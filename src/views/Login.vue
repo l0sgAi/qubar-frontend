@@ -58,6 +58,24 @@
           </template>
           使用 GitHub 继续
         </NButton>
+
+        <!-- <NButton
+          type="primary"
+          size="large"
+          class="azure-btn"
+          @click="handleAzureLogin"
+          :loading="loading"
+        >
+          <template #icon>
+            <svg viewBox="0 0 23 23" class="azure-icon">
+              <path fill="#f35325" d="M1 1h10v10H1z"/>
+              <path fill="#81bc06" d="M12 1h10v10H12z"/>
+              <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+              <path fill="#ffba08" d="M12 12h10v10H12z"/>
+            </svg>
+          </template>
+          使用 Microsoft 继续
+        </NButton> -->
       </div>
 
       <p class="footer">
@@ -100,6 +118,12 @@ const handleGithubLogin = () => {
   loading.value = true
   // 跳转到 GitHub 登录
   window.location.href = 'https://undeclared-porsha-nonformatively.ngrok-free.dev/auth/github/login'
+}
+
+const handleAzureLogin = () => {
+  loading.value = true
+  // 跳转到 Azure 登录
+  window.location.href = 'https://undeclared-porsha-nonformatively.ngrok-free.dev/auth/azure/login'
 }
 </script>
 
@@ -220,6 +244,36 @@ const handleGithubLogin = () => {
   width: 22px;
   height: 22px;
   filter: brightness(0) invert(1);
+}
+
+.azure-btn {
+  width: 100%;
+  height: 52px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  background-color: var(--google-btn-bg);
+  color: var(--google-btn-text);
+  border: 1px solid var(--google-btn-border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  margin-top: 12px;
+}
+
+.azure-btn:hover {
+  background-color: var(--bg-tertiary);
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+}
+
+.azure-btn:active {
+  transform: translateY(0);
+}
+
+.azure-icon {
+  width: 22px;
+  height: 22px;
 }
 
 .footer {
