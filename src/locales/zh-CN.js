@@ -1,7 +1,7 @@
 export default {
   // 通用
   common: {
-    appName: '趣吧 Quba',
+    appName: '趣吧 Qubar',
     search: '搜索',
     searchPlaceholder: '搜索兴趣圈、帖子...',
     loading: '加载中...',

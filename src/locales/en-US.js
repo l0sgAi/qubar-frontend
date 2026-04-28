@@ -1,7 +1,7 @@
 export default {
   // 通用
   common: {
-    appName: 'Quba',
+    appName: 'Qubar',
     search: 'Search',
     searchPlaceholder: 'Search circles, posts...',
     loading: 'Loading...',
