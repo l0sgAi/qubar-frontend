@@ -59,7 +59,7 @@
           使用 GitHub 继续
         </NButton>
 
-        <!-- <NButton
+        <NButton
           type="primary"
           size="large"
           class="azure-btn"
@@ -75,7 +75,7 @@
             </svg>
           </template>
           使用 Microsoft 继续
-        </NButton> -->
+        </NButton>
       </div>
 
       <p class="footer">
