@@ -307,7 +307,7 @@ const handleClearCircleSearch = () => {
   top: 0;
   left: 0;
   right: 0;
-  height: 64px;
+  height: 8dvh;
   display: flex;
   align-items: center;
   justify-content: space-between;
