@@ -130,6 +130,7 @@ const handleAzureLogin = () => {
 <style scoped>
 .login-page {
   min-height: 100vh;
+  background-color: rgb(0, 0, 0);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -299,7 +300,7 @@ const handleAzureLogin = () => {
 
 /* NaiveUI 组件样式覆盖 */
 :deep(.n-card) {
-  background: transparent !important;
+  background: rgba(14, 17, 32, 0.78) !important;
 }
 
 :deep(.n-tag) {

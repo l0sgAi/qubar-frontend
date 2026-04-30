@@ -200,7 +200,7 @@ onUnmounted(() => {
   left: -40px;
   width: calc(100% + 80px);
   height: calc(100% + 80px);
-  filter: blur(60px) saturate(1.6) brightness(0.9);
+  filter: blur(30px) saturate(1.6) brightness(0.9);
 }
 
 .gradient-overlay {
