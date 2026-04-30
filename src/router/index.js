@@ -3,7 +3,7 @@ import Login from '../views/Login.vue'
 import { auth } from '@/utils/auth'
 
 const router = createRouter({
-  history: createWebHistory('/interestBar-frontend/'), // 使用 History 模式，base 与仓库名一致
+  history: createWebHistory('/'),
   routes: [
     {
       path: '/',

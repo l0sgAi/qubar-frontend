@@ -33,7 +33,7 @@ export default defineConfig({
     port: 5173,
     open: true
   },
-  base: '/interestBar-frontend/', // 修改为你的 GitHub 仓库名
+  base: '/',
   build: {
     outDir: 'dist',
     sourcemap: false,
