@@ -844,10 +844,10 @@ function handleAzureLogin() {
   justify-content: center;
   font-size: 12px;
   font-weight: 700;
-  background: var(--bg-tertiary);
-  color: var(--text-tertiary);
-  border: 2px solid var(--glass-border);
-  transition: all 0.3s ease;
+  /* background: var(--bg-tertiary); */
+  /* color: var(--text-tertiary); */
+  /* border: 2px solid var(--glass-border); */
+  /* transition: all 0.3s ease; */
 }
 
 .step-item.active .step-dot {
