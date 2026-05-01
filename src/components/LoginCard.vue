@@ -323,7 +323,7 @@ import { NCard, NButton, NTabs, NTabPane, NForm, NFormItem, NInput, NIcon, NDivi
 import { Email as EmailIcon, Locked, User as UserIcon } from '@vicons/carbon'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
-import { sendVerificationCode, verifyEmailCode, registerWithEmail, loginWithEmail } from '@/api/auth'
+import { loginWithEmail } from '@/api/auth'
 import * as auth from '@/utils/auth'
 
 const router = useRouter()
@@ -497,7 +497,7 @@ async function handleLogin() {
   }
 }
 
-// ---- 注册 Step 1: 发送验证码 ----
+// ---- 注册 Step 1: 发送验证码（Mock） ----
 async function handleSendCode() {
   if (registerStep.value === 1) {
     try {
@@ -507,22 +507,16 @@ async function handleSendCode() {
 
   sendCodeLoading.value = true
   try {
-    const res = await sendVerificationCode(registerData.value.email)
-    if (res.code === 200) {
-      message.success(t('login.register.codeSent'))
-      startCountdown()
-      if (registerStep.value === 1) registerStep.value = 2
-    } else {
-      message.error(res.msg || t('login.messages.sendCodeFailed'))
-    }
-  } catch (err) {
-    message.error(t('login.messages.sendCodeFailed'))
+    await new Promise(r => setTimeout(r, 800))
+    message.success(t('login.register.codeSent'))
+    startCountdown()
+    if (registerStep.value === 1) registerStep.value = 2
   } finally {
     sendCodeLoading.value = false
   }
 }
 
-// ---- 注册 Step 2: 验证验证码 ----
+// ---- 注册 Step 2: 验证验证码（Mock） ----
 async function handleVerifyCode() {
   try {
     await step2FormRef.value?.validate()
@@ -530,21 +524,15 @@ async function handleVerifyCode() {
 
   verifyLoading.value = true
   try {
-    const res = await verifyEmailCode(registerData.value.email, registerData.value.code)
-    if (res.code === 200) {
-      message.success(t('login.messages.codeVerified'))
-      registerStep.value = 3
-    } else {
-      message.error(res.msg || t('login.messages.codeInvalid'))
-    }
-  } catch (err) {
-    message.error(t('login.messages.codeInvalid'))
+    await new Promise(r => setTimeout(r, 800))
+    message.success(t('login.messages.codeVerified'))
+    registerStep.value = 3
   } finally {
     verifyLoading.value = false
   }
 }
 
-// ---- 注册 Step 3: 完成注册 ----
+// ---- 注册 Step 3: 完成注册（Mock） ----
 async function handleRegister() {
   try {
     await step3FormRef.value?.validate()
@@ -552,21 +540,9 @@ async function handleRegister() {
 
   registerLoading.value = true
   try {
-    const res = await registerWithEmail({
-      email: registerData.value.email,
-      username: registerData.value.username,
-      password: registerData.value.password,
-      code: registerData.value.code
-    })
-    if (res.code === 200) {
-      auth.setToken(res.data.token, res.data.expire)
-      message.success(t('login.register.success'))
-      router.push('/home')
-    } else {
-      message.error(res.msg || t('login.messages.registerFailed', { error: '' }))
-    }
-  } catch (err) {
-    message.error(t('login.messages.registerFailed', { error: err.message || '' }))
+    await new Promise(r => setTimeout(r, 800))
+    message.success(t('login.register.success'))
+    router.push('/home')
   } finally {
     registerLoading.value = false
   }
@@ -693,8 +669,8 @@ function handleAzureLogin() {
 :deep(.n-input .n-input__textarea-el),
 :deep(.n-input .n-input__input-el) {
   background-color: transparent !important;
-  color: var(--text-primary) !important;
-  caret-color: var(--text-primary);
+  /* color: var(--text-primary) !important; */
+  /* caret-color: var(--text-primary); */
 }
 
 :deep(.n-input input:-webkit-autofill) {
@@ -897,7 +873,7 @@ function handleAzureLogin() {
 .code-input :deep(.n-input__input) {
   text-align: center;
   font-size: 24px;
-  letter-spacing: 12px;
+  /* letter-spacing: 12px; */
   font-weight: 600;
 }
 

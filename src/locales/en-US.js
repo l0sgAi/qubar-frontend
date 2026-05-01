@@ -292,7 +292,7 @@ export default {
       usernamePlaceholder: 'Choose a username',
       confirmPasswordLabel: 'Confirm Password',
       confirmPasswordPlaceholder: 'Re-enter your password',
-      submit: 'Complete Registration',
+      submit: 'Complete',
       success: 'Registration successful!',
       emailExists: 'This email is already registered'
     },
