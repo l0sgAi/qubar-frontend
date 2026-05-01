@@ -255,10 +255,77 @@ export default {
     tagline: 'Connect interests, discover possibilities',
     googleLogin: 'Continue with Google',
     githubLogin: 'Continue with GitHub',
+    microsoftLogin: 'Continue with Microsoft',
     loginAgreement: 'By logging in, you agree to our',
     userAgreement: 'User Agreement',
     privacyPolicy: 'Privacy Policy',
-    and: 'and'
+    and: 'and',
+
+    tabs: {
+      login: 'Login',
+      register: 'Register'
+    },
+
+    email: {
+      label: 'Email Address',
+      placeholder: 'Enter your email address'
+    },
+    password: {
+      label: 'Password',
+      placeholder: 'Enter your password'
+    },
+    submit: 'Login',
+    dividerText: 'or continue with',
+
+    forgotPassword: 'Forgot password?',
+
+    register: {
+      sendCode: 'Send Code',
+      resendCode: 'Resend',
+      resendIn: 'Resend in {seconds}s',
+      codeSent: 'Verification code sent',
+      codeSentTo: 'Code sent to {email}',
+      codePlaceholder: 'Enter 6-digit code',
+      verify: 'Verify',
+      nextStep: 'Next',
+      usernameLabel: 'Username',
+      usernamePlaceholder: 'Choose a username',
+      confirmPasswordLabel: 'Confirm Password',
+      confirmPasswordPlaceholder: 'Re-enter your password',
+      submit: 'Complete Registration',
+      success: 'Registration successful!',
+      emailExists: 'This email is already registered'
+    },
+
+    passwordStrength: {
+      weak: 'Weak',
+      medium: 'Medium',
+      strong: 'Strong',
+      hint: 'At least 8 characters with letters and numbers'
+    },
+
+    validation: {
+      emailRequired: 'Please enter your email',
+      passwordRequired: 'Please enter your password',
+      passwordMinLength: 'Password must be at least 8 characters',
+      passwordPattern: 'Password must contain letters and numbers',
+      confirmPasswordRequired: 'Please confirm your password',
+      passwordMismatch: 'Passwords do not match',
+      codeRequired: 'Please enter the code',
+      codeFormat: 'Code must be 6 digits',
+      usernameRequired: 'Please enter a username',
+      usernameLength: 'Username must be 2-30 characters',
+      usernamePattern: 'Only letters, numbers, underscores and Chinese characters'
+    },
+
+    messages: {
+      loginSuccess: 'Login successful!',
+      loginFailed: 'Login failed: {error}',
+      registerFailed: 'Registration failed: {error}',
+      codeVerified: 'Email verified successfully',
+      codeInvalid: 'Invalid or expired code',
+      sendCodeFailed: 'Failed to send verification code'
+    }
   },
 
   // 表单验证
