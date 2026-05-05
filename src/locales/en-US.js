@@ -234,7 +234,39 @@ export default {
     yesterday: 'Yesterday',
     daysAgo: '{days}d ago',
     monthsAgo: '{months}mo ago',
-    yearsAgo: '{years}y ago'
+    yearsAgo: '{years}y ago',
+    genders: {
+      notSet: 'Not set',
+      male: 'Male',
+      female: 'Female',
+      other: 'Other'
+    },
+    roles: {
+      user: 'User',
+      admin: 'Admin',
+      superAdmin: 'Super Admin'
+    },
+    editModal: {
+      title: 'Edit Profile',
+      usernamePlaceholder: 'Enter username (1-50 characters)',
+      phonePlaceholder: 'Enter phone number',
+      genderPlaceholder: 'Select gender',
+      birthdayPlaceholder: 'Select birthday',
+      clickUploadAvatar: 'Click to upload avatar',
+      avatarTip: 'Avatar supports JPG, JPEG, PNG, GIF, WebP, SVG formats, max 10MB',
+      saveChanges: 'Save Changes',
+      usernameLengthError: 'Username must be 1-50 characters',
+      phoneFormatError: 'Please enter a valid phone number',
+      avatarTypeError: 'Only JPG, JPEG, PNG, GIF, WebP, SVG formats are supported',
+      avatarSizeError: 'Image size cannot exceed 10MB',
+      avatarUploadSuccess: 'Avatar uploaded successfully',
+      avatarUploadFailed: 'Avatar upload failed',
+      noChangesWarning: 'Please modify at least one field',
+      updateSuccess: 'Profile updated successfully',
+      updateFailed: 'Failed to update profile',
+      fetchFailed: 'Failed to fetch user info',
+      clearHistory: 'Clear browsing history'
+    }
   },
 
   // 导航和菜单

@@ -111,11 +111,11 @@
               <div class="info-list">
                 <div class="info-row">
                   <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.email') }}</NText>
-                  <NText style="font-size: 15px;">{{ userInfo.email || '未设置' }}</NText>
+                  <NText style="font-size: 15px;">{{ userInfo.email || t('user.notSet') }}</NText>
                 </div>
                 <div class="info-row">
                   <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.phone') }}</NText>
-                  <NText style="font-size: 15px;">{{ userInfo.phone || '未绑定' }}</NText>
+                  <NText style="font-size: 15px;">{{ userInfo.phone || t('user.notBound') }}</NText>
                 </div>
                 <div class="info-row">
                   <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.gender') }}</NText>
@@ -136,7 +136,7 @@
                 <div class="info-row">
                   <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.status') }}</NText>
                   <NTag :type="userInfo.status === 1 ? 'success' : 'error'" size="small" round>
-                    {{ userInfo.status === 1 ? '正常' : '禁用' }}
+                    {{ userInfo.status === 1 ? t('user.normal') : t('user.disabled') }}
                   </NTag>
                 </div>
               </div>
@@ -147,38 +147,38 @@
       </div>
 
       <!-- 编辑个人信息模态框 -->
-      <NModal v-model:show="showEditModal" preset="card" title="编辑个人信息" class="edit-modal" style="width: 500px;">
+      <NModal v-model:show="showEditModal" preset="card" :title="t('user.editModal.title')" class="edit-modal" style="width: 50dvw;">
         <NForm ref="formRef" :model="formData" :rules="rules" label-placement="left" label-width="80">
-          <NFormItem label="用户名" path="username">
+          <NFormItem :label="t('user.username')" path="username">
             <NInput
               v-model:value="formData.username"
-              placeholder="请输入用户名（1-50字符）"
+              :placeholder="t('user.editModal.usernamePlaceholder')"
               maxlength="50"
               show-count
             />
           </NFormItem>
 
-          <NFormItem label="手机号" path="phone">
+          <NFormItem :label="t('user.phone')" path="phone">
             <NInput
               v-model:value="formData.phone"
-              placeholder="请输入手机号"
+              :placeholder="t('user.editModal.phonePlaceholder')"
               maxlength="11"
             />
           </NFormItem>
 
-          <NFormItem label="性别" path="gender">
+          <NFormItem :label="t('user.gender')" path="gender">
             <NSelect
               v-model:value="formData.gender"
               :options="genderOptions"
-              placeholder="请选择性别"
+              :placeholder="t('user.editModal.genderPlaceholder')"
             />
           </NFormItem>
 
-          <NFormItem label="生日" path="birthdate">
+          <NFormItem :label="t('user.birthday')" path="birthdate">
             <NDatePicker
               v-model:value="formData.birthdate"
               type="date"
-              placeholder="请选择生日"
+              :placeholder="t('user.editModal.birthdayPlaceholder')"
               :is-date-disabled="(timestamp) => timestamp > Date.now()"
               format="yyyy-MM-dd"
               value-format="yyyy-MM-dd"
@@ -186,7 +186,7 @@
             />
           </NFormItem>
 
-          <NFormItem label="头像">
+          <NFormItem :label="t('user.avatar')">
             <NUpload
               :max="1"
               :default-file-list="avatarFileList"
@@ -197,21 +197,21 @@
               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/svg+xml"
             >
               <div style="text-align: center;">
-                <div>点击上传头像</div>
+                <div>{{ t('user.editModal.clickUploadAvatar') }}</div>
               </div>
             </NUpload>
           </NFormItem>
         </NForm>
 
         <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">
-          头像支持 JPG、JPEG、PNG、GIF、WebP、SVG 格式,文件大小 ≤ 10MB
+          {{ t('user.editModal.avatarTip') }}
         </div>
 
         <template #footer>
           <div class="modal-footer">
-            <NButton @click="showEditModal = false">取消</NButton>
+            <NButton @click="showEditModal = false">{{ t('common.cancel') }}</NButton>
             <NButton type="primary" @click="handleUpdateInfo" :loading="updating">
-              保存修改
+              {{ t('user.editModal.saveChanges') }}
             </NButton>
           </div>
         </template>
@@ -221,7 +221,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   NConfigProvider,
@@ -397,8 +397,8 @@ const fetchUserInfo = async () => {
       userInfo.value = response.data
     }
   } catch (error) {
-    console.error('获取用户信息失败:', error)
-    message.error('获取用户信息失败')
+    console.error(t('user.editModal.fetchFailed') + ':', error)
+    message.error(t('user.editModal.fetchFailed'))
   }
 }
 
@@ -408,12 +408,12 @@ const updating = ref(false)
 const avatarFileList = ref([])
 
 // 性别选项
-const genderOptions = [
-  { label: '未设置', value: 0 },
-  { label: '男', value: 1 },
-  { label: '女', value: 2 },
-  { label: '其他', value: 3 }
-]
+const genderOptions = computed(() => [
+  { label: t('user.genders.notSet'), value: 0 },
+  { label: t('user.genders.male'), value: 1 },
+  { label: t('user.genders.female'), value: 2 },
+  { label: t('user.genders.other'), value: 3 }
+])
 
 // 表单数据
 const formData = ref({
@@ -432,7 +432,7 @@ const rules = {
     validator: (_rule, value) => {
       if (!value) return true
       if (value.length < 1 || value.length > 50) {
-        return new Error('用户名长度为1-50个字符')
+        return new Error(t('user.editModal.usernameLengthError'))
       }
       return true
     }
@@ -444,7 +444,7 @@ const rules = {
       if (!value) return true
       const phoneReg = /^1[3-9]\d{9}$/
       if (!phoneReg.test(value)) {
-        return new Error('请输入正确的手机号')
+        return new Error(t('user.editModal.phoneFormatError'))
       }
       return true
     }
@@ -458,13 +458,13 @@ const beforeAvatarUpload = (data) => {
   const isValidType = allowedTypes.includes(file.type)
 
   if (!isValidType) {
-    message.error('只支持 JPG、JPEG、PNG、GIF、WebP、SVG 格式的图片')
+    message.error(t('user.editModal.avatarTypeError'))
     return false
   }
 
   const maxSize = 10 * 1024 * 1024
   if (file.size > maxSize) {
-    message.error('图片大小不能超过10MB')
+    message.error(t('user.editModal.avatarSizeError'))
     return false
   }
 
@@ -482,12 +482,12 @@ const handleAvatarUpload = async ({ file, onFinish, onError }) => {
     const response = await uploadImage(file.file)
     if (response.data && response.data.url) {
       formData.value.avatar_url = response.data.url
-      message.success('头像上传成功')
+      message.success(t('user.editModal.avatarUploadSuccess'))
       onFinish()
     }
   } catch (error) {
     console.error('头像上传失败:', error)
-    message.error('头像上传失败')
+    message.error(t('user.editModal.avatarUploadFailed'))
     onError()
   }
 }
@@ -503,7 +503,7 @@ const handleUpdateInfo = async () => {
       formData.value.birthdate
 
     if (!hasChanges) {
-      message.warning('请至少修改一项信息')
+      message.warning(t('user.editModal.noChangesWarning'))
       return
     }
 
@@ -528,13 +528,13 @@ const handleUpdateInfo = async () => {
     }
 
     await updateUserInfo(updateData)
-    message.success('个人信息更新成功')
+    message.success(t('user.editModal.updateSuccess'))
     showEditModal.value = false
     avatarFileList.value = []
     await fetchUserInfo()
   } catch (error) {
     console.error('更新个人信息失败:', error)
-    message.error(error.message || '更新个人信息失败')
+    message.error(error.message || t('user.editModal.updateFailed'))
   } finally {
     updating.value = false
   }
@@ -599,7 +599,7 @@ const handleFavoriteClick = (item) => {
 
 // 格式化日期
 const formatDate = (dateStr) => {
-  if (!dateStr) return '未设置'
+  if (!dateStr) return t('user.notSet')
   const date = new Date(dateStr)
   return date.toLocaleDateString('zh-CN')
 }
@@ -607,12 +607,12 @@ const formatDate = (dateStr) => {
 // 获取性别文本
 const getGenderText = (gender) => {
   const genderMap = {
-    0: '未设置',
-    1: '男',
-    2: '女',
-    3: '其他'
+    0: t('user.genders.notSet'),
+    1: t('user.genders.male'),
+    2: t('user.genders.female'),
+    3: t('user.genders.other')
   }
-  return genderMap[gender] || '未设置'
+  return genderMap[gender] || t('user.genders.notSet')
 }
 
 // 获取性别标签类型
@@ -629,11 +629,11 @@ const getGenderType = (gender) => {
 // 获取角色文本
 const getRoleText = (role) => {
   const roleMap = {
-    0: '普通用户',
-    1: '管理员',
-    2: '超级管理员'
+    0: t('user.roles.user'),
+    1: t('user.roles.admin'),
+    2: t('user.roles.superAdmin')
   }
-  return roleMap[role] || '普通用户'
+  return roleMap[role] || t('user.roles.user')
 }
 
 // 获取角色标签类型
@@ -648,7 +648,7 @@ const getRoleType = (role) => {
 
 // 历史操作
 const handleHistoryClear = () => {
-  message.info('清空浏览历史')
+  message.info(t('user.editModal.clearHistory'))
 }
 
 const handleHistoryClick = (item) => {
@@ -657,7 +657,7 @@ const handleHistoryClick = (item) => {
 
 onMounted(() => {
   if (!auth.isAuthenticated()) {
-    message.warning('请先登录')
+    message.warning(t('messages.pleaseLoginFirst'))
     router.push('/')
     return
   }

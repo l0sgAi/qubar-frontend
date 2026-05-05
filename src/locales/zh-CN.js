@@ -234,7 +234,39 @@ export default {
     yesterday: '昨天',
     daysAgo: '{days} 天前',
     monthsAgo: '{months} 个月前',
-    yearsAgo: '{years} 年前'
+    yearsAgo: '{years} 年前',
+    genders: {
+      notSet: '未设置',
+      male: '男',
+      female: '女',
+      other: '其他'
+    },
+    roles: {
+      user: '普通用户',
+      admin: '管理员',
+      superAdmin: '超级管理员'
+    },
+    editModal: {
+      title: '编辑个人信息',
+      usernamePlaceholder: '请输入用户名（1-50字符）',
+      phonePlaceholder: '请输入手机号',
+      genderPlaceholder: '请选择性别',
+      birthdayPlaceholder: '请选择生日',
+      clickUploadAvatar: '点击上传头像',
+      avatarTip: '头像支持 JPG、JPEG、PNG、GIF、WebP、SVG 格式,文件大小 ≤ 10MB',
+      saveChanges: '保存修改',
+      usernameLengthError: '用户名长度为1-50个字符',
+      phoneFormatError: '请输入正确的手机号',
+      avatarTypeError: '只支持 JPG、JPEG、PNG、GIF、WebP、SVG 格式的图片',
+      avatarSizeError: '图片大小不能超过10MB',
+      avatarUploadSuccess: '头像上传成功',
+      avatarUploadFailed: '头像上传失败',
+      noChangesWarning: '请至少修改一项信息',
+      updateSuccess: '个人信息更新成功',
+      updateFailed: '更新个人信息失败',
+      fetchFailed: '获取用户信息失败',
+      clearHistory: '清空浏览历史'
+    }
   },
 
   // 导航和菜单
