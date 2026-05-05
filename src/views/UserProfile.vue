@@ -84,9 +84,13 @@
               <NAvatar
                 :size="260"
                 :src="userInfo.avatar_url"
-                fallback-src="https://img.icons8.com/ios-glyphs/64/user-male-circle.png"
                 round
-                class="sidebar-avatar"/>
+                class="sidebar-avatar">
+                 <div class="avatar-font" 
+                 v-if="!userInfo.avatar_url || userInfo.avatar_url == ''">
+                 {{ userInfo.username.charAt(0) }}
+                </div>
+              </NAvatar>
               <h2 class="sidebar-username">{{ userInfo.username || t('user.notSet') }}</h2>
               <NButton type="primary" size="small" @click="handleEditClick" style="width: 100%; margin-top: 16px; border-radius: 20px;">
                 <template #icon>
@@ -847,6 +851,12 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.avatar-font{
+  font-size: 10dvw;
+  margin-bottom: 3dvh;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
 
 /* 响应式 */
