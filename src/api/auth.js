@@ -37,11 +37,11 @@ export function logout() {
  * @param {string} email
  * @returns {Promise}
  */
-export function sendVerificationCode(email) {
+export function sendVerificationCode(email, lang) {
   return request({
-    url: '/auth/email/send-code',
+    url: '/auth/register/send-code',
     method: 'post',
-    data: { email }
+    data: { email, ...(lang && { lang }) }
   })
 }
 
@@ -53,7 +53,7 @@ export function sendVerificationCode(email) {
  */
 export function verifyEmailCode(email, code) {
   return request({
-    url: '/auth/email/verify-code',
+    url: '/auth/register/verify',
     method: 'post',
     data: { email, code }
   })
@@ -65,10 +65,11 @@ export function verifyEmailCode(email, code) {
  * @returns {Promise}
  */
 export function registerWithEmail(data) {
+  const { email, username, password } = data
   return request({
-    url: '/auth/email/register',
+    url: '/auth/register/complete',
     method: 'post',
-    data
+    data: { email, username, password }
   })
 }
 
@@ -79,7 +80,7 @@ export function registerWithEmail(data) {
  */
 export function loginWithEmail(data) {
   return request({
-    url: '/auth/email/login',
+    url: '/auth/login',
     method: 'post',
     data
   })

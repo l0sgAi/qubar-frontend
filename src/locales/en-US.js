@@ -294,7 +294,8 @@ export default {
       confirmPasswordPlaceholder: 'Re-enter your password',
       submit: 'Complete',
       success: 'Registration successful!',
-      emailExists: 'This email is already registered'
+      emailExists: 'This email is already registered',
+      rateLimit: 'Too many requests, please try again later'
     },
 
     passwordStrength: {

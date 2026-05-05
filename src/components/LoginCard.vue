@@ -323,12 +323,16 @@ import { NCard, NButton, NTabs, NTabPane, NForm, NFormItem, NInput, NIcon, NDivi
 import { Email as EmailIcon, Locked, User as UserIcon } from '@vicons/carbon'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
-import { loginWithEmail } from '@/api/auth'
-import * as auth from '@/utils/auth'
+import { loginWithEmail, sendVerificationCode, verifyEmailCode, registerWithEmail } from '@/api/auth'
+import { auth } from '@/utils/auth'
 
 const router = useRouter()
 const message = useMessage()
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+function getLangParam() {
+  return locale.value.startsWith('zh') ? 'zh' : 'en'
+}
 
 // ---- 通用状态 ----
 const activeTab = ref('login')
@@ -483,21 +487,17 @@ async function handleLogin() {
       email: loginData.value.email,
       password: loginData.value.password
     })
-    if (res.code === 200) {
-      auth.setToken(res.data.token, res.data.expire)
-      message.success(t('login.messages.loginSuccess'))
-      router.push('/home')
-    } else {
-      message.error(res.msg || t('login.messages.loginFailed', { error: '' }))
-    }
+    auth.setToken(res.data.token)
+    message.success(t('login.messages.loginSuccess'))
+    router.push('/home')
   } catch (err) {
-    message.error(t('login.messages.loginFailed', { error: err.message || '' }))
+    message.error(err.message || t('login.messages.loginFailed', { error: '' }))
   } finally {
     loginLoading.value = false
   }
 }
 
-// ---- 注册 Step 1: 发送验证码（Mock） ----
+// ---- 注册 Step 1: 发送验证码 ----
 async function handleSendCode() {
   if (registerStep.value === 1) {
     try {
@@ -507,16 +507,24 @@ async function handleSendCode() {
 
   sendCodeLoading.value = true
   try {
-    await new Promise(r => setTimeout(r, 800))
+    await sendVerificationCode(registerData.value.email, getLangParam())
     message.success(t('login.register.codeSent'))
     startCountdown()
     if (registerStep.value === 1) registerStep.value = 2
+  } catch (err) {
+    if (err.code === 409) {
+      message.error(t('login.register.emailExists'))
+    } else if (err.code === 429) {
+      message.error(t('login.register.rateLimit'))
+    } else {
+      message.error(t('login.messages.sendCodeFailed') + (err.message ? ': ' + err.message : ''))
+    }
   } finally {
     sendCodeLoading.value = false
   }
 }
 
-// ---- 注册 Step 2: 验证验证码（Mock） ----
+// ---- 注册 Step 2: 验证验证码 ----
 async function handleVerifyCode() {
   try {
     await step2FormRef.value?.validate()
@@ -524,15 +532,17 @@ async function handleVerifyCode() {
 
   verifyLoading.value = true
   try {
-    await new Promise(r => setTimeout(r, 800))
+    await verifyEmailCode(registerData.value.email, registerData.value.code)
     message.success(t('login.messages.codeVerified'))
     registerStep.value = 3
+  } catch (err) {
+    message.error(err.message || t('login.messages.codeInvalid'))
   } finally {
     verifyLoading.value = false
   }
 }
 
-// ---- 注册 Step 3: 完成注册（Mock） ----
+// ---- 注册 Step 3: 完成注册 ----
 async function handleRegister() {
   try {
     await step3FormRef.value?.validate()
@@ -540,9 +550,16 @@ async function handleRegister() {
 
   registerLoading.value = true
   try {
-    await new Promise(r => setTimeout(r, 800))
+    const res = await registerWithEmail({
+      email: registerData.value.email,
+      username: registerData.value.username,
+      password: registerData.value.password
+    })
+    auth.setToken(res.data.token, res.data.expire)
     message.success(t('login.register.success'))
     router.push('/home')
+  } catch (err) {
+    message.error(t('login.messages.registerFailed', { error: err.message || '' }))
   } finally {
     registerLoading.value = false
   }

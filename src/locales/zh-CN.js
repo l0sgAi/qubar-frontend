@@ -294,7 +294,8 @@ export default {
       confirmPasswordPlaceholder: '请再次输入密码',
       submit: '完成注册',
       success: '注册成功！',
-      emailExists: '该邮箱已被注册'
+      emailExists: '该邮箱已被注册',
+      rateLimit: '请求过于频繁，请稍后再试'
     },
 
     passwordStrength: {
