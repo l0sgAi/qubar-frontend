@@ -55,9 +55,13 @@
               <NAvatar
                 :size="260"
                 :src="userInfo.avatar_url"
-                fallback-src="https://img.icons8.com/ios-glyphs/64/user-male-circle.png"
                 round
-                class="sidebar-avatar"/>
+                class="sidebar-avatar">
+                 <div class="avatar-font" 
+                 v-if="!userInfo.avatar_url || userInfo.avatar_url == ''">
+                 {{ userInfo.username.charAt(0) }}
+                </div>
+            </NAvatar>
               <h2 class="sidebar-username">{{ userInfo.username || '未设置' }}</h2>
             </div>
 
@@ -383,6 +387,12 @@ onMounted(() => {
 
 .profile-tabs {
   padding: 0 8px;
+}
+
+.avatar-font{
+  font-size: 10dvw;
+  /* margin-bottom: 3dvh; */
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
 
 .profile-tabs :deep(.n-tab-pane) {

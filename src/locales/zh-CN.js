@@ -4,6 +4,9 @@ export default {
     appName: '趣吧 Qubar',
     search: '搜索',
     searchPlaceholder: '搜索兴趣圈、帖子...',
+    searchPosts: '搜索帖子',
+    searchCircles: '搜索圈子',
+    searchUsers: '搜索用户',
     loading: '加载中...',
     loadMore: '加载更多',
     noMore: '没有更多了',
@@ -231,7 +234,39 @@ export default {
     yesterday: '昨天',
     daysAgo: '{days} 天前',
     monthsAgo: '{months} 个月前',
-    yearsAgo: '{years} 年前'
+    yearsAgo: '{years} 年前',
+    genders: {
+      notSet: '未设置',
+      male: '男',
+      female: '女',
+      other: '其他'
+    },
+    roles: {
+      user: '普通用户',
+      admin: '管理员',
+      superAdmin: '超级管理员'
+    },
+    editModal: {
+      title: '编辑个人信息',
+      usernamePlaceholder: '请输入用户名（1-50字符）',
+      phonePlaceholder: '请输入手机号',
+      genderPlaceholder: '请选择性别',
+      birthdayPlaceholder: '请选择生日',
+      clickUploadAvatar: '点击上传头像',
+      avatarTip: '头像支持 JPG、JPEG、PNG、GIF、WebP、SVG 格式,文件大小 ≤ 10MB',
+      saveChanges: '保存修改',
+      usernameLengthError: '用户名长度为1-50个字符',
+      phoneFormatError: '请输入正确的手机号',
+      avatarTypeError: '只支持 JPG、JPEG、PNG、GIF、WebP、SVG 格式的图片',
+      avatarSizeError: '图片大小不能超过10MB',
+      avatarUploadSuccess: '头像上传成功',
+      avatarUploadFailed: '头像上传失败',
+      noChangesWarning: '请至少修改一项信息',
+      updateSuccess: '个人信息更新成功',
+      updateFailed: '更新个人信息失败',
+      fetchFailed: '获取用户信息失败',
+      clearHistory: '清空浏览历史'
+    }
   },
 
   // 导航和菜单
@@ -255,10 +290,78 @@ export default {
     tagline: '连接多元兴趣，发现无限可能',
     googleLogin: '使用 Google 账号继续',
     githubLogin: '使用 GitHub 继续',
+    microsoftLogin: '使用 Microsoft 继续',
     loginAgreement: '登录即代表您同意',
     userAgreement: '《用户协议》',
     privacyPolicy: '《隐私政策》',
-    and: '与'
+    and: '与',
+
+    tabs: {
+      login: '登录',
+      register: '注册'
+    },
+
+    email: {
+      label: '邮箱地址',
+      placeholder: '请输入邮箱地址'
+    },
+    password: {
+      label: '密码',
+      placeholder: '请输入密码'
+    },
+    submit: '登录',
+    dividerText: '或通过以下方式继续',
+
+    forgotPassword: '忘记密码？',
+
+    register: {
+      sendCode: '发送验证码',
+      resendCode: '重新发送',
+      resendIn: '{seconds}s 后重发',
+      codeSent: '验证码已发送',
+      codeSentTo: '验证码已发送至 {email}',
+      codePlaceholder: '请输入6位验证码',
+      verify: '验证',
+      nextStep: '下一步',
+      usernameLabel: '用户名',
+      usernamePlaceholder: '请输入用户名',
+      confirmPasswordLabel: '确认密码',
+      confirmPasswordPlaceholder: '请再次输入密码',
+      submit: '完成注册',
+      success: '注册成功！',
+      emailExists: '该邮箱已被注册',
+      rateLimit: '请求过于频繁，请稍后再试'
+    },
+
+    passwordStrength: {
+      weak: '弱',
+      medium: '中',
+      strong: '强',
+      hint: '密码至少8位，需包含字母和数字'
+    },
+
+    validation: {
+      emailRequired: '请输入邮箱地址',
+      passwordRequired: '请输入密码',
+      passwordMinLength: '密码至少需要8个字符',
+      passwordPattern: '密码需包含字母和数字',
+      confirmPasswordRequired: '请再次输入密码',
+      passwordMismatch: '两次输入的密码不一致',
+      codeRequired: '请输入验证码',
+      codeFormat: '验证码为6位数字',
+      usernameRequired: '请输入用户名',
+      usernameLength: '用户名长度应在2-30个字符之间',
+      usernamePattern: '用户名只能包含字母、数字、下划线和中文'
+    },
+
+    messages: {
+      loginSuccess: '登录成功！',
+      loginFailed: '登录失败：{error}',
+      registerFailed: '注册失败：{error}',
+      codeVerified: '邮箱验证成功',
+      codeInvalid: '验证码无效或已过期',
+      sendCodeFailed: '发送验证码失败'
+    }
   },
 
   // 表单验证
