@@ -6,34 +6,69 @@
 
     <div class="header-center">
       <!-- 搜索栏 -->
-      <div class="search-box">
-        <!-- 圈子标签 -->
-        <div v-if="circleSearch.id" class="circle-tag">
-          <img v-if="circleSearch.avatarUrl" :src="circleSearch.avatarUrl" class="circle-tag-avatar" />
-          <div v-else class="circle-tag-avatar-placeholder">
-            {{ circleSearch.name?.charAt(0)?.toUpperCase() || '?' }}
+      <div class="search-wrapper">
+        <div class="search-box">
+          <!-- 圈子标签 -->
+          <div v-if="circleSearch.id" class="circle-tag">
+            <img v-if="circleSearch.avatarUrl" :src="circleSearch.avatarUrl" class="circle-tag-avatar" />
+            <div v-else class="circle-tag-avatar-placeholder">
+              {{ circleSearch.name?.charAt(0)?.toUpperCase() || '?' }}
+            </div>
+            <span class="circle-tag-name">{{ circleSearch.name }}</span>
+            <button class="circle-tag-close" @click="handleClearCircleSearch" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
-          <span class="circle-tag-name">{{ circleSearch.name }}</span>
-          <button class="circle-tag-close" @click="handleClearCircleSearch" type="button">
+          <span class="search-icon" @click="handleSearch" style="cursor: pointer;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
             </svg>
-          </button>
+          </span>
+          <input
+            ref="searchInputRef"
+            type="text"
+            class="search-input"
+            :placeholder="t('common.searchPlaceholder')"
+            v-model="searchKeyword"
+            @focus="showSuggestions = true"
+            @keyup.enter="handleSearch"
+          />
         </div>
-        <span class="search-icon" @click="handleSearch" style="cursor: pointer;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
-          </svg>
-        </span>
-        <input
-          type="text"
-          class="search-input"
-          :placeholder="t('common.searchPlaceholder')"
-          v-model="searchKeyword"
-          @keyup.enter="handleSearch"
-        />
+        <!-- 搜索建议下拉菜单 -->
+        <Transition name="suggestion-fade">
+          <div
+            v-if="showSuggestions && searchKeyword.trim()"
+            class="search-suggestions"
+          >
+            <div class="suggestion-item" @mousedown.prevent="handleSuggestionSearch('post')">
+              <svg class="suggestion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
+              <span class="suggestion-text">{{ t('common.searchPosts') }}：{{ searchKeyword.trim() }}</span>
+            </div>
+            <div class="suggestion-item" @mousedown.prevent="handleSuggestionSearch('circle')">
+              <svg class="suggestion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <span class="suggestion-text">{{ t('common.searchCircles') }}：{{ searchKeyword.trim() }}</span>
+            </div>
+            <div class="suggestion-item" @mousedown.prevent="handleSuggestionSearch('user')">
+              <svg class="suggestion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span class="suggestion-text">{{ t('common.searchUsers') }}：{{ searchKeyword.trim() }}</span>
+            </div>
+          </div>
+        </Transition>
       </div>
     </div>
 
@@ -86,7 +121,7 @@
 </template>
 
 <script setup>
-import { ref, computed, h, onMounted, watch, inject } from 'vue'
+import { ref, computed, h, onMounted, onBeforeUnmount, watch, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { NButton, NIcon, NDropdown, NAvatar, NBadge, useMessage, useDialog } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -113,6 +148,15 @@ const notificationCount = ref(0)
 
 // 搜索关键词
 const searchKeyword = ref('')
+const showSuggestions = ref(false)
+const searchInputRef = ref(null)
+
+// 点击外部关闭建议菜单
+const handleClickOutside = (e) => {
+  if (!e.target.closest('.search-wrapper')) {
+    showSuggestions.value = false
+  }
+}
 
 // 用户头像首字母
 const userInitial = computed(() => {
@@ -134,8 +178,9 @@ const getAvatarUrl = (name) => {
   return 'https://ui-avatars.com/api/?name='+name
 }
 
-// 组件挂载时获取用户信息和同步搜索关键词
 onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+
   if (auth.isAuthenticated()) {
     fetchUserInfo()
   }
@@ -143,6 +188,10 @@ onMounted(() => {
   if (route.name === 'search' && route.query.q) {
     searchKeyword.value = route.query.q
   }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 
 // 监听路由变化，同步搜索框内容
@@ -252,6 +301,7 @@ const goHome = () => {
 const handleSearch = () => {
   const keyword = searchKeyword.value.trim()
   if (keyword) {
+    showSuggestions.value = false
     // 构建查询参数
     const query = { q: keyword }
 
@@ -262,7 +312,29 @@ const handleSearch = () => {
 
     // 如果已经在搜索页面且搜索相同关键词，需要强制刷新
     if (route.name === 'search' && route.query.q === keyword) {
-      // 使用时间戳确保路由变化触发重新搜索
+      router.replace({
+        path: '/search',
+        query: { ...query, t: Date.now() }
+      })
+    } else {
+      router.push({
+        path: '/search',
+        query
+      })
+    }
+  }
+}
+
+// 搜索建议点击
+const handleSuggestionSearch = (tab) => {
+  const keyword = searchKeyword.value.trim()
+  if (keyword) {
+    showSuggestions.value = false
+    const query = { q: keyword, tab }
+    if (circleSearch.value.id) {
+      query.circle_id = circleSearch.value.id
+    }
+    if (route.name === 'search' && route.query.q === keyword && route.query.tab === tab) {
       router.replace({
         path: '/search',
         query: { ...query, t: Date.now() }
@@ -342,9 +414,15 @@ const handleClearCircleSearch = () => {
   justify-content: center;
 }
 
+/* 搜索包装器 */
+.search-wrapper {
+  position: relative;
+  min-width: 40dvw;
+}
+
 /* 搜索栏 */
 .search-box {
-  min-width: 40dvw;
+  width: 100%;
   display: flex;
   align-items: center;
   background: rgba(255, 255, 255, 0.05);
@@ -459,6 +537,58 @@ const handleClearCircleSearch = () => {
 
 .search-input::placeholder {
   color: rgba(255, 255, 255, 0.4);
+}
+
+/* 搜索建议下拉菜单 */
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: rgba(30, 30, 46, 0.96);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 6px;
+  z-index: 1001;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.suggestion-item:hover {
+  background: rgba(59, 223, 125, 0.1);
+}
+
+.suggestion-icon {
+  width: 16px;
+  height: 16px;
+  color: rgba(59, 223, 125, 0.7);
+  flex-shrink: 0;
+}
+
+.suggestion-text {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+}
+
+.suggestion-fade-enter-active,
+.suggestion-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.suggestion-fade-enter-from,
+.suggestion-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 .header-right {

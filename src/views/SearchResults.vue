@@ -136,6 +136,11 @@ onMounted(async () => {
     return
   }
 
+  // 获取初始搜索类型 tab
+  if (route.query.tab && ['post', 'circle', 'user'].includes(route.query.tab)) {
+    activeTab.value = route.query.tab
+  }
+
   // 获取圈子ID（如果有）
   circleId.value = route.query.circle_id ? Number(route.query.circle_id) : null
 
@@ -165,6 +170,12 @@ onMounted(async () => {
 watch(() => route.query, async (newQuery) => {
   const newKeyword = newQuery.q
   const newCircleId = newQuery.circle_id ? Number(newQuery.circle_id) : null
+  const newTab = newQuery.tab
+
+  // 同步 tab 参数
+  if (newTab && ['post', 'circle', 'user'].includes(newTab)) {
+    activeTab.value = newTab
+  }
 
   if ((newKeyword && newKeyword !== keyword.value) || newCircleId !== circleId.value) {
     keyword.value = newKeyword

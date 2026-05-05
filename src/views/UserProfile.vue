@@ -855,7 +855,7 @@ onMounted(() => {
 
 .avatar-font{
   font-size: 10dvw;
-  margin-bottom: 3dvh;
+  /* margin-bottom: 3dvh; */
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
 

@@ -390,8 +390,9 @@ onMounted(() => {
 }
 
 .avatar-font{
-  font-size: 36px;
-  font-weight: 5rem;
+  font-size: 10dvw;
+  /* margin-bottom: 3dvh; */
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
 
 .profile-tabs :deep(.n-tab-pane) {
