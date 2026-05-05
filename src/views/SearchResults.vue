@@ -162,8 +162,14 @@ onMounted(async () => {
     }
   }
 
-  // 默认搜索帖子
-  searchPostsData()
+  // 根据当前 tab 执行对应的搜索
+  if (activeTab.value === 'post') {
+    searchPostsData()
+  } else if (activeTab.value === 'circle') {
+    searchCirclesData()
+  } else if (activeTab.value === 'user') {
+    searchUsersData()
+  }
 })
 
 // 监听路由变化
