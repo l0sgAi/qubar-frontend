@@ -3,7 +3,7 @@ import { useMessage } from 'naive-ui'
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: 'https://undeclared-porsha-nonformatively.ngrok-free.dev',
+  baseURL: 'https://api.qubar.site',
   headers: {
     // TODO: 解决拦截问题，生产环境可以去掉
     "ngrok-skip-browser-warning": "true" 

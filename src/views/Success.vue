@@ -60,7 +60,7 @@ onMounted(async () => {
     try {
       message.loading('正在登录...', { duration: 0 })
 
-      const response = await fetch('https://undeclared-porsha-nonformatively.ngrok-free.dev/auth/google/callback', {
+      const response = await fetch('https://api.qubar.site/auth/google/callback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

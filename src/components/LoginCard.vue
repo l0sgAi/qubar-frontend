@@ -568,17 +568,17 @@ async function handleRegister() {
 // ---- OAuth ----
 function handleGoogleLogin() {
   oauthLoading.value = true
-  window.location.href = 'https://undeclared-porsha-nonformatively.ngrok-free.dev/auth/google/login'
+  window.location.href = 'https://api.qubar.site/auth/google/login'
 }
 
 function handleGithubLogin() {
   oauthLoading.value = true
-  window.location.href = 'https://undeclared-porsha-nonformatively.ngrok-free.dev/auth/github/login'
+  window.location.href = 'https://api.qubar.site/auth/github/login'
 }
 
 function handleAzureLogin() {
   oauthLoading.value = true
-  window.location.href = 'https://undeclared-porsha-nonformatively.ngrok-free.dev/auth/azure/login'
+  window.location.href = 'https://api.qubar.site/auth/azure/login'
 }
 </script>
 
