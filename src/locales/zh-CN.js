@@ -178,6 +178,10 @@ export default {
       joinTypePrivate: '私密圈子',
       joinTypePrivateDesc: '仅限邀请加入',
       createButton: '创建兴趣圈',
+      cropAvatarTitle: '裁剪头像',
+      cropCoverTitle: '裁剪背景图',
+      cropConfirm: '确认裁剪',
+      cropReset: '重置',
       validation: {
         nameRequired: '请输入圈子名称',
         nameLength: '名称长度应在 2-50 个字符之间',
@@ -198,7 +202,8 @@ export default {
         createSuccess: '兴趣圈创建成功！',
         createFailed: '创建失败，请重试',
         loadCategoriesFailed: '加载分类列表失败',
-        createNetworkError: '创建失败，请检查网络连接'
+        createNetworkError: '创建失败，请检查网络连接',
+        cropFailed: '裁剪失败，请重试'
       }
     }
   },

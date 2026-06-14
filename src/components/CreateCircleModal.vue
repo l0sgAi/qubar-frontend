@@ -142,6 +142,16 @@
       </NSpace>
     </template>
   </NModal>
+
+  <!-- 图片裁剪弹窗（头像 1:1 / 封面 3:1） -->
+  <ImageCropperModal
+    v-model:show="cropperVisible"
+    :image-src="cropperImageSrc"
+    :aspect-ratio="cropperAspectRatio"
+    :title="cropperTitle"
+    @confirm="handleCropConfirm"
+    @cancel="handleCropCancel"
+  />
 </template>
 
 <script setup>
@@ -165,6 +175,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import { getCategories, createCircle } from '@/api/circle'
 import { uploadImage } from '@/api/user'
+import ImageCropperModal from '@/components/ImageCropperModal.vue'
 
 const { t } = useI18n()
 
@@ -188,6 +199,18 @@ const showModal = computed({
 // 文件列表
 const avatarFileList = ref([])
 const coverFileList = ref([])
+
+// 图片裁剪弹窗状态
+const cropperVisible = ref(false)
+const cropperImageSrc = ref('')
+// pendingCrop 缓存当前裁剪上下文：type / NUpload 的 file 与 onFinish/onError
+const pendingCrop = ref(null)
+const cropperAspectRatio = computed(() => (pendingCrop.value?.type === 'cover' ? 3 : 1))
+const cropperTitle = computed(() =>
+  pendingCrop.value?.type === 'cover'
+    ? t('circle.form.cropCoverTitle')
+    : t('circle.form.cropAvatarTitle')
+)
 
 // 表单数据
 const formData = ref({
@@ -264,49 +287,75 @@ const handleNameInput = () => {
   }
 }
 
-// 处理头像上传
+// 处理头像 file-list 同步
 const handleAvatarChange = (options) => {
   avatarFileList.value = options
 }
 
-const handleUploadAvatar = async ({ file, onFinish, onError }) => {
-  try {
-    const res = await uploadImage(file.file)
-    if (res.code === 200 && res.data) {
-      formData.value.avatar_url = res.data.url
-      message.success(t('circle.form.messages.avatarUploadSuccess'))
-      onFinish()
-    } else {
-      message.error(res.message || t('circle.form.messages.avatarUploadFailed'))
-      onError()
-    }
-  } catch (error) {
-    console.error('头像上传失败:', error)
-    message.error(t('circle.form.messages.uploadFailedRetry'))
-    onError()
-  }
-}
-
-// 处理封面上传
+// 处理封面 file-list 同步
 const handleCoverChange = (options) => {
   coverFileList.value = options
 }
 
-const handleUploadCover = async ({ file, onFinish, onError }) => {
+// 打开裁剪弹窗（选图后不直接上传，先裁剪）
+const openCropper = (type, file, onFinish, onError) => {
+  if (cropperImageSrc.value.startsWith('blob:')) {
+    URL.revokeObjectURL(cropperImageSrc.value)
+  }
+  pendingCrop.value = { type, file, onFinish, onError }
+  cropperImageSrc.value = URL.createObjectURL(file.file)
+  cropperVisible.value = true
+}
+
+const handleUploadAvatar = ({ file, onFinish, onError }) => {
+  openCropper('avatar', file, onFinish, onError)
+}
+
+const handleUploadCover = ({ file, onFinish, onError }) => {
+  openCropper('cover', file, onFinish, onError)
+}
+
+// 裁剪确认 → 上传裁剪结果
+const handleCropConfirm = async (blob) => {
+  const p = pendingCrop.value
+  if (!p) return
   try {
-    const res = await uploadImage(file.file)
+    const croppedFile = new File([blob], `cropped-${p.type}.jpg`, { type: 'image/jpeg' })
+    const res = await uploadImage(croppedFile)
     if (res.code === 200 && res.data) {
-      formData.value.cover_url = res.data.url
-      message.success(t('circle.form.messages.coverUploadSuccess'))
-      onFinish()
+      if (p.type === 'avatar') {
+        formData.value.avatar_url = res.data.url
+        message.success(t('circle.form.messages.avatarUploadSuccess'))
+      } else {
+        formData.value.cover_url = res.data.url
+        message.success(t('circle.form.messages.coverUploadSuccess'))
+      }
+      p.onFinish()
     } else {
-      message.error(res.message || t('circle.form.messages.coverUploadFailed'))
-      onError()
+      message.error(res.message || t('circle.form.messages.uploadFailedRetry'))
+      p.onError()
     }
   } catch (error) {
-    console.error('封面上传失败:', error)
+    console.error('裁剪后上传失败:', error)
     message.error(t('circle.form.messages.uploadFailedRetry'))
-    onError()
+    p.onError()
+  } finally {
+    pendingCrop.value = null
+    if (cropperImageSrc.value.startsWith('blob:')) {
+      URL.revokeObjectURL(cropperImageSrc.value)
+      cropperImageSrc.value = ''
+    }
+  }
+}
+
+// 取消裁剪 → 放弃本次上传
+const handleCropCancel = () => {
+  const p = pendingCrop.value
+  if (p) p.onError()
+  pendingCrop.value = null
+  if (cropperImageSrc.value.startsWith('blob:')) {
+    URL.revokeObjectURL(cropperImageSrc.value)
+    cropperImageSrc.value = ''
   }
 }
 

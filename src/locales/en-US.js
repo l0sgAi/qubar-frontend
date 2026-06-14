@@ -178,6 +178,10 @@ export default {
       joinTypePrivate: 'Private Circle',
       joinTypePrivateDesc: 'Invite only',
       createButton: 'Create Circle',
+      cropAvatarTitle: 'Crop Avatar',
+      cropCoverTitle: 'Crop Cover',
+      cropConfirm: 'Confirm Crop',
+      cropReset: 'Reset',
       validation: {
         nameRequired: 'Please enter circle name',
         nameLength: 'Name length should be between 2-50 characters',
@@ -198,7 +202,8 @@ export default {
         createSuccess: 'Circle created successfully!',
         createFailed: 'Creation failed, please try again',
         loadCategoriesFailed: 'Failed to load categories',
-        createNetworkError: 'Creation failed, please check network connection'
+        createNetworkError: 'Creation failed, please check network connection',
+        cropFailed: 'Crop failed, please try again'
       }
     }
   },
