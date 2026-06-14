@@ -96,15 +96,15 @@ import { uploadImage } from '@/api/user'
 
 const props = defineProps({
   postId: {
-    type: Number,
+    type: String,
     required: true
   },
   rootId: {
-    type: Number,
-    default: 0
+    type: String,
+    default: null
   },
   replyToId: {
-    type: Number,
+    type: String,
     required: true
   },
   replyToName: {
@@ -149,7 +149,7 @@ const handleSubmit = async () => {
     const extraData = uploadedImages.value.length > 0 ? { images: [...uploadedImages.value] } : null
     const res = await createComment({
       post_id: props.postId,
-      root_id: props.rootId || props.replyToId,
+      root_id: props.rootId ?? props.replyToId,
       reply_to_id: props.replyToId,
       content: content.value,
       extra_data: extraData

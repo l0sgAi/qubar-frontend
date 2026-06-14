@@ -98,7 +98,7 @@ import { uploadImage } from '@/api/user'
 
 const props = defineProps({
   postId: {
-    type: Number,
+    type: String,
     required: true
   },
   language: {

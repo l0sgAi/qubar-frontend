@@ -113,7 +113,7 @@ const props = defineProps({
     required: true
   },
   circleId: {
-    type: Number,
+    type: String,
     default: null
   },
   circleName: {
@@ -129,7 +129,7 @@ const props = defineProps({
     default: '#ec4899'
   },
   userId: {
-    type: Number,
+    type: String,
     default: null
   },
   userName: {
@@ -192,7 +192,7 @@ const isCollected = ref(false)
 
 const debouncedPostCardLike = useDebounceFn(async () => {
   try {
-    const res = await toggleLike({ type: 'post', target_id: Number(props.postId) })
+    const res = await toggleLike({ type: 'post', target_id: props.postId })
     if (res.data) {
       const serverLiked = res.data.is_liked
       if (isLiked.value !== serverLiked) {

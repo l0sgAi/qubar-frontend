@@ -189,7 +189,6 @@ const toolbars = [
 const rules = {
   circle_id: {
     required: true,
-    type: 'number',
     message: '请选择所属圈子',
     trigger: ['change', 'blur']
   },
@@ -374,7 +373,7 @@ onMounted(async () => {
   // 检查 URL 参数中是否有 circleId，如果有则默认选中
   const circleIdFromUrl = route.query.circleId
   if (circleIdFromUrl) {
-    const circleId = Number(circleIdFromUrl)
+    const circleId = circleIdFromUrl
     // 检查圈子是否在选项列表中
     const circleExists = circleOptions.value.some(option => option.value === circleId)
     if (circleExists) {

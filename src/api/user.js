@@ -52,7 +52,7 @@ export function searchUsers(params) {
 
 /**
  * 获取用户详情
- * @param {number} userId - 用户ID
+ * @param {string} userId - 用户ID(UUIDv7)
  * @returns {Promise}
  */
 export function getUserDetail(userId) {
