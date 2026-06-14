@@ -535,7 +535,7 @@ onMounted(async () => {
 
 /* 强制覆盖所有内部文本:字体 */
 :deep(.md-editor *) {
-  font-family: 'Fira Code', 'Maple Mono SC NF', 'Consolas', '微软雅黑';
+  font-family: 'Fira Code', 'Cascadia Code', 'Maple Mono NF CN', 'JetBrains Mono', 'Source Code Pro', 'Menlo', 'Monaco', 'Consolas', 'Courier New', 'PingFang SC', 'Microsoft YaHei', monospace;
 }
 
 :deep(.cm-scroller *){
