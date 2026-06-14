@@ -3,27 +3,38 @@
     :show="show"
     @update:show="(v) => emit('update:show', v)"
     preset="card"
-    :style="{ width: '640px', borderRadius: '24px' }"
+    :style="{ width: '1040px', borderRadius: '24px' }"
     :title="title"
     :bordered="false"
     size="huge"
     :mask-closable="false"
     :segmented="{ content: 'soft' }"
   >
-    <div class="cropper-wrapper">
-      <img ref="imgEl" :src="imageSrc" class="cropper-img" />
+    <div class="crop-layout">
+      <!-- 左：裁剪区 -->
+      <div class="crop-layout__left">
+        <div class="cropper-wrapper">
+          <img ref="imgEl" :src="imageSrc" class="cropper-img" />
+        </div>
+      </div>
+      <!-- 右：实时预览（复用圈子详情页头部样式） -->
+      <div class="crop-layout__right">
+        <div class="preview-label">{{ t('circle.form.previewTitle') }}</div>
+        <CircleHeaderPreview
+          :cover-url="previewCover"
+          :avatar-url="previewAvatar"
+          :name="circleName"
+          :slug="slug"
+        />
+        <p class="preview-hint">{{ t('circle.form.previewHint') }}</p>
+      </div>
     </div>
 
     <template #footer>
       <NSpace justify="space-between" align="center">
-        <NSpace :size="8">
-          <NButton quaternary round @click="handleReset">
-            {{ t('circle.form.cropReset') }}
-          </NButton>
-          <NButton quaternary round :type="previewVisible ? 'primary' : undefined" @click="togglePreview">
-            {{ t('circle.form.previewButton') }}
-          </NButton>
-        </NSpace>
+        <NButton quaternary round @click="handleReset">
+          {{ t('circle.form.cropReset') }}
+        </NButton>
         <NSpace :size="12">
           <NButton round @click="handleCancel">{{ t('common.cancel') }}</NButton>
           <NButton type="primary" round :loading="confirming" @click="handleConfirm">
@@ -33,31 +44,11 @@
       </NSpace>
     </template>
   </NModal>
-
-  <!-- 效果预览抽屉：与裁剪弹窗并存，实时反映裁剪结果在圈子头部的展示效果 -->
-  <NDrawer
-    v-model:show="previewVisible"
-    placement="right"
-    :width="400"
-    :show-mask="false"
-    :auto-focus="false"
-    :close-on-esc="true"
-  >
-    <NDrawerContent :title="t('circle.form.previewTitle')" closable>
-      <p class="preview-hint">{{ t('circle.form.previewHint') }}</p>
-      <CircleHeaderPreview
-        :cover-url="previewCover"
-        :avatar-url="previewAvatar"
-        :name="circleName"
-        :slug="slug"
-      />
-    </NDrawerContent>
-  </NDrawer>
 </template>
 
 <script setup>
 import { ref, watch, nextTick, computed, onBeforeUnmount } from 'vue'
-import { NModal, NButton, NSpace, NDrawer, NDrawerContent, useMessage } from 'naive-ui'
+import { NModal, NButton, NSpace, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import Cropper from 'cropperjs'
 import CircleHeaderPreview from '@/components/CircleHeaderPreview.vue'
@@ -80,7 +71,6 @@ const { t } = useI18n()
 const message = useMessage()
 const imgEl = ref(null)
 const confirming = ref(false)
-const previewVisible = ref(false)
 const liveCropDataUrl = ref('')
 let cropper = null
 let cropDebounceTimer = null
@@ -109,14 +99,6 @@ const previewCover = computed(() =>
 const previewAvatar = computed(() =>
   props.type === 'avatar' ? liveCropDataUrl.value : props.avatarUrl
 )
-
-const togglePreview = () => {
-  previewVisible.value = !previewVisible.value
-  if (previewVisible.value) {
-    // 打开抽屉时立即刷新一次，避免显示旧值
-    updateLivePreview()
-  }
-}
 
 // 初始化（或重置）裁剪实例
 const initCropper = () => {
@@ -166,7 +148,6 @@ watch(
       await nextTick()
       initCropper()
     } else {
-      previewVisible.value = false
       destroyCropper()
     }
   }
@@ -226,6 +207,34 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* 左右分栏：左裁剪、右实时预览 */
+.crop-layout {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+}
+.crop-layout__left {
+  flex: 1;
+  min-width: 0;
+}
+.crop-layout__right {
+  width: 400px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+}
+.preview-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+}
+
 .cropper-wrapper {
   width: 100%;
   height: 420px;
@@ -258,7 +267,7 @@ onBeforeUnmount(() => {
 }
 
 .preview-hint {
-  margin: 0 0 16px 0;
+  margin: 0;
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.55);
   line-height: 1.5;
