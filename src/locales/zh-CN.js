@@ -182,6 +182,10 @@ export default {
       cropCoverTitle: '裁剪背景图',
       cropConfirm: '确认裁剪',
       cropReset: '重置',
+      previewButton: '效果预览',
+      previewTitle: '效果预览',
+      previewHint: '拖动裁剪框，实时预览圈子头部的展示效果',
+      previewNamePlaceholder: '圈子名称（示例）',
       validation: {
         nameRequired: '请输入圈子名称',
         nameLength: '名称长度应在 2-50 个字符之间',

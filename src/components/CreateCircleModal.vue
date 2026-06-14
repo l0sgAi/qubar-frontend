@@ -149,6 +149,11 @@
     :image-src="cropperImageSrc"
     :aspect-ratio="cropperAspectRatio"
     :title="cropperTitle"
+    :type="cropperType"
+    :circle-name="formData.name"
+    :cover-url="formData.cover_url"
+    :avatar-url="formData.avatar_url"
+    :slug="formData.slug"
     @confirm="handleCropConfirm"
     @cancel="handleCropCancel"
   />
@@ -211,6 +216,8 @@ const cropperTitle = computed(() =>
     ? t('circle.form.cropCoverTitle')
     : t('circle.form.cropAvatarTitle')
 )
+// 裁剪类型透传给裁剪弹窗，用于效果预览映射（头像/封面）
+const cropperType = computed(() => pendingCrop.value?.type || 'avatar')
 
 // 表单数据
 const formData = ref({

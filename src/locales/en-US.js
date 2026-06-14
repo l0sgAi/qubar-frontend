@@ -182,6 +182,10 @@ export default {
       cropCoverTitle: 'Crop Cover',
       cropConfirm: 'Confirm Crop',
       cropReset: 'Reset',
+      previewButton: 'Preview Effect',
+      previewTitle: 'Effect Preview',
+      previewHint: 'Drag the crop box to preview the header live',
+      previewNamePlaceholder: 'Circle name (sample)',
       validation: {
         nameRequired: 'Please enter circle name',
         nameLength: 'Name length should be between 2-50 characters',
