@@ -5,22 +5,30 @@
     preset="card"
     :style="{ width: '600px', borderRadius: '24px' }"
     :title="t('circle.form.createButton')"
-    header-style = "font-size: 28px;"
+    header-style="font-size: 28px;"
     :segmented="{ content: 'soft' }"
     :bordered="false"
     size="huge"
   >
-    <NScrollbar>
-      <NForm
-        ref="formRef"
-        :model="formData"
-        :rules="rules"
-        label-placement="top"
-        require-mark-placement="right"
-        class="scroll-bar"
-        size="large"
-      >
-        <!-- 基本信息 -->
+    <!-- 步骤指示器 -->
+    <NSteps :current="currentStep + 1" size="small" class="steps-bar">
+      <NStep :title="t('circle.form.step1Title')" />
+      <NStep :title="t('circle.form.step2Title')" />
+      <NStep :title="t('circle.form.step3Title')" />
+      <NStep :title="t('circle.form.step4Title')" />
+    </NSteps>
+
+    <NForm
+      ref="formRef"
+      :model="formData"
+      :rules="rules"
+      label-placement="top"
+      require-mark-placement="right"
+      class="step-form"
+      size="large"
+    >
+      <!-- 步骤 1：名称、标识、简介 -->
+      <div v-show="currentStep === 0" class="step-pane">
         <NFormItem :label="t('circle.form.name')" path="name">
           <NInput
             v-model:value="formData.name"
@@ -44,15 +52,15 @@
             v-model:value="formData.description"
             type="textarea"
             :placeholder="t('circle.form.descriptionPlaceholder')"
-            :autosize="{ minRows: 5, maxRows: 7 }"
+            :autosize="{ minRows: 4, maxRows: 6 }"
             maxlength="2000"
             show-count
           />
         </NFormItem>
+      </div>
 
-        <NDivider />
-
-        <!-- 图片上传 -->
+      <!-- 步骤 2：图片上传 + 圈内规则 -->
+      <div v-show="currentStep === 1" class="step-pane">
         <NFormItem :label="t('circle.form.avatar')" path="avatar_url">
           <NUpload
             :max="1"
@@ -87,21 +95,20 @@
 
         <NDivider />
 
-        <!-- 圈内规则 -->
         <NFormItem :label="t('circle.form.rules')" path="rule">
           <NInput
             v-model:value="formData.rule"
             type="textarea"
             :placeholder="t('circle.form.rulesPlaceholder')"
-            :autosize="{ minRows: 6, maxRows: 10 }"
+            :autosize="{ minRows: 4, maxRows: 8 }"
             maxlength="2000"
             show-count
           />
         </NFormItem>
+      </div>
 
-        <NDivider />
-
-        <!-- 分类与权限 -->
+      <!-- 步骤 3：分类 + 加入方式 -->
+      <div v-show="currentStep === 2" class="step-pane">
         <NFormItem :label="t('circle.form.category')" path="category_id">
           <NSelect
             v-model:value="formData.category_id"
@@ -130,15 +137,62 @@
             </NSpace>
           </NRadioGroup>
         </NFormItem>
-      </NForm>
-    </NScrollbar>
+      </div>
+
+      <!-- 步骤 4：确认预览（复用圈子详情页头部样式） -->
+      <div v-show="currentStep === 3" class="step-pane">
+        <CircleHeaderPreview
+          :cover-url="formData.cover_url"
+          :avatar-url="formData.avatar_url"
+          :name="formData.name"
+          :slug="formData.slug"
+        />
+        <div class="review-summary">
+          <div class="review-row">
+            <span class="review-label">{{ t('circle.form.description') }}</span>
+            <span class="review-value">{{ formData.description || '-' }}</span>
+          </div>
+          <div class="review-row">
+            <span class="review-label">{{ t('circle.form.rules') }}</span>
+            <span class="review-value">{{ formData.rule || '-' }}</span>
+          </div>
+          <div class="review-row">
+            <span class="review-label">{{ t('circle.form.category') }}</span>
+            <span class="review-value">{{ selectedCategoryLabel }}</span>
+          </div>
+          <div class="review-row">
+            <span class="review-label">{{ t('circle.form.joinType') }}</span>
+            <span class="review-value">{{ joinTypeText }}</span>
+          </div>
+        </div>
+      </div>
+    </NForm>
 
     <template #footer>
-      <NSpace justify="end" :size="16">
+      <NSpace justify="space-between" align="center" :size="16">
         <NButton size="large" @click="handleCancel">{{ t('common.cancel') }}</NButton>
-        <NButton type="primary" size="large" :loading="loading" @click="handleSubmit">
-          {{ t('circle.form.createButton') }}
-        </NButton>
+        <NSpace :size="12">
+          <NButton v-if="currentStep > 0" size="large" @click="handlePrev">
+            {{ t('circle.form.prevStep') }}
+          </NButton>
+          <NButton
+            v-if="currentStep < totalSteps - 1"
+            type="primary"
+            size="large"
+            @click="handleNext"
+          >
+            {{ t('circle.form.nextStep') }}
+          </NButton>
+          <NButton
+            v-if="currentStep === totalSteps - 1"
+            type="primary"
+            size="large"
+            :loading="loading"
+            @click="handleSubmit"
+          >
+            {{ t('circle.form.createButton') }}
+          </NButton>
+        </NSpace>
       </NSpace>
     </template>
   </NModal>
@@ -172,7 +226,8 @@ import {
   NRadioGroup,
   NRadio,
   NSelect,
-  NScrollbar,
+  NSteps,
+  NStep,
   NDivider,
   NText,
   useMessage
@@ -181,6 +236,7 @@ import { useI18n } from 'vue-i18n'
 import { getCategories, createCircle } from '@/api/circle'
 import { uploadImage } from '@/api/user'
 import ImageCropperModal from '@/components/ImageCropperModal.vue'
+import CircleHeaderPreview from '@/components/CircleHeaderPreview.vue'
 
 const { t } = useI18n()
 
@@ -200,6 +256,17 @@ const showModal = computed({
   get: () => props.show,
   set: (val) => emit('update:show', val)
 })
+
+// 步骤控制
+const totalSteps = 4
+const currentStep = ref(0)
+// 每一步"下一步"时需要校验的字段（其余字段暂不校验）
+const stepFieldsMap = [
+  ['name', 'slug', 'description'],
+  ['rule'],
+  ['category_id'],
+  []
+]
 
 // 文件列表
 const avatarFileList = ref([])
@@ -234,6 +301,20 @@ const formData = ref({
 // 分类选项
 const categoryOptions = ref([])
 const loadingCategories = ref(false)
+// 第 4 步汇总：分类名称
+const selectedCategoryLabel = computed(() => {
+  const opt = categoryOptions.value.find(o => o.value === formData.value.category_id)
+  return opt ? opt.label : t('common.notSet')
+})
+// 第 4 步汇总：加入方式文案
+const joinTypeText = computed(() => {
+  const map = {
+    0: t('circle.form.joinTypeDirect'),
+    1: t('circle.form.joinTypeReview'),
+    2: t('circle.form.joinTypePrivate')
+  }
+  return map[formData.value.join_type] || '-'
+})
 
 // 加载分类列表
 const loadCategories = async () => {
@@ -288,7 +369,7 @@ const handleNameInput = () => {
   if (formData.value.name && !formData.value.slug) {
     formData.value.slug = formData.value.name
       .toLowerCase()
-      .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '-')
+      .replace(/[^a-z0-9一-龥]/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '')
   }
@@ -366,9 +447,27 @@ const handleCropCancel = () => {
   }
 }
 
+// 下一步：只校验当前步的字段，通过才前进
+const handleNext = async () => {
+  const fields = stepFieldsMap[currentStep.value]
+  try {
+    if (fields.length) {
+      await formRef.value?.validate(undefined, (rule) => !!rule.key && fields.includes(rule.key))
+    }
+    if (currentStep.value < totalSteps - 1) currentStep.value++
+  } catch {
+    // 校验失败：naive-ui 已在当前步字段下显示错误，停留本步
+  }
+}
+
+// 上一步
+const handlePrev = () => {
+  if (currentStep.value > 0) currentStep.value--
+}
+
 // 提交表单
 const handleSubmit = async () => {
-  // 校验失败：naive-ui 已自动在字段下显示错误，静默返回，不误报网络错误
+  // 最终全量校验（安全兜底；前面各步已逐步校验过）
   try {
     await formRef.value?.validate()
   } catch {
@@ -409,6 +508,7 @@ const handleCancel = () => {
 const handleReset = () => {
   setTimeout(() => {
     formRef.value?.restoreValidation()
+    currentStep.value = 0
     formData.value = {
       name: '',
       slug: '',
@@ -435,10 +535,50 @@ watch(showModal, (val) => {
 </script>
 
 <style scoped>
-/* 滚动区域：与新宽度协调，留出呼吸感 */
-.scroll-bar {
-  height: 65vh;
-  padding: 24px;
+/* 步骤指示器 */
+.steps-bar {
+  padding: 4px 8px 20px;
+}
+
+/* 表单区域：常规屏幕无需滚动，矮屏兜底可滚 */
+.step-form {
+  max-height: 62vh;
+  overflow-y: auto;
+  padding: 0 8px;
+}
+
+/* 每步面板给一个最小高度，避免步骤切换时弹窗高度跳动 */
+.step-pane {
+  min-height: 340px;
+}
+
+/* 第 4 步：确认预览汇总 */
+.review-summary {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.review-row {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.review-row:last-child {
+  border-bottom: none;
+}
+.review-label {
+  width: 80px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+}
+.review-value {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* ===== 卡片整体：圆润 + 柔和阴影 ===== */
