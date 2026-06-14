@@ -3,8 +3,8 @@
     v-model:show="showModal"
     :mask-closable="false"
     preset="card"
-    :style="{ width: '1200px', borderRadius: '12px' }"
-    :title="'✨ ' + t('circle.form.createButton')"
+    :style="{ width: '600px', borderRadius: '24px' }"
+    :title="t('circle.form.createButton')"
     header-style = "font-size: 28px;"
     :segmented="{ content: 'soft' }"
     :bordered="false"
@@ -44,7 +44,7 @@
             v-model:value="formData.description"
             type="textarea"
             :placeholder="t('circle.form.descriptionPlaceholder')"
-            :autosize="{ minRows: 4, maxRows: 6 }"
+            :autosize="{ minRows: 5, maxRows: 7 }"
             maxlength="2000"
             show-count
           />
@@ -93,7 +93,7 @@
             v-model:value="formData.rule"
             type="textarea"
             :placeholder="t('circle.form.rulesPlaceholder')"
-            :autosize="{ minRows: 5, maxRows: 8 }"
+            :autosize="{ minRows: 6, maxRows: 10 }"
             maxlength="2000"
             show-count
           />
@@ -249,7 +249,7 @@ const rules = computed(() => ({
     { min: 10, max: 2000, message: t('circle.form.validation.rulesLength'), trigger: 'blur' }
   ],
   category_id: [
-    { required: true, message: t('circle.form.validation.categoryRequired'), trigger: 'change', type: 'number' }
+    { required: true, message: t('circle.form.validation.categoryRequired'), trigger: 'change' }
   ]
 }))
 
@@ -312,13 +312,19 @@ const handleUploadCover = async ({ file, onFinish, onError }) => {
 
 // 提交表单
 const handleSubmit = async () => {
+  // 校验失败：naive-ui 已自动在字段下显示错误，静默返回，不误报网络错误
   try {
     await formRef.value?.validate()
+  } catch {
+    return
+  }
+
+  try {
     loading.value = true
 
     // 调用创建兴趣圈接口
     const res = await createCircle(formData.value)
-    console.log('创建结果:'+res)
+    console.log('创建结果:' + res)
     if (res.code === 200) {
       message.success(t('circle.form.messages.createSuccess'))
       emit('success', res.data)
@@ -329,7 +335,7 @@ const handleSubmit = async () => {
     }
   } catch (error) {
     console.error('创建兴趣圈失败:', error)
-    // 优先显示接口返回的错误消息
+    // 仅在此处才可能是接口/网络错误，优先显示接口返回的错误消息
     const errorMsg = error.message || t('circle.form.messages.createNetworkError')
     message.error(errorMsg)
   } finally {
@@ -373,10 +379,91 @@ watch(showModal, (val) => {
 </script>
 
 <style scoped>
-/* 仅保留必要的自定义样式 */
-.scroll-bar{
+/* 滚动区域：与新宽度协调，留出呼吸感 */
+.scroll-bar {
   height: 65vh;
-  padding: 17px;
+  padding: 24px;
 }
 
+/* ===== 卡片整体：圆润 + 柔和阴影 ===== */
+:deep(.n-card) {
+  border-radius: 24px !important;
+  box-shadow: var(--shadow-lg) !important;
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+:deep(.n-card-header) {
+  border-radius: 24px 24px 0 0 !important;
+}
+
+:deep(.n-card-header__title) {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ===== 输入框 / 选择框：更高、更圆 ===== */
+:deep(.n-input),
+:deep(.n-base-selection) {
+  --n-border-radius: 14px !important;
+  --n-height: 52px !important;
+  font-size: 15px;
+}
+
+:deep(.n-base-selection-label) {
+  min-height: 52px !important;
+}
+
+:deep(.n-input__textarea-el) {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* 聚焦态：绿色边框 + 柔光晕 */
+:deep(.n-input--focus),
+:deep(.n-base-selection:focus-within) {
+  --n-border-focus: 1px solid #18a058 !important;
+  --n-box-shadow-focus: 0 0 0 3px rgba(24, 160, 88, 0.18) !important;
+}
+
+/* ===== 按钮：圆角 + 高度，主按钮绿色渐变 ===== */
+:deep(.n-button) {
+  --n-border-radius: 14px !important;
+  --n-height: 46px !important;
+  transition: all 0.2s ease;
+}
+
+:deep(.n-button--primary-type) {
+  background: var(--primary-gradient) !important;
+  border: none !important;
+  color: #07140d !important;
+  font-weight: 600 !important;
+}
+
+:deep(.n-button--primary-type:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(34, 179, 106, 0.35);
+  opacity: 0.95;
+}
+
+/* ===== 图片上传卡片：圆润化 ===== */
+:deep(.n-upload-trigger--image-card),
+:deep(.n-upload-file-list__item) {
+  border-radius: 16px !important;
+  transition: all 0.2s ease;
+}
+
+:deep(.n-upload-trigger--image-card:hover) {
+  border-color: #18a058 !important;
+  color: #18a058 !important;
+}
+
+/* ===== 表单标签：略增间距，更通透 ===== */
+:deep(.n-form-item) {
+  margin-bottom: 4px;
+}
 </style>
