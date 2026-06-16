@@ -27,10 +27,9 @@ export function uploadImage(file) {
   return request({
     url: '/upload/image',
     method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    data: formData
+    // 不手动设 Content-Type：axios 检测到 FormData 会自动加上
+    // 'multipart/form-data; boundary=...'，手动设会丢 boundary 导致后端解析为空。
   })
 }
 

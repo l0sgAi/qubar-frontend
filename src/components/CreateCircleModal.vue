@@ -146,6 +146,7 @@
           :avatar-url="formData.avatar_url"
           :name="formData.name"
           :slug="formData.slug"
+          :banner-aspect="COVER_ASPECT_RATIO"
         />
         <div class="review-summary">
           <div class="review-row">
@@ -208,6 +209,7 @@
     :cover-url="formData.cover_url"
     :avatar-url="formData.avatar_url"
     :slug="formData.slug"
+    :cover-aspect="COVER_ASPECT_RATIO"
     @confirm="handleCropConfirm"
     @cancel="handleCropCancel"
   />
@@ -272,12 +274,16 @@ const stepFieldsMap = [
 const avatarFileList = ref([])
 const coverFileList = ref([])
 
+// 封面裁剪比例 ≈ CircleDetail 头部宽高比（横幅，真实约 7:1，取 6 兼顾可裁剪性）。
+// 与 CircleHeaderPreview 的 BANNER_ASPECT 保持一致，确保「裁剪即所见」。
+const COVER_ASPECT_RATIO = 6
+
 // 图片裁剪弹窗状态
 const cropperVisible = ref(false)
 const cropperImageSrc = ref('')
 // pendingCrop 缓存当前裁剪上下文：type / NUpload 的 file 与 onFinish/onError
 const pendingCrop = ref(null)
-const cropperAspectRatio = computed(() => (pendingCrop.value?.type === 'cover' ? 3 : 1))
+const cropperAspectRatio = computed(() => (pendingCrop.value?.type === 'cover' ? COVER_ASPECT_RATIO : 1))
 const cropperTitle = computed(() =>
   pendingCrop.value?.type === 'cover'
     ? t('circle.form.cropCoverTitle')

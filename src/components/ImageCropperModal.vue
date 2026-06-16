@@ -25,6 +25,7 @@
           :avatar-url="previewAvatar"
           :name="circleName"
           :slug="slug"
+          :banner-aspect="coverAspect"
         />
         <p class="preview-hint">{{ t('circle.form.previewHint') }}</p>
       </div>
@@ -63,7 +64,10 @@ const props = defineProps({
   circleName: { type: String, default: '' },
   coverUrl: { type: String, default: '' },
   avatarUrl: { type: String, default: '' },
-  slug: { type: String, default: '' }
+  slug: { type: String, default: '' },
+  // 预览头部 banner 横幅宽高比（始终用封面比例，不随当前裁剪类型变化），
+  // 与 CreateCircleModal 封面裁剪比例同步，默认取真实头部比例。
+  coverAspect: { type: Number, default: 6 }
 })
 const emit = defineEmits(['update:show', 'confirm', 'cancel'])
 
