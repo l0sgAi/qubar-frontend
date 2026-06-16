@@ -540,11 +540,20 @@ watch(showModal, (val) => {
   padding: 4px 8px 20px;
 }
 
-/* 表单区域：常规屏幕无需滚动，矮屏兜底可滚 */
+/* 表单区域：常规屏幕无需滚动，矮屏兜底可滚（滚动条隐藏，保持视觉干净） */
 .step-form {
-  max-height: 62vh;
+  max-height: 70vh;
   overflow-y: auto;
   padding: 0 8px;
+  /* Firefox */
+  scrollbar-width: none;
+  /* IE / 旧版 Edge */
+  -ms-overflow-style: none;
+}
+
+/* Chrome / Safari / 新版 Edge：隐藏滚动条 */
+.step-form::-webkit-scrollbar {
+  display: none;
 }
 
 /* 每步面板给一个最小高度，避免步骤切换时弹窗高度跳动 */
@@ -662,4 +671,5 @@ watch(showModal, (val) => {
 :deep(.n-form-item) {
   margin-bottom: 4px;
 }
+
 </style>
