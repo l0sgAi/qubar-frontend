@@ -201,7 +201,8 @@ export default {
         descriptionLength: '描述长度应在 10-2000 个字符之间',
         rulesRequired: '请输入圈内规则',
         rulesLength: '规则长度应在 10-2000 个字符之间',
-        categoryRequired: '请选择圈子分类'
+        categoryRequired: '请选择圈子分类',
+        pleaseComplete: '请完善带 * 的必填项后再提交'
       },
       messages: {
         avatarUploadSuccess: '头像上传成功',

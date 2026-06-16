@@ -456,7 +456,8 @@ const handleNext = async () => {
     }
     if (currentStep.value < totalSteps - 1) currentStep.value++
   } catch {
-    // 校验失败：naive-ui 已在当前步字段下显示错误，停留本步
+    // 校验失败：naive-ui 已在当前步字段下显示错误，停留本步并给出提示
+    message.warning(t('circle.form.validation.pleaseComplete'))
   }
 }
 
@@ -465,12 +466,24 @@ const handlePrev = () => {
   if (currentStep.value > 0) currentStep.value--
 }
 
+// 根据字段名定位所属步骤索引（提交校验失败时，用于跳转到出错步骤）
+const findStepByField = (field) => {
+  const idx = stepFieldsMap.findIndex((fields) => fields.includes(field))
+  return idx === -1 ? null : idx
+}
+
 // 提交表单
 const handleSubmit = async () => {
   // 最终全量校验（安全兜底；前面各步已逐步校验过）
   try {
     await formRef.value?.validate()
-  } catch {
+  } catch (errors) {
+    // 校验失败：前面步骤的字段被 v-show 隐藏，红字错误用户在提交页看不到。
+    // 故弹出全局提示，并自动跳转到第一个出错字段所在的步骤，让红字错误可见。
+    message.warning(t('circle.form.validation.pleaseComplete'))
+    const firstField = errors && typeof errors === 'object' ? Object.keys(errors)[0] : null
+    const step = firstField ? findStepByField(firstField) : null
+    if (step !== null) currentStep.value = step
     return
   }
 

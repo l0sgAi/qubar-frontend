@@ -1127,9 +1127,5 @@ defineExpose({ refreshComments, addComment })
 :deep(.n-image-preview){
   z-index: 9999 !important;
 }
-
-:deep(.md-editor-code-head){
-  z-index: 1000 !important;
-}
 </style>
 

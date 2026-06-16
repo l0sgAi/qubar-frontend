@@ -201,7 +201,8 @@ export default {
         descriptionLength: 'Description length should be between 10-2000 characters',
         rulesRequired: 'Please enter circle rules',
         rulesLength: 'Rules length should be between 10-2000 characters',
-        categoryRequired: 'Please select a category'
+        categoryRequired: 'Please select a category',
+        pleaseComplete: 'Please complete the required fields before submitting'
       },
       messages: {
         avatarUploadSuccess: 'Avatar uploaded successfully',
