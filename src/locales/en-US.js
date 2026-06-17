@@ -102,7 +102,8 @@ export default {
     hottest:'Trending',
     latest:'Latest',
     highlights:'Highlights',
-    postNotFound: 'Post not found'
+    postNotFound: 'Post not found',
+    viewDetail: 'View details'
   },
 
   // 圈子相关

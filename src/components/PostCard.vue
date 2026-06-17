@@ -39,7 +39,8 @@
     <!-- 帖子内容 -->
     <div class="post-content">
       <h3 class="post-title">{{ title }}</h3>
-      <p v-if="content" class="post-text">{{ content }}</p>
+      <p v-if="content" ref="textRef" class="post-text">{{ content }}</p>
+      <span v-if="content && isTruncated" class="view-detail">{{ t('post.viewDetail') }} →</span>
     </div>
 
     <!-- 搜索结果：封面图（标题下方） -->
@@ -92,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { NCard, NAvatar, NButton, NIcon, NTime, NImage, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -189,6 +190,33 @@ const props = defineProps({
 const message = useMessage()
 const isLiked = ref(false)
 const isCollected = ref(false)
+
+// 摘要按高度截断后，检测是否真的溢出（scrollHeight > clientHeight），
+// 仅在溢出时显示「查看详情」提示。ResizeObserver 兜底宽度变化导致的重排。
+const textRef = ref(null)
+const isTruncated = ref(false)
+let resizeObserver = null
+
+const checkTruncation = () => {
+  const el = textRef.value
+  isTruncated.value = !!el && el.scrollHeight - el.clientHeight > 1
+}
+
+onMounted(() => {
+  nextTick(checkTruncation)
+  if (textRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(checkTruncation)
+    resizeObserver.observe(textRef.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+})
+
+watch(() => props.content, () => {
+  nextTick(checkTruncation)
+})
 
 const debouncedPostCardLike = useDebounceFn(async () => {
   try {
@@ -363,6 +391,29 @@ const goToUser = () => {
   margin-left: 16px;
   color: rgba(255, 255, 255, 0.8);
   line-height: 1.6;
+  /* 保留摘要文本中的换行（\n），同时长行仍自动折行 */
+  white-space: pre-wrap;
+  word-break: break-word;
+  /* 按高度截断：≈ 6 行（line-height 1.6 → 9.6em），超出裁掉。
+     不用 -webkit-line-clamp，它强制 white-space:normal 会丢失换行。 */
+  max-height: 9.6em;
+  overflow: hidden;
+}
+
+/* 摘要溢出时的「查看详情」提示，项目主题蒂芙尼绿 #66eac2 */
+.view-detail {
+  display: inline-block;
+  margin-left: 16px;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #66eac2;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+
+.post-card:hover .view-detail {
+  opacity: 1;
 }
 
 /* 搜索结果封面图（标题下方） */

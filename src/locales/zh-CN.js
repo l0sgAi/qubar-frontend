@@ -102,7 +102,8 @@ export default {
     hottest:'近期热点',
     latest:'最新',
     highlights:'精华',
-    postNotFound: '帖子不存在'
+    postNotFound: '帖子不存在',
+    viewDetail: '查看详情'
   },
 
   // 圈子相关
