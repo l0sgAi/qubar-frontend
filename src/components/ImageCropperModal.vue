@@ -11,14 +11,14 @@
     :segmented="{ content: 'soft' }"
   >
     <div class="crop-layout">
-      <!-- 左：裁剪区 -->
-      <div class="crop-layout__left">
+      <!-- 上：裁剪区 -->
+      <div class="crop-layout__cropper">
         <div class="cropper-wrapper">
           <img ref="imgEl" :src="imageSrc" class="cropper-img" />
         </div>
       </div>
-      <!-- 右：实时预览（复用圈子详情页头部样式） -->
-      <div class="crop-layout__right">
+      <!-- 下：实时预览（横幅铺满宽度，复用圈子详情页头部样式） -->
+      <div class="crop-layout__preview">
         <div class="preview-label">{{ t('circle.form.previewTitle') }}</div>
         <CircleHeaderPreview
           :cover-url="previewCover"
@@ -211,22 +211,21 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* 左右分栏：左裁剪、右实时预览 */
+/* 上下分栏：上裁剪、下实时预览（横幅铺满宽度，预览区更大） */
 .crop-layout {
   display: flex;
+  flex-direction: column;
   gap: 20px;
   align-items: stretch;
 }
-.crop-layout__left {
-  flex: 1;
+.crop-layout__cropper {
+  width: 100%;
   min-width: 0;
 }
-.crop-layout__right {
-  width: 400px;
-  flex-shrink: 0;
+.crop-layout__preview {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
