@@ -226,21 +226,27 @@ onBeforeUnmount(() => {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
-  padding: 16px;
+  padding: 12px 16px;
+}
+/* 预览横幅限宽并居中：避免在宽弹窗里被拉得过高，压缩预览区整体高度以适配小屏 */
+.crop-layout__preview :deep(.circle-header) {
+  max-width: 560px;
+  margin: 0 auto;
 }
 .preview-label {
   font-size: 0.85rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.75);
+  text-align: center;
 }
 
 .cropper-wrapper {
   width: 100%;
-  height: 420px;
+  height: 360px;
   background: rgba(0, 0, 0, 0.35);
   border-radius: 14px;
   overflow: hidden;
@@ -274,5 +280,6 @@ onBeforeUnmount(() => {
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.55);
   line-height: 1.5;
+  text-align: center;
 }
 </style>
