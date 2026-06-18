@@ -43,14 +43,9 @@
       <span v-if="content && isTruncated" class="view-detail">{{ t('post.viewDetail') }} →</span>
     </div>
 
-    <!-- 搜索结果：封面图（标题下方） -->
-    <div v-if="coverImage" class="post-cover" @click.stop>
-      <NImage :src="coverImage" :alt="title" object-fit="cover" class="post-cover__img" />
-    </div>
-
-    <!-- 非搜索结果：图片轮播 -->
-    <div v-else-if="images && images.length > 0" @click.stop>
-      <ImageCarousel :images="images" :parent-width="900" />
+    <!-- 图片轮播：封面图与多图统一展示 -->
+    <div v-if="displayImages.length > 0" class="post-carousel" @click.stop>
+      <ImageCarousel :images="displayImages" :parent-width="900" />
     </div>
 
     <!-- 搜索结果：统计信息（仅展示） -->
@@ -93,9 +88,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { NCard, NAvatar, NButton, NIcon, NTime, NImage, useMessage } from 'naive-ui'
+import { NCard, NAvatar, NButton, NIcon, NTime, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { toggleLike } from '@/api/like'
 import { useDebounceFn } from '@/utils/throttle'
@@ -190,6 +185,13 @@ const props = defineProps({
 const message = useMessage()
 const isLiked = ref(false)
 const isCollected = ref(false)
+
+// 统一图片列表：有多图就用 images，否则回退到单张封面图。
+// 这样封面图与非封面图帖子都用同一个轮播组件展示，摘要截断策略也保持一致。
+const displayImages = computed(() => {
+  if (props.images && props.images.length > 0) return props.images
+  return props.coverImage ? [props.coverImage] : []
+})
 
 // 摘要按高度截断后，检测是否真的溢出（scrollHeight > clientHeight），
 // 仅在溢出时显示「查看详情」提示。ResizeObserver 兜底宽度变化导致的重排。
@@ -416,30 +418,10 @@ const goToUser = () => {
   opacity: 1;
 }
 
-/* 搜索结果封面图（标题下方） */
-.post-cover {
-  margin-left: 1dvw;
-  height: 18dvh;
-  width: 24dvw;
+/* 图片轮播（封面图/多图统一）：与摘要文本左对齐（16px） */
+.post-carousel {
+  margin-left: 16px;
   margin-bottom: 12px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.post-cover :deep(.post-cover__img) {
-  display: block;
-}
-
-.post-cover :deep(img) {
-  height: 18dvh;
-  width: 24dvw;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.post-card:hover .post-cover :deep(img) {
-  transform: scale(1.02);
 }
 
 /* 搜索结果：统计信息 */
