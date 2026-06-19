@@ -49,7 +49,7 @@ const headerBg = computed(() => {
   if (props.coverUrl) {
     return `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(16,16,28,1)), url(${props.coverUrl})`
   }
-  return 'linear-gradient(135deg, rgba(236,72,153,0.2) 0%, rgba(168,85,247,0.2) 25%, rgba(59,130,246,0.2) 50%, rgba(6,182,212,0.2) 75%, rgba(34,197,94,0.2) 100%)'
+  return 'linear-gradient(135deg, rgba(34,197,94,0.8) 0%, rgba(16,185,129,0.8) 25%, rgba(20,184,166,0.8) 50%, rgba(59,130,246,0.8) 75%, rgba(234,179,8,0.8) 100%)'
 })
 
 const initial = computed(() => props.name?.charAt(0)?.toUpperCase() || '?')
