@@ -344,31 +344,38 @@ const loadCategories = async () => {
 }
 
 // 表单验证规则
-const rules = computed(() => ({
-  name: [
-    { required: true, message: t('circle.form.validation.nameRequired'), trigger: 'blur' },
-    { min: 2, max: 50, message: t('circle.form.validation.nameLength'), trigger: 'blur' }
-  ],
-  slug: [
-    {
-      pattern: /^[a-z0-9-]*$/,
-      message: t('circle.form.validation.slugPattern'),
-      trigger: 'blur'
-    },
-    { max: 60, message: t('circle.form.validation.slugMaxLength'), trigger: 'blur' }
-  ],
-  description: [
-    { required: true, message: t('circle.form.validation.descriptionRequired'), trigger: 'blur' },
-    { min: 10, max: 2000, message: t('circle.form.validation.descriptionLength'), trigger: 'blur' }
-  ],
-  rule: [
-    { required: true, message: t('circle.form.validation.rulesRequired'), trigger: 'blur' },
-    { min: 10, max: 2000, message: t('circle.form.validation.rulesLength'), trigger: 'blur' }
-  ],
-  category_id: [
-    { required: true, message: t('circle.form.validation.categoryRequired'), trigger: 'change' }
-  ]
-}))
+// 每条规则注入 `key`（字段名）：handleNext 调用 validate 的 shouldRuleBeApplied
+// 过滤器只拿到 rule 对象本身（naive-ui 不会注入字段名），需靠这里的 key 按字段过滤。
+const rules = computed(() => {
+  const raw = {
+    name: [
+      { required: true, message: t('circle.form.validation.nameRequired'), trigger: 'blur' },
+      { min: 2, max: 50, message: t('circle.form.validation.nameLength'), trigger: 'blur' }
+    ],
+    slug: [
+      {
+        pattern: /^[a-z0-9-]*$/,
+        message: t('circle.form.validation.slugPattern'),
+        trigger: 'blur'
+      },
+      { max: 60, message: t('circle.form.validation.slugMaxLength'), trigger: 'blur' }
+    ],
+    description: [
+      { required: true, message: t('circle.form.validation.descriptionRequired'), trigger: 'blur' },
+      { min: 10, max: 2000, message: t('circle.form.validation.descriptionLength'), trigger: 'blur' }
+    ],
+    rule: [
+      { required: true, message: t('circle.form.validation.rulesRequired'), trigger: 'blur' },
+      { min: 10, max: 2000, message: t('circle.form.validation.rulesLength'), trigger: 'blur' }
+    ],
+    category_id: [
+      { required: true, message: t('circle.form.validation.categoryRequired'), trigger: 'change' }
+    ]
+  }
+  // 注入字段名，供按步校验的过滤器识别
+  Object.entries(raw).forEach(([field, list]) => list.forEach((r) => { r.key = field }))
+  return raw
+})
 
 // 名称输入处理，自动生成 slug
 const handleNameInput = () => {

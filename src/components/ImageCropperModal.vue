@@ -17,17 +17,25 @@
           <img ref="imgEl" :src="imageSrc" class="cropper-img" />
         </div>
       </div>
-      <!-- 下：实时预览（横幅铺满宽度，复用圈子详情页头部样式） -->
+      <!-- 下：实时预览 -->
       <div class="crop-layout__preview">
-        <div class="preview-label">{{ t('circle.form.previewTitle') }}</div>
+        <div class="preview-label">{{ resolvedPreviewTitle }}</div>
+        <!-- 个人信息场景：仅预览圆形头像 -->
+        <div v-if="avatarOnly" class="avatar-preview">
+          <NAvatar :size="120" :src="avatarPreviewSrc" round class="avatar-preview__lg" />
+          <NAvatar :size="64" :src="avatarPreviewSrc" round class="avatar-preview__md" />
+          <NAvatar :size="40" :src="avatarPreviewSrc" round class="avatar-preview__sm" />
+        </div>
+        <!-- 圈子场景：横幅铺满宽度，复用圈子详情页头部样式 -->
         <CircleHeaderPreview
+          v-else
           :cover-url="previewCover"
           :avatar-url="previewAvatar"
           :name="circleName"
           :slug="slug"
           :banner-aspect="coverAspect"
         />
-        <p class="preview-hint">{{ t('circle.form.previewHint') }}</p>
+        <p class="preview-hint">{{ resolvedPreviewHint }}</p>
       </div>
     </div>
 
@@ -49,7 +57,7 @@
 
 <script setup>
 import { ref, watch, nextTick, computed, onBeforeUnmount } from 'vue'
-import { NModal, NButton, NSpace, useMessage } from 'naive-ui'
+import { NModal, NButton, NSpace, NAvatar, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import Cropper from 'cropperjs'
 import CircleHeaderPreview from '@/components/CircleHeaderPreview.vue'
@@ -67,7 +75,12 @@ const props = defineProps({
   slug: { type: String, default: '' },
   // 预览头部 banner 横幅宽高比（始终用封面比例，不随当前裁剪类型变化），
   // 与 CreateCircleModal 封面裁剪比例同步，默认取真实头部比例。
-  coverAspect: { type: Number, default: 6 }
+  coverAspect: { type: Number, default: 6 },
+  // 个人信息场景：仅预览圆形头像（不渲染圈子头部横幅）
+  avatarOnly: { type: Boolean, default: false },
+  // 预览标题/提示文案覆盖（空值回退到圈子默认文案）
+  previewTitle: { type: String, default: '' },
+  previewHint: { type: String, default: '' }
 })
 const emit = defineEmits(['update:show', 'confirm', 'cancel'])
 
@@ -103,6 +116,12 @@ const previewCover = computed(() =>
 const previewAvatar = computed(() =>
   props.type === 'avatar' ? liveCropDataUrl.value : props.avatarUrl
 )
+
+// 个人信息场景：头像预览图（实时裁剪优先，未裁剪时回退原图）
+const avatarPreviewSrc = computed(() => liveCropDataUrl.value || props.avatarUrl)
+// 预览标题/提示：调用方可覆盖，否则回退圈子默认文案
+const resolvedPreviewTitle = computed(() => props.previewTitle || t('circle.form.previewTitle'))
+const resolvedPreviewHint = computed(() => props.previewHint || t('circle.form.previewHint'))
 
 // 初始化（或重置）裁剪实例
 const initCropper = () => {
@@ -242,6 +261,20 @@ onBeforeUnmount(() => {
   font-weight: 600;
   color: rgba(255, 255, 255, 0.75);
   text-align: center;
+}
+
+/* 个人信息场景：头像多尺寸实时预览（模拟资料卡 / 导航栏 / 列表头像） */
+.avatar-preview {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 28px;
+  padding: 18px 0 6px;
+}
+.avatar-preview :deep(.n-avatar) {
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .cropper-wrapper {
