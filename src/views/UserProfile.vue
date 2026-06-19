@@ -943,7 +943,7 @@ onMounted(() => {
 }
 
 .edit-modal .n-form-item {
-  margin-bottom: 20px;
+  margin-bottom: 5px;
 }
 
 .edit-modal .n-form-item-label {
