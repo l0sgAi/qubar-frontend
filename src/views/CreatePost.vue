@@ -91,11 +91,13 @@
                 </NButton>
               </div>
             </NForm>
-            <!-- 图片上传浮标（真实进度） -->
-            <Transition name="upload-floater">
-              <div v-if="uploading" class="upload-floater">
-                <NSpin :size="16" />
-                <span>{{ t('upload.uploading') }} {{ overallProgress }}%</span>
+            <!-- 图片上传浮标（居中、醒目） -->
+            <Transition name="upload-overlay">
+              <div v-if="uploading" class="upload-overlay">
+                <div class="upload-floater">
+                  <NProgress type="circle" :percentage="overallProgress" :radius="64" :stroke-width="7" />
+                  <span class="upload-floater__label">{{ t('upload.uploading') }}</span>
+                </div>
               </div>
             </Transition>
           </NCard>
@@ -120,7 +122,7 @@ import {
   NButton,
   NAvatar,
   NText,
-  NSpin,
+  NProgress,
   useMessage
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -390,33 +392,45 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.upload-floater {
+.upload-overlay {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
+  inset: 0;
   z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  background: rgba(24, 24, 28, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+}
+
+.upload-floater {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 40px;
+  background: rgba(24, 24, 28, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.upload-floater__label {
+  font-size: 15px;
+  font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
-  font-size: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(8px);
 }
 
-.upload-floater-enter-active,
-.upload-floater-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+.upload-overlay-enter-active,
+.upload-overlay-leave-active {
+  transition: opacity 0.2s ease;
 }
 
-.upload-floater-enter-from,
-.upload-floater-leave-to {
+.upload-overlay-enter-from,
+.upload-overlay-leave-to {
   opacity: 0;
-  transform: translateY(8px);
 }
 
 .create-post-page {
