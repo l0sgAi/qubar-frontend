@@ -65,7 +65,7 @@
             :reply-to-id="null"
             :reply-to-name="comment.author_name"
             :language="language"
-            @submit="handleReplySubmit(comment)"
+            @submit="handleReplySubmit(comment, $event)"
             @cancel="activeReplyId = null"
           />
 
@@ -160,7 +160,7 @@
                   :reply-to-id="reply.id"
                   :reply-to-name="reply.author_name"
                   :language="language"
-                  @submit="handleReplySubmit(comment)"
+                  @submit="handleReplySubmit(comment, $event)"
                   @cancel="activeReplyId = null"
                 />
               </div>
