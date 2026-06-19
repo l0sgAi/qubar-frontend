@@ -40,6 +40,12 @@
     </div>
 
     <template #footer>
+      <NProgress
+        v-if="confirming && uploadProgress != null"
+        type="line"
+        :percentage="uploadProgress"
+        class="crop-upload-progress"
+      />
       <NSpace justify="space-between" align="center">
         <NButton quaternary round @click="handleReset">
           {{ t('circle.form.cropReset') }}
@@ -57,7 +63,7 @@
 
 <script setup>
 import { ref, watch, nextTick, computed, onBeforeUnmount } from 'vue'
-import { NModal, NButton, NSpace, NAvatar, useMessage } from 'naive-ui'
+import { NModal, NButton, NSpace, NAvatar, NProgress, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import Cropper from 'cropperjs'
 import CircleHeaderPreview from '@/components/CircleHeaderPreview.vue'
@@ -80,7 +86,11 @@ const props = defineProps({
   avatarOnly: { type: Boolean, default: false },
   // 预览标题/提示文案覆盖（空值回退到圈子默认文案）
   previewTitle: { type: String, default: '' },
-  previewHint: { type: String, default: '' }
+  previewHint: { type: String, default: '' },
+  // 可选：裁剪确认后在弹窗内直接上传。提供时 confirm 事件载荷为 { url }，
+  // 且确认按钮在整个网络上传期间保持 loading；未提供时维持旧行为（emit blob）。
+  // 签名：(blob, { onProgress }) => Promise<url>
+  uploadHandler: { type: Function, default: null }
 })
 const emit = defineEmits(['update:show', 'confirm', 'cancel'])
 
@@ -88,6 +98,7 @@ const { t } = useI18n()
 const message = useMessage()
 const imgEl = ref(null)
 const confirming = ref(false)
+const uploadProgress = ref(null) // null=未上传；0-100=上传中进度
 const liveCropDataUrl = ref('')
 let cropper = null
 let cropDebounceTimer = null
@@ -210,14 +221,29 @@ const handleConfirm = () => {
   }
   confirming.value = true
   canvas.toBlob(
-    (blob) => {
-      confirming.value = false
+    async (blob) => {
       if (!blob) {
+        confirming.value = false
         message.error(t('circle.form.messages.cropFailed'))
         return
       }
-      emit('confirm', blob)
-      emit('update:show', false)
+      try {
+        if (props.uploadHandler) {
+          uploadProgress.value = 0
+          const url = await props.uploadHandler(blob, {
+            onProgress: (pct) => { uploadProgress.value = pct }
+          })
+          emit('confirm', { url })
+        } else {
+          emit('confirm', blob)
+        }
+        emit('update:show', false)
+      } catch (e) {
+        // 上传失败：保持弹窗打开供重试；错误提示由 uploadHandler 自行处理
+      } finally {
+        confirming.value = false
+        uploadProgress.value = null
+      }
     },
     'image/jpeg',
     0.92
@@ -230,6 +256,10 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.crop-upload-progress {
+  margin-bottom: 12px;
+}
+
 /* 上下分栏：上裁剪、下实时预览（横幅铺满宽度，预览区更大） */
 .crop-layout {
   display: flex;

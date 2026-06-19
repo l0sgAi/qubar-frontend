@@ -210,6 +210,7 @@
     :avatar-url="formData.avatar_url"
     :slug="formData.slug"
     :cover-aspect="COVER_ASPECT_RATIO"
+    :upload-handler="handleCropUpload"
     @confirm="handleCropConfirm"
     @cancel="handleCropCancel"
   />
@@ -236,7 +237,7 @@ import {
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { getCategories, createCircle } from '@/api/circle'
-import { uploadImage } from '@/api/user'
+import { useImageUpload } from '@/composables/useImageUpload'
 import ImageCropperModal from '@/components/ImageCropperModal.vue'
 import CircleHeaderPreview from '@/components/CircleHeaderPreview.vue'
 
@@ -254,6 +255,7 @@ const emit = defineEmits(['update:show', 'success'])
 const message = useMessage()
 const formRef = ref(null)
 const loading = ref(false)
+const { uploadOne } = useImageUpload()
 const showModal = computed({
   get: () => props.show,
   set: (val) => emit('update:show', val)
@@ -416,36 +418,39 @@ const handleUploadCover = ({ file, onFinish, onError }) => {
   openCropper('cover', file, onFinish, onError)
 }
 
-// 裁剪确认 → 上传裁剪结果
-const handleCropConfirm = async (blob) => {
+// 裁剪确认 → 在弹窗内上传裁剪结果（由 ImageCropperModal 调用）
+const handleCropUpload = async (blob, { onProgress } = {}) => {
   const p = pendingCrop.value
-  if (!p) return
+  const croppedFile = new File([blob], `cropped-${p.type}.jpg`, { type: 'image/jpeg' })
   try {
-    const croppedFile = new File([blob], `cropped-${p.type}.jpg`, { type: 'image/jpeg' })
-    const res = await uploadImage(croppedFile)
-    if (res.code === 200 && res.data) {
-      if (p.type === 'avatar') {
-        formData.value.avatar_url = res.data.url
-        message.success(t('circle.form.messages.avatarUploadSuccess'))
-      } else {
-        formData.value.cover_url = res.data.url
-        message.success(t('circle.form.messages.coverUploadSuccess'))
-      }
-      p.onFinish()
-    } else {
-      message.error(res.message || t('circle.form.messages.uploadFailedRetry'))
-      p.onError()
-    }
+    const url = await uploadOne(croppedFile, { onProgress })
+    message.success(p.type === 'avatar'
+      ? t('circle.form.messages.avatarUploadSuccess')
+      : t('circle.form.messages.coverUploadSuccess'))
+    return url
   } catch (error) {
     console.error('裁剪后上传失败:', error)
     message.error(t('circle.form.messages.uploadFailedRetry'))
-    p.onError()
-  } finally {
-    pendingCrop.value = null
-    if (cropperImageSrc.value.startsWith('blob:')) {
-      URL.revokeObjectURL(cropperImageSrc.value)
-      cropperImageSrc.value = ''
-    }
+    throw error // rethrow → 弹窗保持打开，供重试
+  }
+}
+
+// 上传成功 → 回填 URL 并结束本次裁剪
+const handleCropConfirm = (payload) => {
+  const p = pendingCrop.value
+  if (!p) return
+  const url = payload?.url
+  if (!url) return
+  if (p.type === 'avatar') {
+    formData.value.avatar_url = url
+  } else {
+    formData.value.cover_url = url
+  }
+  p.onFinish()
+  pendingCrop.value = null
+  if (cropperImageSrc.value.startsWith('blob:')) {
+    URL.revokeObjectURL(cropperImageSrc.value)
+    cropperImageSrc.value = ''
   }
 }
 

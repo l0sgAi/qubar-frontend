@@ -91,6 +91,13 @@
                 </NButton>
               </div>
             </NForm>
+            <!-- 图片上传浮标（真实进度） -->
+            <Transition name="upload-floater">
+              <div v-if="uploading" class="upload-floater">
+                <NSpin :size="16" />
+                <span>{{ t('upload.uploading') }} {{ overallProgress }}%</span>
+              </div>
+            </Transition>
           </NCard>
 
           <!-- 右侧规则卡片 -->
@@ -102,7 +109,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
+import { ref, computed, onMounted, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   NCard,
@@ -113,6 +120,7 @@ import {
   NButton,
   NAvatar,
   NText,
+  NSpin,
   useMessage
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -123,12 +131,19 @@ import SideNav from '@/components/SideNav.vue'
 import CircleRuleCard from '@/components/post-create/CircleRuleCard.vue'
 import { getMyCircles, createPost } from '@/api/post'
 import { getCircleDetail } from '@/api/circle'
-import { uploadImage } from '@/api/user'
+import { useImageUpload } from '@/composables/useImageUpload'
 
 const router = useRouter()
 const route = useRoute()
 const message = useMessage()
 const { t } = useI18n()
+const { uploading, progress, uploadMany } = useImageUpload({ withProgress: true })
+// md-editor 内部不便自定义 loading，故用浮标展示整批上传整体进度
+const overallProgress = computed(() => {
+  const arr = progress.value
+  if (!arr.length) return 0
+  return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length)
+})
 const offset = ref(260)
 const formRef = ref(null)
 const submitting = ref(false)
@@ -285,28 +300,17 @@ const handleCircleChange = async (circleId) => {
   }
 }
 
-// 上传图片
+// 上传图片（md-editor onUploadImg 回调）
 const handleUploadImg = async (files, callback) => {
   try {
-    const urls = []
-
-    for (const file of files) {
-      const res = await uploadImage(file)
-      if (res.data && res.data.url) {
-        urls.push(res.data.url)
-      } else if (res.data) {
-        urls.push(res.data)
-      }
-    }
-
-    // 回填到 media_extra 字段
+    const urls = await uploadMany(files)
+    // 回填到 media_extra 字段（提交时会被 extractImageUrls 覆盖，此处仅保留即时状态）
     formData.value.media_extra = [...formData.value.media_extra, ...urls]
-
     callback(urls)
-    message.success('图片上传成功')
+    message.success(t('upload.success'))
   } catch (error) {
     console.error('图片上传失败:', error)
-    message.error('图片上传失败，请重试')
+    message.error(t('upload.failed'))
   }
 }
 
@@ -386,6 +390,35 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.upload-floater {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(24, 24, 28, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+}
+
+.upload-floater-enter-active,
+.upload-floater-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.upload-floater-enter-from,
+.upload-floater-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
 .create-post-page {
   min-height: 100vh;
   position: relative;

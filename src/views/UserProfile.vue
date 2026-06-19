@@ -241,6 +241,7 @@
         :avatar-url="formData.avatar_url"
         :preview-title="t('user.editModal.previewTitle')"
         :preview-hint="t('user.editModal.previewHint')"
+        :upload-handler="handleCropUpload"
         @confirm="handleCropConfirm"
         @cancel="handleCropCancel"
       />
@@ -281,7 +282,8 @@ import BrowseHistory from '@/components/user-profile/BrowseHistory.vue'
 import ImageCropperModal from '@/components/ImageCropperModal.vue'
 import { auth } from '@/utils/auth'
 import request from '@/utils/request'
-import { updateUserInfo, uploadImage } from '@/api/user'
+import { updateUserInfo } from '@/api/user'
+import { useImageUpload } from '@/composables/useImageUpload'
 import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
@@ -435,6 +437,7 @@ const fetchUserInfo = async () => {
 const showEditModal = ref(false)
 const updating = ref(false)
 const avatarFileList = ref([])
+const { uploadOne } = useImageUpload()
 
 // 头像裁剪弹窗状态（选图后先裁剪再上传，与创建圈子流程一致）
 const cropperVisible = ref(false)
@@ -521,31 +524,32 @@ const handleAvatarUpload = ({ file, onFinish, onError }) => {
   cropperVisible.value = true
 }
 
-// 裁剪确认 → 上传裁剪结果
-const handleCropConfirm = async (blob) => {
-  const p = pendingCrop.value
-  if (!p) return
+// 裁剪确认 → 在弹窗内上传裁剪结果（由 ImageCropperModal 调用）
+const handleCropUpload = async (blob, { onProgress } = {}) => {
+  const croppedFile = new File([blob], 'cropped-avatar.jpg', { type: 'image/jpeg' })
   try {
-    const croppedFile = new File([blob], 'cropped-avatar.jpg', { type: 'image/jpeg' })
-    const response = await uploadImage(croppedFile)
-    if (response.data && response.data.url) {
-      formData.value.avatar_url = response.data.url
-      message.success(t('user.editModal.avatarUploadSuccess'))
-      p.onFinish()
-    } else {
-      message.error(t('user.editModal.avatarUploadFailed'))
-      p.onError()
-    }
+    const url = await uploadOne(croppedFile, { onProgress })
+    message.success(t('user.editModal.avatarUploadSuccess'))
+    return url
   } catch (error) {
     console.error('裁剪后上传失败:', error)
     message.error(t('user.editModal.avatarUploadFailed'))
-    p.onError()
-  } finally {
-    pendingCrop.value = null
-    if (cropperImageSrc.value.startsWith('blob:')) {
-      URL.revokeObjectURL(cropperImageSrc.value)
-      cropperImageSrc.value = ''
-    }
+    throw error // rethrow → 弹窗保持打开，供重试
+  }
+}
+
+// 上传成功 → 回填头像 URL 并结束本次裁剪
+const handleCropConfirm = (payload) => {
+  const p = pendingCrop.value
+  if (!p) return
+  const url = payload?.url
+  if (!url) return
+  formData.value.avatar_url = url
+  p.onFinish()
+  pendingCrop.value = null
+  if (cropperImageSrc.value.startsWith('blob:')) {
+    URL.revokeObjectURL(cropperImageSrc.value)
+    cropperImageSrc.value = ''
   }
 }
 

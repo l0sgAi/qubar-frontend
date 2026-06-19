@@ -432,6 +432,15 @@ export default {
     }
   },
 
+  // 图片上传
+  upload: {
+    uploading: '上传中',
+    success: '上传成功',
+    failed: '上传失败，请重试',
+    maxImages: '最多上传 {max} 张图片',
+    exceedLimit: '已超出上限，仅上传前 {remaining} 张'
+  },
+
   // 消息提示
   messages: {
     loginRequired: '请先登录',
