@@ -60,12 +60,12 @@
           <!-- 内联回复编辑器 -->
           <CommentReplyEditor
             v-if="activeReplyId === comment.id"
-            :post-id="Number(postId)"
+            :post-id="postId"
             :root-id="comment.id"
-            :reply-to-id="0"
+            :reply-to-id="null"
             :reply-to-name="comment.author_name"
             :language="language"
-            @submit="handleReplySubmit(comment)"
+            @submit="handleReplySubmit(comment, $event)"
             @cancel="activeReplyId = null"
           />
 
@@ -155,12 +155,12 @@
                 <!-- 内联回复编辑器（回复子评论） -->
                 <CommentReplyEditor
                   v-if="activeReplyId === reply.id"
-                  :post-id="Number(postId)"
+                  :post-id="postId"
                   :root-id="comment.id"
                   :reply-to-id="reply.id"
                   :reply-to-name="reply.author_name"
                   :language="language"
-                  @submit="handleReplySubmit(comment)"
+                  @submit="handleReplySubmit(comment, $event)"
                   @cancel="activeReplyId = null"
                 />
               </div>
@@ -255,7 +255,7 @@ import { useThrottleFn, useDebounceFn } from '@/utils/throttle'
 
 const props = defineProps({
   postId: {
-    type: [Number, String],
+    type: String,
     required: true
   },
   sort: {
@@ -566,7 +566,7 @@ const loadComments = async (isRefresh = false) => {
   loading.value = true
   try {
     const params = {
-      post_id: Number(props.postId),
+      post_id: props.postId,
       sort: getSortValue()
     }
     if (!isRefresh && nextCursor.value) {
@@ -1126,10 +1126,6 @@ defineExpose({ refreshComments, addComment })
 
 :deep(.n-image-preview){
   z-index: 9999 !important;
-}
-
-:deep(.md-editor-code-head){
-  z-index: 1000 !important;
 }
 </style>
 

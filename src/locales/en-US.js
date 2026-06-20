@@ -102,7 +102,8 @@ export default {
     hottest:'Trending',
     latest:'Latest',
     highlights:'Highlights',
-    postNotFound: 'Post not found'
+    postNotFound: 'Post not found',
+    viewDetail: 'View details'
   },
 
   // 圈子相关
@@ -178,6 +179,20 @@ export default {
       joinTypePrivate: 'Private Circle',
       joinTypePrivateDesc: 'Invite only',
       createButton: 'Create Circle',
+      step1Title: 'Basic Info',
+      step2Title: 'Images & Rules',
+      step3Title: 'Category & Access',
+      step4Title: 'Review',
+      nextStep: 'Next',
+      prevStep: 'Previous',
+      cropAvatarTitle: 'Crop Avatar',
+      cropCoverTitle: 'Crop Cover',
+      cropConfirm: 'Confirm Crop',
+      cropReset: 'Reset',
+      previewButton: 'Preview Effect',
+      previewTitle: 'Effect Preview',
+      previewHint: 'Drag the crop box to preview the header live',
+      previewNamePlaceholder: 'Circle name (sample)',
       validation: {
         nameRequired: 'Please enter circle name',
         nameLength: 'Name length should be between 2-50 characters',
@@ -187,7 +202,8 @@ export default {
         descriptionLength: 'Description length should be between 10-2000 characters',
         rulesRequired: 'Please enter circle rules',
         rulesLength: 'Rules length should be between 10-2000 characters',
-        categoryRequired: 'Please select a category'
+        categoryRequired: 'Please select a category',
+        pleaseComplete: 'Please complete the required fields before submitting'
       },
       messages: {
         avatarUploadSuccess: 'Avatar uploaded successfully',
@@ -198,7 +214,8 @@ export default {
         createSuccess: 'Circle created successfully!',
         createFailed: 'Creation failed, please try again',
         loadCategoriesFailed: 'Failed to load categories',
-        createNetworkError: 'Creation failed, please check network connection'
+        createNetworkError: 'Creation failed, please check network connection',
+        cropFailed: 'Crop failed, please try again'
       }
     }
   },
@@ -253,6 +270,9 @@ export default {
       genderPlaceholder: 'Select gender',
       birthdayPlaceholder: 'Select birthday',
       clickUploadAvatar: 'Click to upload avatar',
+      cropAvatarTitle: 'Crop Avatar',
+      previewTitle: 'Avatar Preview',
+      previewHint: 'Drag the crop box to preview the avatar live',
       avatarTip: 'Avatar supports JPG, JPEG, PNG, GIF, WebP, SVG formats, max 10MB',
       saveChanges: 'Save Changes',
       usernameLengthError: 'Username must be 1-50 characters',
@@ -410,6 +430,15 @@ export default {
       success: 'Reply posted',
       failed: 'Reply failed'
     }
+  },
+
+  // 图片上传
+  upload: {
+    uploading: 'Uploading',
+    success: 'Upload successful',
+    failed: 'Upload failed, please try again',
+    maxImages: 'Up to {max} images allowed',
+    exceedLimit: 'Limit exceeded, uploading the first {remaining} only'
   },
 
   // 消息提示

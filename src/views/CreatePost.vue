@@ -91,6 +91,15 @@
                 </NButton>
               </div>
             </NForm>
+            <!-- 图片上传浮标（居中、醒目） -->
+            <Transition name="upload-overlay">
+              <div v-if="uploading" class="upload-overlay">
+                <div class="upload-floater">
+                  <NProgress type="circle" :percentage="overallProgress" :radius="64" :stroke-width="7" />
+                  <span class="upload-floater__label">{{ t('upload.uploading') }}</span>
+                </div>
+              </div>
+            </Transition>
           </NCard>
 
           <!-- 右侧规则卡片 -->
@@ -102,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
+import { ref, computed, onMounted, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   NCard,
@@ -113,6 +122,7 @@ import {
   NButton,
   NAvatar,
   NText,
+  NProgress,
   useMessage
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -123,12 +133,19 @@ import SideNav from '@/components/SideNav.vue'
 import CircleRuleCard from '@/components/post-create/CircleRuleCard.vue'
 import { getMyCircles, createPost } from '@/api/post'
 import { getCircleDetail } from '@/api/circle'
-import { uploadImage } from '@/api/user'
+import { useImageUpload } from '@/composables/useImageUpload'
 
 const router = useRouter()
 const route = useRoute()
 const message = useMessage()
 const { t } = useI18n()
+const { uploading, progress, uploadMany } = useImageUpload({ withProgress: true })
+// md-editor 内部不便自定义 loading，故用浮标展示整批上传整体进度
+const overallProgress = computed(() => {
+  const arr = progress.value
+  if (!arr.length) return 0
+  return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length)
+})
 const offset = ref(260)
 const formRef = ref(null)
 const submitting = ref(false)
@@ -189,7 +206,6 @@ const toolbars = [
 const rules = {
   circle_id: {
     required: true,
-    type: 'number',
     message: '请选择所属圈子',
     trigger: ['change', 'blur']
   },
@@ -286,28 +302,17 @@ const handleCircleChange = async (circleId) => {
   }
 }
 
-// 上传图片
+// 上传图片（md-editor onUploadImg 回调）
 const handleUploadImg = async (files, callback) => {
   try {
-    const urls = []
-
-    for (const file of files) {
-      const res = await uploadImage(file)
-      if (res.data && res.data.url) {
-        urls.push(res.data.url)
-      } else if (res.data) {
-        urls.push(res.data)
-      }
-    }
-
-    // 回填到 media_extra 字段
+    const urls = await uploadMany(files)
+    // 回填到 media_extra 字段（提交时会被 extractImageUrls 覆盖，此处仅保留即时状态）
     formData.value.media_extra = [...formData.value.media_extra, ...urls]
-
     callback(urls)
-    message.success('图片上传成功')
+    message.success(t('upload.success'))
   } catch (error) {
     console.error('图片上传失败:', error)
-    message.error('图片上传失败，请重试')
+    message.error(t('upload.failed'))
   }
 }
 
@@ -374,7 +379,7 @@ onMounted(async () => {
   // 检查 URL 参数中是否有 circleId，如果有则默认选中
   const circleIdFromUrl = route.query.circleId
   if (circleIdFromUrl) {
-    const circleId = Number(circleIdFromUrl)
+    const circleId = circleIdFromUrl
     // 检查圈子是否在选项列表中
     const circleExists = circleOptions.value.some(option => option.value === circleId)
     if (circleExists) {
@@ -387,6 +392,47 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.upload-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.22);
+  pointer-events: none;
+}
+
+.upload-floater {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 40px;
+  background: rgba(24, 24, 28, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.upload-floater__label {
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.upload-overlay-enter-active,
+.upload-overlay-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.upload-overlay-enter-from,
+.upload-overlay-leave-to {
+  opacity: 0;
+}
+
 .create-post-page {
   min-height: 100vh;
   position: relative;
@@ -536,7 +582,7 @@ onMounted(async () => {
 
 /* 强制覆盖所有内部文本:字体 */
 :deep(.md-editor *) {
-  font-family: 'Fira Code', 'Maple Mono SC NF', 'Consolas', '微软雅黑';
+  font-family: 'Fira Code', 'Cascadia Code', 'Maple Mono NF CN', 'JetBrains Mono', 'Source Code Pro', 'Menlo', 'Monaco', 'Consolas', 'Courier New', 'PingFang SC', 'Microsoft YaHei', monospace;
 }
 
 :deep(.cm-scroller *){

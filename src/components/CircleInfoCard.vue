@@ -152,7 +152,7 @@ const { t } = useI18n()
 
 const props = defineProps({
   circleId: {
-    type: [Number, String],
+    type: String,
     required: true
   }
 })
@@ -164,15 +164,15 @@ const message = useMessage()
 
 // 圈子详情数据
 const circleDetail = ref({
-  id: 0,
+  id: null,
   name: '',
   slug: '',
   avatar_url: '',
   cover_url: '',
   description: '',
   rule: '',
-  creator_id: 0,
-  category_id: 0,
+  creator_id: null,
+  category_id: null,
   hot: 0,
   member_count: 0,
   post_count: 0,

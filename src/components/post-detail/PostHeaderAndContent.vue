@@ -288,7 +288,7 @@ const getStatusTagType = (status) => {
 }
 
 :deep(.md-editor *) {
-  font-family: 'Fira Code', 'Maple Mono SC NF', 'Consolas', '微软雅黑';
+  font-family: 'Fira Code', 'Cascadia Code', 'Maple Mono NF CN', 'JetBrains Mono', 'Source Code Pro', 'Menlo', 'Monaco', 'Consolas', 'Courier New', 'PingFang SC', 'Microsoft YaHei', monospace;
 }
 
 .post-actions {

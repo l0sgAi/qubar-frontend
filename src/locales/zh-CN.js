@@ -102,7 +102,8 @@ export default {
     hottest:'近期热点',
     latest:'最新',
     highlights:'精华',
-    postNotFound: '帖子不存在'
+    postNotFound: '帖子不存在',
+    viewDetail: '查看详情'
   },
 
   // 圈子相关
@@ -178,6 +179,20 @@ export default {
       joinTypePrivate: '私密圈子',
       joinTypePrivateDesc: '仅限邀请加入',
       createButton: '创建兴趣圈',
+      step1Title: '基本信息',
+      step2Title: '图片与规则',
+      step3Title: '分类与权限',
+      step4Title: '确认预览',
+      nextStep: '下一步',
+      prevStep: '上一步',
+      cropAvatarTitle: '裁剪头像',
+      cropCoverTitle: '裁剪背景图',
+      cropConfirm: '确认裁剪',
+      cropReset: '重置',
+      previewButton: '效果预览',
+      previewTitle: '效果预览',
+      previewHint: '拖动裁剪框，实时预览圈子头部的展示效果',
+      previewNamePlaceholder: '圈子名称（示例）',
       validation: {
         nameRequired: '请输入圈子名称',
         nameLength: '名称长度应在 2-50 个字符之间',
@@ -187,7 +202,8 @@ export default {
         descriptionLength: '描述长度应在 10-2000 个字符之间',
         rulesRequired: '请输入圈内规则',
         rulesLength: '规则长度应在 10-2000 个字符之间',
-        categoryRequired: '请选择圈子分类'
+        categoryRequired: '请选择圈子分类',
+        pleaseComplete: '请完善带 * 的必填项后再提交'
       },
       messages: {
         avatarUploadSuccess: '头像上传成功',
@@ -198,7 +214,8 @@ export default {
         createSuccess: '兴趣圈创建成功！',
         createFailed: '创建失败，请重试',
         loadCategoriesFailed: '加载分类列表失败',
-        createNetworkError: '创建失败，请检查网络连接'
+        createNetworkError: '创建失败，请检查网络连接',
+        cropFailed: '裁剪失败，请重试'
       }
     }
   },
@@ -253,6 +270,9 @@ export default {
       genderPlaceholder: '请选择性别',
       birthdayPlaceholder: '请选择生日',
       clickUploadAvatar: '点击上传头像',
+      cropAvatarTitle: '裁剪头像',
+      previewTitle: '头像效果预览',
+      previewHint: '拖动裁剪框，实时预览头像在不同位置的展示效果',
       avatarTip: '头像支持 JPG、JPEG、PNG、GIF、WebP、SVG 格式,文件大小 ≤ 10MB',
       saveChanges: '保存修改',
       usernameLengthError: '用户名长度为1-50个字符',
@@ -410,6 +430,15 @@ export default {
       success: '回复成功',
       failed: '回复失败'
     }
+  },
+
+  // 图片上传
+  upload: {
+    uploading: '上传中',
+    success: '上传成功',
+    failed: '上传失败，请重试',
+    maxImages: '最多上传 {max} 张图片',
+    exceedLimit: '已超出上限，仅上传前 {remaining} 张'
   },
 
   // 消息提示

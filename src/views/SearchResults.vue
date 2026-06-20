@@ -142,7 +142,7 @@ onMounted(async () => {
   }
 
   // 获取圈子ID（如果有）
-  circleId.value = route.query.circle_id ? Number(route.query.circle_id) : null
+  circleId.value = route.query.circle_id || null
 
   // 如果有圈子ID，获取圈子信息
   if (circleId.value) {
@@ -175,7 +175,7 @@ onMounted(async () => {
 // 监听路由变化
 watch(() => route.query, async (newQuery) => {
   const newKeyword = newQuery.q
-  const newCircleId = newQuery.circle_id ? Number(newQuery.circle_id) : null
+  const newCircleId = newQuery.circle_id || null
   const newTab = newQuery.tab
 
   // 同步 tab 参数
@@ -264,9 +264,9 @@ const transformPostData = (apiPosts) => {
     userAvatar: post.author_avatar || '',
     userColor: '#a855f7',
     title: post.title || '无标题',
-    content: '',
+    content: post.summary || post.content || '',
     coverImage: post.first_image || '',
-    images: [],
+    images: post.images || [],
     postTime: post.create_time || '',
     viewCount: post.view_count || 0,
     likeCount: post.like_count || 0,

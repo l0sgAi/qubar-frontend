@@ -3,7 +3,7 @@ import request from '@/utils/request'
 /**
  * 发表评论
  * @param {Object} data - 评论数据
- * @param {number} data.post_id - 帖子ID
+ * @param {string} data.post_id - 帖子ID(UUIDv7)
  * @param {string} data.content - 评论内容
  * @returns {Promise}
  */
@@ -18,7 +18,7 @@ export function createComment(data) {
 /**
  * 获取顶层评论列表
  * @param {Object} params
- * @param {number} params.post_id - 帖子ID
+ * @param {string} params.post_id - 帖子ID(UUIDv7)
  * @param {number} [params.sort] - 0=按点赞倒序（默认），1=按时间倒序
  * @param {string} [params.cursor] - 游标，首页不传
  * @returns {Promise}
@@ -34,7 +34,7 @@ export function getCommentList(params) {
 /**
  * 加载子回复列表（页码分页）
  * @param {Object} params
- * @param {number} params.root_id - 根评论ID
+ * @param {string} params.root_id - 根评论ID(UUIDv7)
  * @param {number} [params.sort] - 0=按时间倒序（默认），1=按点赞倒序
  * @param {number} [params.page] - 页码，从1开始
  * @param {number} [params.page_size] - 每页数量，默认5

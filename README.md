@@ -11,7 +11,7 @@
 
 ## 项目结构
 
-```
+```bash
 interestBar-frontend/
 ├── src/
 │   ├── assets/          # 静态资源

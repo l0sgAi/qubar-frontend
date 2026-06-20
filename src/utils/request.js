@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useMessage } from 'naive-ui'
+import { sanitizePayload } from '@/utils/sanitize'
 
 // 创建 axios 实例
 const request = axios.create({
@@ -19,6 +20,14 @@ request.interceptors.request.use(
     if (token) {
       // 设置 sa-token 的请求头
       config.headers['satoken'] = token
+    }
+    // 清洗请求体中的非法字节（如 NULL 字节 U+0000），
+    // 避免后端 PostgreSQL 报 "invalid byte sequence for encoding UTF8: 0x00"。
+    // 富文本/Markdown 内容是 NULL 字节的主要来源，故只清洗 data 即可覆盖。
+    // 注意：FormData 不走此清洗——其文件字段不可枚举，递归会把整个 FormData 变成空 {}，
+    // 导致上传的文件丢失；FormData 也无 NULL 字节文本风险。
+    if (config.data && !(config.data instanceof FormData)) {
+      config.data = sanitizePayload(config.data)
     }
     return config
   },

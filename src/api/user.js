@@ -16,25 +16,6 @@ export function updateUserInfo(data) {
 }
 
 /**
- * 上传图片
- * @param {File} file - 图片文件
- * @returns {Promise} 返回包含 URL 的响应
- */
-export function uploadImage(file) {
-  const formData = new FormData()
-  formData.append('file', file)
-
-  return request({
-    url: '/upload/image',
-    method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
-}
-
-/**
  * 搜索用户列表
  * @param {Object} params - 查询参数
  * @param {string} params.keyword - 搜索关键词（可选）
@@ -52,7 +33,7 @@ export function searchUsers(params) {
 
 /**
  * 获取用户详情
- * @param {number} userId - 用户ID
+ * @param {string} userId - 用户ID(UUIDv7)
  * @returns {Promise}
  */
 export function getUserDetail(userId) {

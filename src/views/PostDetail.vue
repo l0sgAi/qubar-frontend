@@ -22,7 +22,7 @@
               @collect="handleCollect"
             >
             <CommentEditor
-              :post-id="Number(route.params.id)"
+              :post-id="route.params.id"
               :language="language"
               @submit="handleSubmitComment"
               @upload-img="handleCommentUploadImg"
@@ -30,7 +30,7 @@
 
             <CommentList
               ref="commentListRef"
-              :post-id="Number(route.params.id)"
+              :post-id="route.params.id"
               v-model:sort="commentSort"
               v-model:comment-count="commentCount"
               :language="language"

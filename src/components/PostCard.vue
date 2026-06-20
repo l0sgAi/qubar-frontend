@@ -39,17 +39,13 @@
     <!-- 帖子内容 -->
     <div class="post-content">
       <h3 class="post-title">{{ title }}</h3>
-      <p v-if="content" class="post-text">{{ content }}</p>
+      <p v-if="content" ref="textRef" class="post-text">{{ content }}</p>
+      <span v-if="content && isTruncated" class="view-detail">{{ t('post.viewDetail') }} →</span>
     </div>
 
-    <!-- 搜索结果：封面图（标题下方） -->
-    <div v-if="coverImage" class="post-cover" @click.stop>
-      <NImage :src="coverImage" :alt="title" object-fit="cover" class="post-cover__img" />
-    </div>
-
-    <!-- 非搜索结果：图片轮播 -->
-    <div v-else-if="images && images.length > 0" @click.stop>
-      <ImageCarousel :images="images" :parent-width="900" />
+    <!-- 图片轮播：封面图与多图统一展示 -->
+    <div v-if="displayImages.length > 0" class="post-carousel" @click.stop>
+      <ImageCarousel :images="displayImages" :parent-width="900" />
     </div>
 
     <!-- 搜索结果：统计信息（仅展示） -->
@@ -92,9 +88,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { NCard, NAvatar, NButton, NIcon, NTime, NImage, useMessage } from 'naive-ui'
+import { NCard, NAvatar, NButton, NIcon, NTime, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { toggleLike } from '@/api/like'
 import { useDebounceFn } from '@/utils/throttle'
@@ -113,7 +109,7 @@ const props = defineProps({
     required: true
   },
   circleId: {
-    type: Number,
+    type: String,
     default: null
   },
   circleName: {
@@ -129,7 +125,7 @@ const props = defineProps({
     default: '#ec4899'
   },
   userId: {
-    type: Number,
+    type: String,
     default: null
   },
   userName: {
@@ -190,9 +186,43 @@ const message = useMessage()
 const isLiked = ref(false)
 const isCollected = ref(false)
 
+// 统一图片列表：有多图就用 images，否则回退到单张封面图。
+// 这样封面图与非封面图帖子都用同一个轮播组件展示，摘要截断策略也保持一致。
+const displayImages = computed(() => {
+  if (props.images && props.images.length > 0) return props.images
+  return props.coverImage ? [props.coverImage] : []
+})
+
+// 摘要按高度截断后，检测是否真的溢出（scrollHeight > clientHeight），
+// 仅在溢出时显示「查看详情」提示。ResizeObserver 兜底宽度变化导致的重排。
+const textRef = ref(null)
+const isTruncated = ref(false)
+let resizeObserver = null
+
+const checkTruncation = () => {
+  const el = textRef.value
+  isTruncated.value = !!el && el.scrollHeight - el.clientHeight > 1
+}
+
+onMounted(() => {
+  nextTick(checkTruncation)
+  if (textRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(checkTruncation)
+    resizeObserver.observe(textRef.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+})
+
+watch(() => props.content, () => {
+  nextTick(checkTruncation)
+})
+
 const debouncedPostCardLike = useDebounceFn(async () => {
   try {
-    const res = await toggleLike({ type: 'post', target_id: Number(props.postId) })
+    const res = await toggleLike({ type: 'post', target_id: props.postId })
     if (res.data) {
       const serverLiked = res.data.is_liked
       if (isLiked.value !== serverLiked) {
@@ -363,32 +393,35 @@ const goToUser = () => {
   margin-left: 16px;
   color: rgba(255, 255, 255, 0.8);
   line-height: 1.6;
-}
-
-/* 搜索结果封面图（标题下方） */
-.post-cover {
-  margin-left: 1dvw;
-  height: 18dvh;
-  width: 24dvw;
-  margin-bottom: 12px;
-  border-radius: 12px;
+  /* 保留摘要文本中的换行（\n），同时长行仍自动折行 */
+  white-space: pre-wrap;
+  word-break: break-word;
+  /* 按高度截断：≈ 6 行（line-height 1.6 → 9.6em），超出裁掉。
+     不用 -webkit-line-clamp，它强制 white-space:normal 会丢失换行。 */
+  max-height: 9.6em;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
 }
 
-.post-cover :deep(.post-cover__img) {
-  display: block;
+/* 摘要溢出时的「查看详情」提示，项目主题蒂芙尼绿 #66eac2 */
+.view-detail {
+  display: inline-block;
+  margin-left: 16px;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #66eac2;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
 }
 
-.post-cover :deep(img) {
-  height: 18dvh;
-  width: 24dvw;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+.post-card:hover .view-detail {
+  opacity: 1;
 }
 
-.post-card:hover .post-cover :deep(img) {
-  transform: scale(1.02);
+/* 图片轮播（封面图/多图统一）：与摘要文本左对齐（16px） */
+.post-carousel {
+  margin-left: 16px;
+  margin-bottom: 12px;
 }
 
 /* 搜索结果：统计信息 */

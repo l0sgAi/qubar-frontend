@@ -436,12 +436,12 @@ const handleClearCircleSearch = () => {
 
 .search-box:hover {
   background: rgba(255, 255, 255, 0.08);
-  border: 2px rgba(83, 249, 166, 0.493) solid;
+  border: 2px rgba(83, 249, 166, 0.345) solid;
 }
 
 .search-box:focus-within {
   background: rgba(255, 255, 255, 0.1);
-  border:2px rgba(59, 223, 125, 0.899) solid;
+  border:2px rgba(83, 249, 166, 0.616) solid;
   box-shadow: 0 0 0 3px rgba(59, 223, 125, 0.152);
 }
 

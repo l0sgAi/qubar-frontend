@@ -147,14 +147,25 @@
       </div>
 
       <!-- 编辑个人信息模态框 -->
-      <NModal v-model:show="showEditModal" preset="card" :title="t('user.editModal.title')" class="edit-modal" style="width: 50dvw;">
-        <NForm ref="formRef" :model="formData" :rules="rules" label-placement="left" label-width="80">
+      <NModal
+        v-model:show="showEditModal"
+        preset="card"
+        :title="t('user.editModal.title')"
+        class="edit-modal"
+        :mask-closable="false"
+        :bordered="false"
+        :segmented="{ content: 'soft' }"
+        size="huge"
+        header-style="font-size: 26px;"
+        :style="{ width: '50dvw', borderRadius: '24px' }">
+        <NForm ref="formRef" :model="formData" :rules="rules" label-placement="top" size="large">
           <NFormItem :label="t('user.username')" path="username">
             <NInput
               v-model:value="formData.username"
               :placeholder="t('user.editModal.usernamePlaceholder')"
               maxlength="50"
               show-count
+              size="large"
             />
           </NFormItem>
 
@@ -163,6 +174,7 @@
               v-model:value="formData.phone"
               :placeholder="t('user.editModal.phonePlaceholder')"
               maxlength="11"
+              size="large"
             />
           </NFormItem>
 
@@ -171,6 +183,7 @@
               v-model:value="formData.gender"
               :options="genderOptions"
               :placeholder="t('user.editModal.genderPlaceholder')"
+              size="large"
             />
           </NFormItem>
 
@@ -183,29 +196,29 @@
               format="yyyy-MM-dd"
               value-format="yyyy-MM-dd"
               style="width: 100%;"
+              size="large"
             />
           </NFormItem>
 
           <NFormItem :label="t('user.avatar')">
             <NUpload
               :max="1"
-              :default-file-list="avatarFileList"
+              :file-list="avatarFileList"
               list-type="image-card"
               :custom-request="handleAvatarUpload"
               @before-upload="beforeAvatarUpload"
               @update:file-list="handleFileListChange"
-              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/svg+xml"
+              accept="image/*"
             >
               <div style="text-align: center;">
                 <div>{{ t('user.editModal.clickUploadAvatar') }}</div>
               </div>
             </NUpload>
+            <template #feedback>
+              <NText depth="3" style="font-size: 12px">{{ t('user.editModal.avatarTip') }}</NText>
+            </template>
           </NFormItem>
         </NForm>
-
-        <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">
-          {{ t('user.editModal.avatarTip') }}
-        </div>
 
         <template #footer>
           <div class="modal-footer">
@@ -216,6 +229,22 @@
           </div>
         </template>
       </NModal>
+
+      <!-- 头像裁剪弹窗（1:1，仅预览圆形头像） -->
+      <ImageCropperModal
+        v-model:show="cropperVisible"
+        :image-src="cropperImageSrc"
+        :aspect-ratio="1"
+        :title="t('user.editModal.cropAvatarTitle')"
+        type="avatar"
+        avatar-only
+        :avatar-url="formData.avatar_url"
+        :preview-title="t('user.editModal.previewTitle')"
+        :preview-hint="t('user.editModal.previewHint')"
+        :upload-handler="handleCropUpload"
+        @confirm="handleCropConfirm"
+        @cancel="handleCropCancel"
+      />
     </div>
   </NConfigProvider>
 </template>
@@ -250,9 +279,11 @@ import MyPosts from '@/components/user-profile/MyPosts.vue'
 import MyGroups from '@/components/user-profile/MyGroups.vue'
 import MyFavorites from '@/components/user-profile/MyFavorites.vue'
 import BrowseHistory from '@/components/user-profile/BrowseHistory.vue'
+import ImageCropperModal from '@/components/ImageCropperModal.vue'
 import { auth } from '@/utils/auth'
 import request from '@/utils/request'
-import { updateUserInfo, uploadImage } from '@/api/user'
+import { updateUserInfo } from '@/api/user'
+import { useImageUpload } from '@/composables/useImageUpload'
 import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
@@ -406,6 +437,13 @@ const fetchUserInfo = async () => {
 const showEditModal = ref(false)
 const updating = ref(false)
 const avatarFileList = ref([])
+const { uploadOne } = useImageUpload()
+
+// 头像裁剪弹窗状态（选图后先裁剪再上传，与创建圈子流程一致）
+const cropperVisible = ref(false)
+const cropperImageSrc = ref('')
+// pendingCrop 缓存本次裁剪上下文：NUpload 的 file 与 onFinish/onError
+const pendingCrop = ref(null)
 
 // 性别选项
 const genderOptions = computed(() => [
@@ -476,19 +514,53 @@ const handleFileListChange = (fileList) => {
   avatarFileList.value = fileList
 }
 
-// 处理头像上传
-const handleAvatarUpload = async ({ file, onFinish, onError }) => {
+// 选图后不直接上传，先打开裁剪弹窗（1:1）
+const handleAvatarUpload = ({ file, onFinish, onError }) => {
+  if (cropperImageSrc.value.startsWith('blob:')) {
+    URL.revokeObjectURL(cropperImageSrc.value)
+  }
+  pendingCrop.value = { file, onFinish, onError }
+  cropperImageSrc.value = URL.createObjectURL(file.file)
+  cropperVisible.value = true
+}
+
+// 裁剪确认 → 在弹窗内上传裁剪结果（由 ImageCropperModal 调用）
+const handleCropUpload = async (blob, { onProgress } = {}) => {
+  const croppedFile = new File([blob], 'cropped-avatar.jpg', { type: 'image/jpeg' })
   try {
-    const response = await uploadImage(file.file)
-    if (response.data && response.data.url) {
-      formData.value.avatar_url = response.data.url
-      message.success(t('user.editModal.avatarUploadSuccess'))
-      onFinish()
-    }
+    const url = await uploadOne(croppedFile, { onProgress })
+    message.success(t('user.editModal.avatarUploadSuccess'))
+    return url
   } catch (error) {
-    console.error('头像上传失败:', error)
+    console.error('裁剪后上传失败:', error)
     message.error(t('user.editModal.avatarUploadFailed'))
-    onError()
+    throw error // rethrow → 弹窗保持打开，供重试
+  }
+}
+
+// 上传成功 → 回填头像 URL 并结束本次裁剪
+const handleCropConfirm = (payload) => {
+  const p = pendingCrop.value
+  if (!p) return
+  const url = payload?.url
+  if (!url) return
+  formData.value.avatar_url = url
+  p.onFinish()
+  pendingCrop.value = null
+  if (cropperImageSrc.value.startsWith('blob:')) {
+    URL.revokeObjectURL(cropperImageSrc.value)
+    cropperImageSrc.value = ''
+  }
+}
+
+// 取消裁剪 → 放弃本次上传
+const handleCropCancel = () => {
+  const p = pendingCrop.value
+  if (p) p.onError()
+  pendingCrop.value = null
+  if (cropperImageSrc.value.startsWith('blob:')) {
+    URL.revokeObjectURL(cropperImageSrc.value)
+    cropperImageSrc.value = ''
   }
 }
 
@@ -808,45 +880,6 @@ onMounted(() => {
   padding: 24px 0 0 0;
 }
 
-/* 编辑模态框 */
-.edit-modal {
-  background: black !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-}
-
-:deep(.n-card__content) {
-  padding: 24px !important;
-}
-
-:deep(.n-form-item-label) {
-  color: rgba(255, 255, 255, 0.8) !important;
-}
-
-:deep(.n-input__input) {
-  color: rgba(255, 255, 255, 0.9) !important;
-}
-
-:deep(.n-input__border) {
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-:deep(.n-input:hover .n-input__border) {
-  border-color: rgba(255, 255, 255, 0.3) !important;
-}
-
-:deep(.n-upload-trigger) {
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-:deep(.n-upload-trigger:hover) {
-  border-color: #ec4899 !important;
-}
-
-:deep(.n-upload-file-list__item) {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
 .modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -880,5 +913,101 @@ onMounted(() => {
     margin-left: 0;
     padding: 16px;
   }
+}
+</style>
+
+<!--
+  编辑模态框样式：使用非 scoped 全局块。
+  NModal 会将内容 teleport 到 body，scoped + class 前缀的 :deep 选择器无法命中
+  teleport 出去的 DOM（class 与 data-v 落在不同元素上）。这里用 .edit-modal 前缀
+  做范围限定，保证只影响本弹窗，且能稳定穿透 teleport。
+-->
+<style>
+/* ===== 卡片整体：圆润 + 玻璃质感 ===== */
+.edit-modal .n-card {
+  border-radius: 24px !important;
+  box-shadow: var(--shadow-lg) !important;
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  overflow: hidden;
+}
+
+.edit-modal .n-card-header {
+  border-radius: 24px 24px 0 0 !important;
+}
+
+.edit-modal .n-card-header__main,
+.edit-modal .n-card-header__title {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.edit-modal .n-form-item {
+  margin-bottom: 5px;
+}
+
+.edit-modal .n-form-item-label {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 14px !important;
+}
+
+/* ===== 输入框 / 选择框 / 日期：更高、更圆 ===== */
+.edit-modal .n-input,
+.edit-modal .n-base-selection {
+  --n-border-radius: 14px !important;
+  --n-height: 52px !important;
+  font-size: 15px;
+}
+
+.edit-modal .n-base-selection-label {
+  min-height: 52px !important;
+}
+
+.edit-modal .n-input__textarea-el {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* 聚焦态：绿色边框 + 柔光晕（与创建圈子一致） */
+.edit-modal .n-input--focus,
+.edit-modal .n-base-selection:focus-within {
+  --n-border-focus: 1px solid #18a058 !important;
+  --n-box-shadow-focus: 0 0 0 3px rgba(24, 160, 88, 0.18) !important;
+}
+
+/* ===== 按钮：圆角 + 高度，主按钮绿色渐变 ===== */
+.edit-modal .n-button {
+  --n-border-radius: 14px !important;
+  --n-height: 46px !important;
+  transition: all 0.2s ease;
+}
+
+.edit-modal .n-button--primary-type {
+  background: var(--primary-gradient) !important;
+  border: none !important;
+  color: #07140d !important;
+  font-weight: 600 !important;
+}
+
+.edit-modal .n-button--primary-type:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(34, 179, 106, 0.35);
+  opacity: 0.95;
+}
+
+/* ===== 图片上传卡片：圆润化 ===== */
+.edit-modal .n-upload-trigger--image-card,
+.edit-modal .n-upload-file-list__item {
+  border-radius: 16px !important;
+  transition: all 0.2s ease;
+}
+
+.edit-modal .n-upload-trigger--image-card:hover {
+  border-color: #18a058 !important;
+  color: #18a058 !important;
 }
 </style>

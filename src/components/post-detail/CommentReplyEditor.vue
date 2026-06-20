@@ -13,31 +13,16 @@
     />
     <!-- 图片预览照片墙 -->
     <div v-if="uploadedImages.length || uploading" class="image-wall">
-      <NImageGroup>
-        <div class="image-wall-grid">
-          <div v-for="(url, idx) in uploadedImages" :key="'img-' + idx" class="image-wall-item">
-            <NImage
-              :src="url"
-              width="64"
-              height="64"
-              object-fit="cover"
-              lazy
-              preview-src=""
-              :style="{ borderRadius: '6px' }"
-            />
-            <button class="image-wall-remove" @click="removeImage(idx)" title="删除图片">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-          <div v-for="n in uploadingCount" :key="'loading-' + n" class="image-wall-item image-wall-loading">
-            <NSpin :size="18" />
-          </div>
-        </div>
-      </NImageGroup>
-      <span class="image-wall-count">{{ uploadedImages.length + uploadingCount }} / {{ MAX_COMMENT_IMAGES }}</span>
+      <UploadImageWall
+        :images="uploadedImages"
+        :uploading="uploading"
+        :uploading-count="uploadingCount"
+        :max-count="MAX_COMMENT_IMAGES"
+        :thumb-size="64"
+        :gap="6"
+        :progress="progress"
+        @remove="removeImage"
+      />
     </div>
     <div class="reply-editor-footer">
       <div class="footer-left">
@@ -86,25 +71,26 @@
 
 <script setup>
 import { ref } from 'vue'
-import { NButton, NImage, NImageGroup, NIcon, NSpin, useMessage } from 'naive-ui'
+import { NButton, NIcon, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import { createComment } from '@/api/comment'
 import { getUserInfo } from '@/api/auth'
-import { uploadImage } from '@/api/user'
+import { useImageUpload } from '@/composables/useImageUpload'
+import UploadImageWall from '@/components/UploadImageWall.vue'
 
 const props = defineProps({
   postId: {
-    type: Number,
+    type: String,
     required: true
   },
   rootId: {
-    type: Number,
-    default: 0
+    type: String,
+    default: null
   },
   replyToId: {
-    type: Number,
+    type: String,
     required: true
   },
   replyToName: {
@@ -123,8 +109,7 @@ const { t } = useI18n()
 const message = useMessage()
 const content = ref('')
 const submitting = ref(false)
-const uploading = ref(false)
-const uploadingCount = ref(0)
+const { uploading, uploadingCount, progress, uploadMany } = useImageUpload({ withProgress: true })
 const uploadedImages = ref([])
 const fileInputRef = ref(null)
 
@@ -149,7 +134,7 @@ const handleSubmit = async () => {
     const extraData = uploadedImages.value.length > 0 ? { images: [...uploadedImages.value] } : null
     const res = await createComment({
       post_id: props.postId,
-      root_id: props.rootId || props.replyToId,
+      root_id: props.rootId ?? props.replyToId,
       reply_to_id: props.replyToId,
       content: content.value,
       extra_data: extraData
@@ -200,34 +185,21 @@ const handleFileSelect = (e) => {
 
 const uploadFiles = async (files) => {
   if (uploadedImages.value.length >= MAX_COMMENT_IMAGES) {
-    message.warning(`评论最多上传 ${MAX_COMMENT_IMAGES} 张图片`)
+    message.warning(t('upload.maxImages', { max: MAX_COMMENT_IMAGES }))
     return
   }
   const remaining = MAX_COMMENT_IMAGES - uploadedImages.value.length
   const filesToUpload = files.slice(0, remaining)
   if (filesToUpload.length < files.length) {
-    message.warning(`已超出上限，仅上传前 ${remaining} 张`)
+    message.warning(t('upload.exceedLimit', { remaining }))
   }
-  uploadingCount.value = filesToUpload.length
-  uploading.value = true
   try {
-    const urls = []
-    for (const file of filesToUpload) {
-      const res = await uploadImage(file)
-      if (res.data && res.data.url) {
-        urls.push(res.data.url)
-      } else if (res.data) {
-        urls.push(res.data)
-      }
-    }
+    const urls = await uploadMany(filesToUpload)
     uploadedImages.value = [...uploadedImages.value, ...urls]
-    message.success('图片上传成功')
+    message.success(t('upload.success'))
   } catch (error) {
     console.error('图片上传失败:', error)
-    message.error('图片上传失败，请重试')
-  } finally {
-    uploading.value = false
-    uploadingCount.value = 0
+    message.error(t('upload.failed'))
   }
 }
 </script>
@@ -260,57 +232,6 @@ const uploadFiles = async (files) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.image-wall-grid {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.image-wall-item {
-  position: relative;
-  line-height: 0;
-}
-
-.image-wall-remove {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 77, 79, 0.9);
-  border: none;
-  border-radius: 50%;
-  color: #fff;
-  cursor: pointer;
-  padding: 0;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.image-wall-item:hover .image-wall-remove {
-  opacity: 1;
-}
-
-.image-wall-count {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
-  white-space: nowrap;
-  margin-left: 10px;
-}
-
-.image-wall-loading {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
 }
 
 .reply-editor-footer {
