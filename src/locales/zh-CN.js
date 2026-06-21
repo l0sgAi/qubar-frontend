@@ -228,6 +228,7 @@ export default {
     profile: '个人资料',
     editProfile: '编辑资料',
     myPosts: '我的帖子',
+    posts: '帖子',
     myFavorites: '我的收藏',
     browseHistory: '浏览历史',
     myGroups: '兴趣圈',

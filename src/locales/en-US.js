@@ -228,6 +228,7 @@ export default {
     profile: 'Profile',
     editProfile: 'Edit Profile',
     myPosts: 'My Posts',
+    posts: 'Posts',
     myFavorites: 'My Favorites',
     browseHistory: 'History',
     myGroups: 'Circles',

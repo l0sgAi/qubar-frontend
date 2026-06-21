@@ -25,12 +25,13 @@
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>帖子</span>
-                  <NTag size="small" :bordered="false" round>{{ mockData.posts.length }}</NTag>
+                  <NTag size="small" :bordered="false" round>{{ postsTotal }}</NTag>
                 </NSpace>
               </template>
               <MyPosts
-                :posts="mockData.posts"
-                readonly/>
+                :user-id="String(route.params.id || '')"
+                readonly
+                @total-change="handlePostsTotalChange"/>
             </NTabPane>
 
             <!-- 加入的兴趣圈 Tab -->
@@ -162,6 +163,12 @@ const mockData = ref({
   posts: [],
   groups: []
 })
+
+// 帖子总数（由 MyPosts 通过 total-change 上报，用于 Tab 计数）
+const postsTotal = ref(0)
+const handlePostsTotalChange = (total) => {
+  postsTotal.value = total || 0
+}
 
 // 获取用户信息
 const fetchUserInfo = async () => {

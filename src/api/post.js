@@ -68,6 +68,42 @@ export function searchPosts(params) {
 }
 
 /**
+ * 获取当前登录用户自己的帖子列表
+ * 与 /post/list 的区别：仅返回本人帖子，且不过滤 status（草稿/审核/已发布/拒绝/封禁均可见），
+ * 关键字匹配额外支持 fuzziness:AUTO（容错拼写错误）。
+ * @param {Object} params - 查询参数
+ * @param {string} params.keyword - 关键字，模糊匹配 title（权重×3）与 summary（权重×1），为空时返回全部（可选）
+ * @param {number} params.size - 每页数量，默认20，<=0 或 >100 时后端回退为20
+ * @param {string} params.search_after - 上一页响应返回的游标（JSON数组字符串，原样透传，可选）
+ * @returns {Promise}
+ */
+export function getMyPosts(params) {
+  return request({
+    url: '/post/my',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取指定用户的已发布帖子列表（查看他人主页）
+ * 仅返回 status=1（已发布）；响应结构与 /post/my 完全一致，列表组件可直接复用。
+ * @param {string} userId - 目标用户 ID（UUIDv7）
+ * @param {Object} params - 查询参数
+ * @param {string} params.keyword - 关键字，模糊匹配 title（权重×3）与 summary（权重×1）（可选）
+ * @param {number} params.size - 每页数量，默认20，<=0 或 >100 时后端回退为20
+ * @param {string} params.search_after - 上一页响应返回的游标（JSON数组字符串，原样透传，可选）
+ * @returns {Promise}
+ */
+export function getUserPosts(userId, params) {
+  return request({
+    url: `/post/user/${userId}`,
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 获取帖子详情
  * @param {string} id - 帖子ID(UUIDv7)
  * @returns {Promise}
