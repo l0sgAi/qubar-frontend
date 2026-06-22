@@ -395,7 +395,10 @@ onMounted(async () => {
 .upload-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  /* md-editor-v3 的 Modal/dropdown zIndex 基准 20000（config.mjs），
+     原值 1000 会被其图片上传浮层盖住，导致编辑器内上传看不到进度。
+     提到 99999 确保进度浮标始终可见；pointer-events:none 不影响下层操作。 */
+  z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;

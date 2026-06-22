@@ -15,7 +15,12 @@ export function uploadImage(file, { onUploadProgress } = {}) {
     url: '/upload/image',
     method: 'post',
     data: formData,
-    onUploadProgress
+    onUploadProgress,
+    // 覆盖 request 实例的全局 timeout(10s)：大图/慢网上传易超 10s，
+    // axios 抛 ECONNABORTED → 前端判失败，但后端此时往往已完整接收并保存成功，
+    // 出现“后端成功、前端失败”的假象。上传已有真实进度条给用户反馈，
+    // 故此处不设超时（0 = 无限等），由进度条 + 用户手动取消兜底。
+    timeout: 0
     // 不手动设 Content-Type：axios 检测到 FormData 会自动加上
     // 'multipart/form-data; boundary=...'，手动设会丢 boundary 导致后端解析为空。
   })
