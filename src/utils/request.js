@@ -37,6 +37,16 @@ request.interceptors.request.use(
   }
 )
 
+/**
+ * 判断请求是否属于认证流程（登录/注册）。
+ * 这类请求本身不携带有效会话，其返回的 401 含义是“凭证错误”而非“会话过期”，
+ * 因此不应触发自动登出 + 重定向，否则会把后端的错误提示连同页面一起刷掉，
+ * 应直接 reject 交由调用方（如 LoginCard）展示错误信息。
+ */
+function isAuthRequest(url = '') {
+  return typeof url === 'string' && (url.includes('/auth/login') || url.includes('/auth/register'))
+}
+
 // 响应拦截器
 request.interceptors.response.use(
   response => {
@@ -47,7 +57,9 @@ request.interceptors.response.use(
       console.error('业务错误:', res.message)
 
       // 处理特定错误码
-      if (res.code === 401) {
+      // 登录/注册等认证请求返回的 401 表示“凭证错误”，而非“会话过期”，
+      // 此时不应重定向（会刷掉错误提示），应直接交由调用方展示错误。
+      if (res.code === 401 && !isAuthRequest(response.config.url)) {
         // token 无效或过期，清除本地存储并跳转到登录页
         localStorage.removeItem('quba_token')
         window.location.href = '/'
@@ -68,7 +80,8 @@ request.interceptors.response.use(
       const res = error.response.data
 
       // 处理 401 未授权
-      if (error.response.status === 401 || res.code === 401) {
+      // 登录/注册等认证请求的 401 表示“凭证错误”，应交由调用方展示，不重定向。
+      if (!isAuthRequest(error.config?.url) && (error.response.status === 401 || res.code === 401)) {
         localStorage.removeItem('quba_token')
         window.location.href = '/'
       }
