@@ -33,6 +33,26 @@ export function getMyCircles(params) {
 }
 
 /**
+ * 获取指定用户已加入的圈子列表（查看他人主页）
+ * 与 /circle/my 的区别：目标用户来自 user_id 查询参数（任意已登录用户均可查看他人加入的圈子）。
+ * 响应结构与 /circle/my 一致（circles / total / size / search_after，搜索模式额外可能含 truncated）。
+ * 注意：搜索模式（keyword 非空）下 total 恒为 0，前端不应展示总数。
+ * @param {string} userId - 目标用户 ID（UUIDv7，必填）
+ * @param {Object} params - 查询参数
+ * @param {string} params.keyword - 关键字，模糊匹配圈子 name（权重×3）与 description（权重×1）（可选）
+ * @param {number} params.size - 每页数量，默认20，<=0 或 >100 时后端回退为20
+ * @param {string} params.search_after - 上一页响应返回的游标（base64 不透明串，原样透传，可选）
+ * @returns {Promise}
+ */
+export function getUserCircles(userId, params) {
+  return request({
+    url: '/circle/user',
+    method: 'get',
+    params: { user_id: userId, ...params }
+  })
+}
+
+/**
  * 创建帖子
  * @param {Object} data - 帖子数据
  * @param {string} data.circle_id - 所属圈子ID(UUIDv7)

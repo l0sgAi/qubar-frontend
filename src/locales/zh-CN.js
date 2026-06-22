@@ -134,6 +134,7 @@ export default {
     description: '简介',
     noCircles: '暂无圈子',
     noCircleResults: '暂无圈子结果',
+    resultsMayBeIncomplete: '结果可能不全，请细化关键字',
     moreOptions: '更多选项',
     report: '举报',
     joinType: '加入方式',

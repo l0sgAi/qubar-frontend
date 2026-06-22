@@ -39,10 +39,13 @@
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>兴趣圈</span>
-                  <NTag size="small" :bordered="false" round>{{ mockData.groups.length }}</NTag>
+                  <NTag size="small" :bordered="false" round>{{ groupsTotal }}</NTag>
                 </NSpace>
               </template>
-              <MyGroups :groups="mockData.groups" @click="handleGroupClick"/>
+              <MyGroups
+                :user-id="String(route.params.id || '')"
+                @total-change="handleGroupsTotalChange"
+                @click="handleGroupClick"/>
             </NTabPane>
           </NTabs>
         </NCard>
@@ -158,16 +161,16 @@ const userInfo = ref({
   update_time: null
 })
 
-// 模拟数据
-const mockData = ref({
-  posts: [],
-  groups: []
-})
-
 // 帖子总数（由 MyPosts 通过 total-change 上报，用于 Tab 计数）
 const postsTotal = ref(0)
 const handlePostsTotalChange = (total) => {
   postsTotal.value = total || 0
+}
+
+// 加入的兴趣圈总数（由 MyGroups 通过 total-change 上报，用于 Tab 计数）
+const groupsTotal = ref(0)
+const handleGroupsTotalChange = (total) => {
+  groupsTotal.value = total || 0
 }
 
 // 获取用户信息

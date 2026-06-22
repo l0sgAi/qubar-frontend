@@ -134,6 +134,7 @@ export default {
     description: 'Description',
     noCircles: 'No circles yet',
     noCircleResults: 'No circle results',
+    resultsMayBeIncomplete: 'Results may be incomplete, refine your keyword',
     moreOptions: 'More',
     report: 'Report',
     joinType: 'Join Type',

@@ -6,7 +6,7 @@
         v-model:value="searchKey"
         :placeholder="t('circle.interestCircle')"
         clearable
-        :loading="autoFetch && loading"
+        :loading="isFetchMode && loading"
         style="width: 280px;"
         @input="handleSearchInput"
         @clear="handleSearchClear">
@@ -33,7 +33,8 @@
             </svg>
           </NIcon>
           <p class="empty-text">{{ t('circle.noCircles') }}</p>
-          <p class="empty-hint">{{ t('circle.createCircle') }}</p>
+          <!-- 查看他人主页时不展示「创建圈子」引导 -->
+          <p v-if="!userId" class="empty-hint">{{ t('circle.createCircle') }}</p>
         </div>
         <NCard
           v-for="group in displayedGroups"
@@ -58,20 +59,24 @@
             </span>
           </div>
         </NCard>
-        <!-- 无限滚动哨兵：仅在自动拉取模式下生效 -->
-        <div v-if="autoFetch" ref="sentinel" class="scroll-sentinel"></div>
+        <!-- 无限滚动哨兵：仅在拉取模式下生效 -->
+        <div v-if="isFetchMode" ref="sentinel" class="scroll-sentinel"></div>
+        <!-- 搜索模式被截断提示（扫满上限仍未集齐 size 条，可能还有更深的命中）-->
+        <div v-if="truncated" class="truncated-hint">
+          {{ t('circle.resultsMayBeIncomplete') }}
+        </div>
       </div>
     </NSpin>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { NCard, NAvatar, NIcon, NInput, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useFormatNumber } from '@/utils/i18n'
-import { getMyCircles } from '@/api/post'
+import { getMyCircles, getUserCircles } from '@/api/post'
 
 const router = useRouter()
 const message = useMessage()
@@ -79,7 +84,7 @@ const { t } = useI18n()
 const { formatNumber } = useFormatNumber()
 
 const props = defineProps({
-  // 外部注入的圈子数据（兜底/无接口场景，如查看他人主页时的 mock）
+  // 外部注入的圈子数据（兜底/无接口场景）
   groups: {
     type: Array,
     default: () => []
@@ -89,6 +94,14 @@ const props = defineProps({
   autoFetch: {
     type: Boolean,
     default: false
+  },
+  // 目标用户 ID：
+  // - 为空：查看「我加入的圈子」，走 /circle/my（autoFetch=true 时生效）
+  // - 传值：查看该用户加入的圈子，走 /circle/user?user_id=...（任意已登录用户均可查看）
+  //        传值后强制进入自动拉取模式，忽略外部 groups。
+  userId: {
+    type: String,
+    default: ''
   }
 })
 
@@ -97,12 +110,19 @@ const emit = defineEmits(['click', 'total-change'])
 const searchKey = ref('')
 const loading = ref(false)
 
+// 是否走接口拉取：查看他人（userId）或我的圈子（autoFetch）
+const isFetchMode = computed(() => props.autoFetch || !!props.userId)
+
 // === 自动拉取模式状态（与 MyPosts 保持一致的分页结构）===
 const PAGE_SIZE = 20
 const circles = ref([])
 const searchAfter = ref('')
 const hasMore = ref(false)
 const sentinel = ref(null)
+// 浏览模式下的真实总数（搜索模式 total 恒为 0，需缓存此值供 Tab 计数稳定）
+const browseTotal = ref(0)
+// 搜索模式可能被服务端截断（扫满上限仍未集齐 size 条）
+const truncated = ref(false)
 let searchTimer = null
 let observer = null
 
@@ -116,6 +136,7 @@ const transformCircle = (c) => ({
 })
 
 // 拉取圈子：append=true 表示追加下一页
+// 数据源由 userId 决定 —— /circle/user?user_id=（他人）或 /circle/my（我的）
 const fetchCircles = async (append = false) => {
   if (loading.value) return
   loading.value = true
@@ -123,20 +144,32 @@ const fetchCircles = async (append = false) => {
     const params = { size: PAGE_SIZE }
     if (searchKey.value) params.keyword = searchKey.value
     if (append && searchAfter.value) {
+      // 游标原样透传，不解析/不修改（base64 不透明串）
       params.search_after = searchAfter.value
     }
 
-    const res = await getMyCircles(params)
+    const res = props.userId
+      ? await getUserCircles(props.userId, params)
+      : await getMyCircles(params)
+
     const data = res.data || {}
     const list = (data.circles || []).map(transformCircle)
     circles.value = append ? [...circles.value, ...list] : list
 
     searchAfter.value = data.search_after || ''
     hasMore.value = !!data.search_after
+    truncated.value = !!data.truncated
 
     // 仅首页（含新搜索）上报命中总数，供父组件展示 Tab 计数
     if (!append) {
-      emit('total-change', data.total || circles.value.length)
+      if (searchKey.value) {
+        // 搜索模式 total 恒为 0：保留浏览模式总数，避免覆盖 Tab 计数
+        emit('total-change', browseTotal.value || circles.value.length)
+      } else {
+        // 浏览模式：total 为该用户加入圈子总数（准确）
+        browseTotal.value = data.total || 0
+        emit('total-change', browseTotal.value)
+      }
     }
   } catch (error) {
     console.error('获取圈子列表失败:', error)
@@ -146,10 +179,20 @@ const fetchCircles = async (append = false) => {
   }
 }
 
+// 重置列表并从首页重新拉取（切换目标用户 / 路由变化时使用）
+const resetAndFetch = () => {
+  searchAfter.value = ''
+  hasMore.value = false
+  truncated.value = false
+  browseTotal.value = 0
+  circles.value = []
+  fetchCircles(false)
+}
+
 // === 搜索 ===
 // 自动拉取模式：服务端关键字匹配（防抖）；外部数据模式：本地过滤
 const handleSearchInput = () => {
-  if (!props.autoFetch) return
+  if (!isFetchMode.value) return
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
     searchAfter.value = ''
@@ -159,7 +202,7 @@ const handleSearchInput = () => {
 }
 
 const handleSearchClear = () => {
-  if (!props.autoFetch) return
+  if (!isFetchMode.value) return
   if (searchTimer) clearTimeout(searchTimer)
   searchAfter.value = ''
   hasMore.value = false
@@ -175,12 +218,12 @@ const filteredGroups = computed(() => {
   )
 })
 
-// 实际渲染列表：自动拉取用 circles，否则用外部传入数据
-const displayedGroups = computed(() => (props.autoFetch ? circles.value : filteredGroups.value))
+// 实际渲染列表：拉取模式用 circles，否则用外部传入数据
+const displayedGroups = computed(() => (isFetchMode.value ? circles.value : filteredGroups.value))
 
-// === 无限滚动（仅自动拉取模式）===
+// === 无限滚动（仅拉取模式）===
 const setupObserver = () => {
-  if (!props.autoFetch) return
+  if (!isFetchMode.value) return
   if (observer) {
     observer.disconnect()
     observer = null
@@ -200,6 +243,11 @@ const setupObserver = () => {
 
 watch([sentinel, hasMore, loading], setupObserver)
 
+// 切换目标用户（路由参数变化）时重置并重新拉取首页
+watch(() => props.userId, (next, prev) => {
+  if (next !== prev) resetAndFetch()
+})
+
 // 点击圈子：跳转圈子详情，同时上抛 click 供父组件兜底
 const handleClick = (group) => {
   emit('click', group)
@@ -209,9 +257,14 @@ const handleClick = (group) => {
 }
 
 onMounted(() => {
-  if (props.autoFetch) {
+  if (isFetchMode.value) {
     nextTick(() => fetchCircles(false))
   }
+})
+
+onBeforeUnmount(() => {
+  if (observer) observer.disconnect()
+  if (searchTimer) clearTimeout(searchTimer)
 })
 </script>
 
@@ -296,6 +349,14 @@ onMounted(() => {
 .scroll-sentinel {
   grid-column: 1 / -1;
   height: 1px;
+}
+
+.truncated-hint {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 8px 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .empty-state {
