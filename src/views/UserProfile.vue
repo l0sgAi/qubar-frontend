@@ -39,10 +39,10 @@
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>{{ t('user.myGroups') }}</span>
-                  <NTag size="small" :bordered="false" round>{{ mockData.groups.length }}</NTag>
+                  <NTag size="small" :bordered="false" round>{{ groupsTotal }}</NTag>
                 </NSpace>
               </template>
-              <MyGroups :groups="mockData.groups" @click="handleGroupClick"/>
+              <MyGroups :auto-fetch="true" @total-change="handleGroupsTotalChange"/>
             </NTabPane>
 
             <!-- 我的收藏 Tab -->
@@ -300,6 +300,12 @@ const handlePostsTotalChange = (total) => {
   postsTotal.value = total || 0
 }
 
+// 加入的兴趣圈总数（由 MyGroups 通过 total-change 上报，用于 Tab 计数）
+const groupsTotal = ref(0)
+const handleGroupsTotalChange = (total) => {
+  groupsTotal.value = total || 0
+}
+
 // 用户信息
 const userInfo = ref({
   id: null,
@@ -359,38 +365,6 @@ const mockData = ref({
       comments: 32,
       likes: 234,
       views: 1890
-    }
-  ],
-  groups: [
-    {
-      id: 1,
-      name: 'Vue.js爱好者',
-      description: 'Vue.js技术交流与学习社区',
-      avatar: 'https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg',
-      coverGradient: 'linear-gradient(135deg, rgba(66, 184, 131, 0.3) 0%, rgba(66, 184, 131, 0.1) 100%)',
-      members: 1234,
-      posts: 5678,
-      role: 'admin'
-    },
-    {
-      id: 2,
-      name: '前端性能优化',
-      description: '专注于前端性能优化的技术讨论',
-      avatar: 'https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg',
-      coverGradient: 'linear-gradient(135deg, rgba(236, 72, 153, 0.3) 0%, rgba(236, 72, 153, 0.1) 100%)',
-      members: 892,
-      posts: 2341,
-      role: 'member'
-    },
-    {
-      id: 3,
-      name: 'Node.js实战',
-      description: 'Node.js后端开发经验分享',
-      avatar: 'https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg',
-      coverGradient: 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0.1) 100%)',
-      members: 567,
-      posts: 1234,
-      role: 'member'
     }
   ],
   favorites: [
@@ -659,11 +633,6 @@ const handlePostEdit = (post) => {
 
 const handlePostDelete = (post) => {
   message.warning(`删除帖子: ${post.title}`)
-}
-
-// 兴趣圈操作
-const handleGroupClick = (group) => {
-  message.info(`进入兴趣圈: ${group.name}`)
 }
 
 // 收藏操作

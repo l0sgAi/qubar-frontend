@@ -40,7 +40,7 @@
     <div class="post-content">
       <h3 class="post-title">{{ title }}</h3>
       <p v-if="content" ref="textRef" class="post-text">{{ content }}</p>
-      <span v-if="content && isTruncated" class="view-detail">{{ t('post.viewDetail') }} →</span>
+      <span v-if="content && isTruncated" class="view-detail">{{ t('post.viewDetail') }} ></span>
     </div>
 
     <!-- 图片轮播：封面图与多图统一展示 -->
