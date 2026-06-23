@@ -327,6 +327,16 @@ onBeforeUnmount(() => {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
+/* 修正首字母居中：display-directive="show" 下兴趣圈 tab 初始 display:none 挂载，
+   naive-ui NAvatar 的 fitTextTransform 首次在隐藏态测得 offsetWidth/Height=0 → ratio=NaN →
+   内联 transform(scale NaN) 失效；又因 memoedTextHtml 缓存守卫，切回可见态不再重算，
+   导致 .n-avatar__text 停在 left/top:50%（左上角贴圆心）→ 首字母偏到右下角。
+   此处强制 translate 基于元素真实尺寸居中（CSS 百分比 translate 渲染即正确，绕过 JS 测量），
+   !important 用于覆盖 naive-ui 写入的内联 transform。*/
+.group-info :deep(.n-avatar__text) {
+  transform: translate(-50%, -50%) !important;
+}
+
 .group-name {
   font-size: 1rem;
   font-weight: 600;
