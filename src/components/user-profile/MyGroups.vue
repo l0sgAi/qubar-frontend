@@ -22,7 +22,7 @@
     </div>
 
     <NSpin :show="loading">
-      <div class="groups-grid">
+      <div class="groups-grid" :class="{ 'groups-grid--loading': loading && !displayedGroups.length }">
         <div v-if="displayedGroups.length === 0 && !loading" class="empty-state">
           <NIcon size="64" :depth="3">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -294,6 +294,11 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+}
+
+/* 加载占位：列表为空时撑高容器，避免 NSpin 动画被裁剪、页面收缩跳动 */
+.groups-grid--loading {
+  min-height: 320px;
 }
 
 .group-card {

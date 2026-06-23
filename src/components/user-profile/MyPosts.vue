@@ -21,7 +21,7 @@
     </div>
 
     <NSpin :show="loading && !posts.length">
-      <div class="posts-list">
+      <div class="posts-list" :class="{ 'posts-list--loading': loading && !posts.length }">
         <div v-if="!loading && posts.length === 0" class="empty-state">
           <NIcon size="64" :depth="3">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -360,6 +360,11 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* 加载占位：列表为空时撑高容器，避免 NSpin 动画被裁剪、页面收缩跳动 */
+.posts-list--loading {
+  min-height: 320px;
 }
 
 .post-cards {
