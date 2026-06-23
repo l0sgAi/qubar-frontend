@@ -21,7 +21,7 @@
             class="profile-tabs">
 
             <!-- 帖子 Tab -->
-            <NTabPane name="posts">
+            <NTabPane name="posts" display-directive="show">
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>帖子</span>
@@ -35,7 +35,7 @@
             </NTabPane>
 
             <!-- 加入的兴趣圈 Tab -->
-            <NTabPane name="groups">
+            <NTabPane name="groups" display-directive="show">
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>兴趣圈</span>

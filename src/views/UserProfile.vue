@@ -21,7 +21,7 @@
             class="profile-tabs">
 
             <!-- 我的帖子 Tab -->
-            <NTabPane name="posts">
+            <NTabPane name="posts" display-directive="show">
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>{{ t('user.myPosts') }}</span>
@@ -35,7 +35,7 @@
             </NTabPane>
 
             <!-- 加入的兴趣圈 Tab -->
-            <NTabPane name="groups">
+            <NTabPane name="groups" display-directive="show">
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>{{ t('user.myGroups') }}</span>
@@ -46,7 +46,7 @@
             </NTabPane>
 
             <!-- 我的收藏 Tab -->
-            <NTabPane name="favorites">
+            <NTabPane name="favorites" display-directive="show">
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>{{ t('user.myFavorites') }}</span>
@@ -60,7 +60,7 @@
             </NTabPane>
 
             <!-- 浏览历史 Tab -->
-            <NTabPane name="history">
+            <NTabPane name="history" display-directive="show">
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>{{ t('user.browseHistory') }}</span>
