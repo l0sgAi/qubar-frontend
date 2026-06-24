@@ -16,6 +16,24 @@ export function updateUserInfo(data) {
 }
 
 /**
+ * 重置 / 设置密码（PUT /user/update 的部分更新语义，不校验旧密码）
+ * 后端要求 password 与 confirm_password 成对提交，二者缺一报 400。
+ * @param {string} password - 新密码（最小 6 字符；原样提交，不 trim）
+ * @param {string} confirmPassword - 确认密码，须与 password 完全一致
+ * @returns {Promise} 成功 resolve 响应体；业务错误（code!==200）由 request 拦截器 reject
+ */
+export function resetPassword(password, confirmPassword) {
+  return request({
+    url: '/user/update',
+    method: 'put',
+    data: {
+      password,
+      confirm_password: confirmPassword
+    }
+  })
+}
+
+/**
  * 搜索用户列表
  * @param {Object} params - 查询参数
  * @param {string} params.keyword - 搜索关键词（可选）

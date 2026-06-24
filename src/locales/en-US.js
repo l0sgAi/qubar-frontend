@@ -288,6 +288,19 @@ export default {
       updateFailed: 'Failed to update profile',
       fetchFailed: 'Failed to fetch user info',
       clearHistory: 'Clear browsing history'
+    },
+    passwordModal: {
+      button: 'Change Password',
+      title: 'Change Password',
+      newPassword: 'New Password',
+      confirmPassword: 'Confirm Password',
+      newPasswordPlaceholder: 'Enter new password (at least 6 characters)',
+      confirmPasswordPlaceholder: 'Enter the new password again',
+      lengthError: 'Password must be at least 6 characters',
+      mismatchError: 'The two passwords do not match',
+      updateSuccess: 'Password changed successfully',
+      updateFailed: 'Failed to change password',
+      sessionTip: 'Your current session stays valid after changing the password. No need to log in again.'
     }
   },
 

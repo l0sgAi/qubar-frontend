@@ -103,6 +103,9 @@
                 </template>
                 {{ t('user.editProfile') }}
               </NButton>
+              <NButton quaternary size="small" @click="openPasswordModal" style="width: 100%; margin-top: 8px; border-radius: 20px;">
+                {{ t('user.passwordModal.button') }}
+              </NButton>
             </div>
 
             <!-- 用户基本信息 -->
@@ -230,6 +233,50 @@
         </template>
       </NModal>
 
+      <!-- 修改密码 / 设置密码模态框（不校验旧密码；提交后当前会话保持有效） -->
+      <NModal
+        v-model:show="showPasswordModal"
+        preset="card"
+        :title="t('user.passwordModal.title')"
+        class="edit-modal"
+        :mask-closable="false"
+        :bordered="false"
+        :segmented="{ content: 'soft' }"
+        size="huge"
+        header-style="font-size: 26px;"
+        :style="{ width: '40dvw', borderRadius: '24px' }">
+        <NForm ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-placement="top" size="large">
+          <NFormItem :label="t('user.passwordModal.newPassword')" path="password">
+            <NInput
+              v-model:value="passwordForm.password"
+              type="password"
+              show-password-on="click"
+              :placeholder="t('user.passwordModal.newPasswordPlaceholder')"
+              size="large"
+            />
+          </NFormItem>
+          <NFormItem :label="t('user.passwordModal.confirmPassword')" path="confirmPassword">
+            <NInput
+              v-model:value="passwordForm.confirmPassword"
+              type="password"
+              show-password-on="click"
+              :placeholder="t('user.passwordModal.confirmPasswordPlaceholder')"
+              size="large"
+              @keyup.enter="handleResetPassword"
+            />
+          </NFormItem>
+          <NText depth="3" style="font-size: 12px;">{{ t('user.passwordModal.sessionTip') }}</NText>
+        </NForm>
+        <template #footer>
+          <div class="modal-footer">
+            <NButton @click="showPasswordModal = false">{{ t('common.cancel') }}</NButton>
+            <NButton type="primary" @click="handleResetPassword" :loading="passwordUpdating">
+              {{ t('user.editModal.saveChanges') }}
+            </NButton>
+          </div>
+        </template>
+      </NModal>
+
       <!-- 头像裁剪弹窗（1:1，仅预览圆形头像） -->
       <ImageCropperModal
         v-model:show="cropperVisible"
@@ -282,7 +329,7 @@ import BrowseHistory from '@/components/user-profile/BrowseHistory.vue'
 import ImageCropperModal from '@/components/ImageCropperModal.vue'
 import { auth } from '@/utils/auth'
 import request from '@/utils/request'
-import { updateUserInfo } from '@/api/user'
+import { updateUserInfo, resetPassword } from '@/api/user'
 import { useImageUpload } from '@/composables/useImageUpload'
 import { useI18n } from 'vue-i18n'
 
@@ -418,6 +465,37 @@ const showEditModal = ref(false)
 const updating = ref(false)
 const avatarFileList = ref([])
 const { uploadOne } = useImageUpload()
+
+// 修改密码模态框相关（不校验旧密码；密码原样提交，不 trim）
+const showPasswordModal = ref(false)
+const passwordUpdating = ref(false)
+const passwordFormRef = ref(null)
+const passwordForm = ref({
+  password: '',
+  confirmPassword: ''
+})
+const passwordRules = {
+  password: {
+    required: true,
+    trigger: ['blur', 'input'],
+    validator: (_rule, value) => {
+      if (!value || value.length < 6) {
+        return new Error(t('user.passwordModal.lengthError'))
+      }
+      return true
+    }
+  },
+  confirmPassword: {
+    required: true,
+    trigger: ['blur', 'input'],
+    validator: (_rule, value) => {
+      if (value !== passwordForm.value.password) {
+        return new Error(t('user.passwordModal.mismatchError'))
+      }
+      return true
+    }
+  }
+}
 
 // 头像裁剪弹窗状态（选图后先裁剪再上传，与创建圈子流程一致）
 const cropperVisible = ref(false)
@@ -624,6 +702,40 @@ const openEditModal = () => {
 // 编辑按钮点击事件
 const handleEditClick = () => {
   openEditModal()
+}
+
+// 打开修改密码弹窗
+const openPasswordModal = () => {
+  passwordForm.value = { password: '', confirmPassword: '' }
+  showPasswordModal.value = true
+}
+
+// 提交重置密码（本地先校验减少 400 往返；不校验旧密码；成功后不踢登录）
+const handleResetPassword = async () => {
+  try {
+    await passwordFormRef.value?.validate()
+  } catch {
+    return
+  }
+  if (passwordForm.value.password.length < 6) {
+    message.error(t('user.passwordModal.lengthError'))
+    return
+  }
+  if (passwordForm.value.password !== passwordForm.value.confirmPassword) {
+    message.error(t('user.passwordModal.mismatchError'))
+    return
+  }
+  passwordUpdating.value = true
+  try {
+    await resetPassword(passwordForm.value.password, passwordForm.value.confirmPassword)
+    message.success(t('user.passwordModal.updateSuccess'))
+    showPasswordModal.value = false
+  } catch (error) {
+    console.error('修改密码失败:', error)
+    message.error(error.message || t('user.passwordModal.updateFailed'))
+  } finally {
+    passwordUpdating.value = false
+  }
 }
 
 // 帖子操作

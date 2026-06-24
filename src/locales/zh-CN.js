@@ -288,6 +288,19 @@ export default {
       updateFailed: '更新个人信息失败',
       fetchFailed: '获取用户信息失败',
       clearHistory: '清空浏览历史'
+    },
+    passwordModal: {
+      button: '修改密码',
+      title: '修改密码',
+      newPassword: '新密码',
+      confirmPassword: '确认密码',
+      newPasswordPlaceholder: '请输入新密码（至少 6 位）',
+      confirmPasswordPlaceholder: '请再次输入新密码',
+      lengthError: '密码至少 6 位',
+      mismatchError: '两次输入的密码不一致',
+      updateSuccess: '密码修改成功',
+      updateFailed: '密码修改失败',
+      sessionTip: '修改成功后当前登录保持有效，无需重新登录'
     }
   },
 
