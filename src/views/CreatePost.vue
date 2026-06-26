@@ -442,9 +442,9 @@ onMounted(async () => {
 }
 
 .main-content {
-  margin-top: 64px;
+  margin-top: var(--header-height);
   padding: 24px;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - var(--header-height));
   transition: margin-left 0.3s ease, width 0.3s ease;
 }
 

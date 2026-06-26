@@ -241,7 +241,7 @@ const handleCreateSuccess = (data) => {
 .side-layout {
   position: fixed;
   left: 0;
-  top: 64px;
+  top: var(--header-height);
   bottom: 0;
   z-index: 999;
   overflow-y: hidden !important;
@@ -252,7 +252,7 @@ const handleCreateSuccess = (data) => {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
-  height: calc(100vh - 64px);
+  height: calc(100vh - var(--header-height));
   overflow-y: auto;
 }
 

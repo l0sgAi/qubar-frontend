@@ -190,14 +190,14 @@ const handleLogout = async () => {
   display: flex;
   justify-content: center;
   gap: 24px;
-  margin-top: 4%;
-  min-height: calc(100vh - 64px);
+  margin-top: var(--header-height);
+  min-height: calc(100vh - var(--header-height));
   transition: margin-left 0.3s ease, width 0.3s ease;
 }
 
 .main-content {
   padding: 24px;
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - var(--header-height));
   max-width: 780px;
   width: 100%;
 }

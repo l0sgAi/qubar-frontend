@@ -835,9 +835,9 @@ onMounted(() => {
 }
 
 .main-content {
-  margin-top: 7dvh;
+  margin-top: var(--header-height);
   padding: 24px;
-  min-height: calc(100dvh - 64px);
+  min-height: calc(100vh - var(--header-height));
   transition: margin-left 0.3s ease, width 0.3s ease;
   display: flex;
   gap: 24px;

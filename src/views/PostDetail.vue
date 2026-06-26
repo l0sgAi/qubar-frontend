@@ -216,8 +216,8 @@ onMounted(() => {
 }
 
 .main-content {
-  margin-top: 10dvh;
-  min-height: calc(100vh - 64px);
+  margin-top: var(--header-height);
+  min-height: calc(100vh - var(--header-height));
   transition: margin-left 0.3s ease, width 0.3s ease;
 }
 
@@ -250,8 +250,8 @@ onMounted(() => {
   width: 23dvw;
   flex-shrink: 0;
   position: sticky;
-  top: 88px;
-  max-height: calc(100vh - 88px);
+  top: calc(var(--header-height) + 24px);
+  max-height: calc(100vh - var(--header-height) - 24px);
   overflow-y: auto;
   /* 隐藏滚动条 */
   scrollbar-width: none; /* Firefox */

@@ -382,11 +382,10 @@ const handleClearCircleSearch = () => {
   top: 0;
   left: 0;
   right: 0;
-  height: 8dvh;
+  height: var(--header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* margin-bottom: 8dvh; */
   padding: 0 24px;
   background: rgba(16, 16, 28, 0.8);
   backdrop-filter: blur(20px);
@@ -445,7 +444,7 @@ const handleClearCircleSearch = () => {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   padding: 6px 16px;
-  min-height: 6dvh;
+  min-height: 44px;
   transition: all 0.3s ease;
   gap: 8px;
 }
