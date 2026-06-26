@@ -71,6 +71,7 @@ import CommentEditor from '@/components/post-detail/CommentEditor.vue'
 import CommentList from '@/components/post-detail/CommentList.vue'
 import { getPostDetail } from '@/api/post'
 import { toggleLike } from '@/api/like'
+import { toggleCollect } from '@/api/collect'
 import { getCircleDetail } from '@/api/circle'
 import { useThrottleFn, useDebounceFn } from '@/utils/throttle'
 import {ArticleRound} from '@vicons/material'
@@ -157,9 +158,25 @@ const handleLike = () => {
   debouncedPostLike()
 }
 
-// 收藏
+// 收藏（乐观更新 + debounce 合并请求）
+// 收藏数 collect_count 由后端异步聚合，前端不本地 ±1（对接文档约定）
+const debouncedPostCollect = useDebounceFn(async () => {
+  if (!post.value) return
+  try {
+    const res = await toggleCollect({ post_id: post.value.id })
+    if (res.data) {
+      post.value.is_collected = res.data.is_collected
+    }
+  } catch (error) {
+    post.value.is_collected = !post.value.is_collected
+    message.error(t('messages.operationFailed', { error: error.message }))
+  }
+}, 600)
+
 const handleCollect = () => {
-  message.info(t('messages.favoriteFeaturePending'))
+  if (!post.value) return
+  post.value.is_collected = !post.value.is_collected
+  debouncedPostCollect()
 }
 
 // ============ 评论区相关 ============

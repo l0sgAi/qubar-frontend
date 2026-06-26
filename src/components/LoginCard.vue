@@ -6,7 +6,10 @@
     </div>
 
     <div class="logo-area">
-      <div class="logo-text">{{ t('common.appName') }}</div>
+      <div class="logo-brand">
+        <img src="/favicon.svg" alt="logo" class="logo-icon" />
+        <span class="logo-text">{{ t('common.appName') }}</span>
+      </div>
       <p class="tagline">{{ t('login.tagline') }}</p>
     </div>
 
@@ -616,6 +619,20 @@ function handleAzureLogin() {
   margin-bottom: 24px;
 }
 
+.logo-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.logo-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
 .logo-text {
   font-size: 2.5rem;
   font-weight: 800;
@@ -623,7 +640,6 @@ function handleAzureLogin() {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 12px;
   letter-spacing: -0.5px;
 }
 

@@ -86,6 +86,7 @@ export default {
       like: 'Like',
       liked: 'Liked',
       favorite: 'Favorite',
+      favorited: 'Favorited',
       share: 'Share',
       comment: 'Comment'
     },

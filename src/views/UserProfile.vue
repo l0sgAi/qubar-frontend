@@ -50,13 +50,10 @@
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>{{ t('user.myFavorites') }}</span>
-                  <NTag size="small" :bordered="false" round>{{ mockData.favorites.length }}</NTag>
+                  <NTag size="small" :bordered="false" round>{{ favoritesTotal }}</NTag>
                 </NSpace>
               </template>
-              <MyFavorites
-                :favorites="mockData.favorites"
-                @remove="handleFavoriteRemove"
-                @click="handleFavoriteClick"/>
+              <MyFavorites @total-change="handleFavoritesTotalChange"/>
             </NTabPane>
 
             <!-- 浏览历史 Tab -->
@@ -351,6 +348,12 @@ const handlePostsTotalChange = (total) => {
 const groupsTotal = ref(0)
 const handleGroupsTotalChange = (total) => {
   groupsTotal.value = total || 0
+}
+
+// 我的收藏总数（由 MyFavorites 通过 total-change 上报，用于 Tab 计数）
+const favoritesTotal = ref(0)
+const handleFavoritesTotalChange = (total) => {
+  favoritesTotal.value = total || 0
 }
 
 // 用户信息

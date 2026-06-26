@@ -1,7 +1,7 @@
 export default {
   // 通用
   common: {
-    appName: '趣吧 Qubar',
+    appName: '趣吧',
     search: '搜索',
     searchPlaceholder: '搜索兴趣圈、帖子...',
     searchPosts: '搜索帖子',
@@ -86,6 +86,7 @@ export default {
       like: '点赞',
       liked: '已赞',
       favorite: '收藏',
+      favorited: '已收藏',
       share: '分享',
       comment: '评论'
     },

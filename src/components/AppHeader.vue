@@ -1,7 +1,10 @@
 <template>
   <div class="app-header">
     <div class="header-left">
-      <div class="logo" @click="goHome">{{ t('common.appName') }}</div>
+      <div class="logo" @click="goHome">
+        <img src="/favicon.svg" alt="logo" class="logo-icon" />
+        <span class="logo-text">{{ t('common.appName') }}</span>
+      </div>
     </div>
 
     <div class="header-center">
@@ -383,6 +386,7 @@ const handleClearCircleSearch = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* margin-bottom: 8dvh; */
   padding: 0 24px;
   background: rgba(16, 16, 28, 0.8);
   backdrop-filter: blur(20px);
@@ -398,14 +402,26 @@ const handleClearCircleSearch = () => {
 }
 
 .logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.logo-text {
   font-size: 1.5rem;
   font-weight: 700;
   background: rgba(96, 248, 187, 0.867);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  cursor: pointer;
-  user-select: none;
 }
 
 .header-center {

@@ -4,9 +4,11 @@
       <h2 class="tab-title">{{ t('user.myFavorites') }}</h2>
       <NInput
         v-model:value="searchKey"
-        :placeholder="t('common.search')"
+        :placeholder="t('common.searchPosts')"
         clearable
-        style="width: 280px;">
+        style="width: 280px;"
+        @input="handleSearchInput"
+        @clear="handleSearchClear">
         <template #prefix>
           <NIcon>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -18,105 +20,232 @@
       </NInput>
     </div>
 
-    <NSpin :show="loading">
-      <div class="favorites-list">
-        <div v-if="filteredFavorites.length === 0" class="empty-state">
+    <NSpin :show="loading && !posts.length">
+      <div class="posts-list" :class="{ 'posts-list--loading': loading && !posts.length }">
+        <div v-if="!loading && posts.length === 0" class="empty-state">
           <NIcon size="64" :depth="3">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
           </NIcon>
           <p class="empty-text">{{ t('post.noFavorites') }}</p>
-          <p class="empty-hint">{{ t('post.actions.favorite') }}</p>
         </div>
-        <NCard
-          v-for="item in filteredFavorites"
-          :key="item.id"
-          class="favorite-card"
-          :bordered="false"
-          hoverable>
-          <div class="favorite-content">
-            <div class="favorite-icon">
-              <NIcon size="32" :color="item.type === 'post' ? '#ec4899' : '#a855f7'">
-                <svg v-if="item.type === 'post'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1m2 13a2 2 0 0 1-2-2V7m2 13a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
-                </svg>
-                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-              </NIcon>
-            </div>
-            <div class="favorite-info">
-              <h4 class="favorite-title">{{ item.title }}</h4>
-              <p class="favorite-description">{{ item.description }}</p>
-              <div class="favorite-meta">
-                <span class="favorite-type">
-                  <NTag :type="item.type === 'post' ? 'primary' : 'info'" size="tiny">
-                    {{ item.type === 'post' ? t('post.post') : t('circle.interestCircle') }}
-                  </NTag>
-                </span>
-                <span class="favorite-time">{{ item.time }}</span>
+        <div v-else class="post-cards">
+          <NCard
+            v-for="post in posts"
+            :key="post.id"
+            class="post-card"
+            :bordered="false"
+            hoverable
+            @click="handleCardClick(post)">
+            <div class="post-header">
+              <div class="post-author">
+                <NAvatar
+                  :size="40"
+                  :src="post.authorAvatar"
+                  round/>
+                <div class="author-info">
+                  <span class="author-name">{{ post.authorName }}</span>
+                  <span class="post-time">{{ post.timeText }}</span>
+                </div>
               </div>
             </div>
-            <NButton
-              text
-              type="error"
-              size="small"
-              @click="handleRemove(item)">
-              <template #icon>
-                <NIcon>
-                  <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                  </svg>
-                </NIcon>
-              </template>
-            </NButton>
-          </div>
-        </NCard>
+            <div class="post-title-row">
+              <h3 class="post-title">{{ post.title }}</h3>
+              <div v-if="post.isPinned || post.isEssence" class="post-badges">
+                <NTag v-if="post.isPinned" size="tiny" round type="warning">{{ t('post.badges.pinned') }}</NTag>
+                <NTag v-if="post.isEssence" size="tiny" round type="success">{{ t('post.badges.essence') }}</NTag>
+              </div>
+            </div>
+            <p class="post-content">{{ post.content }}</p>
+            <!-- 图片轮播：与帖子列表卡片统一使用 ImageCarousel -->
+            <div v-if="post.images && post.images.length" class="post-carousel" @click.stop>
+              <ImageCarousel :images="post.images" :parent-width="900" />
+            </div>
+            <div class="post-footer">
+              <div class="post-tags">
+                <span v-if="post.circleName" class="circle-tag">{{ post.circleName }}</span>
+              </div>
+              <div class="post-stats">
+                <span class="stat">
+                  <NIcon>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                  </NIcon>
+                  {{ formatNumber(post.comments) }}
+                </span>
+                <span class="stat">
+                  <NIcon>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                  </NIcon>
+                  {{ formatNumber(post.likes) }}
+                </span>
+                <span class="stat">
+                  <NIcon>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </NIcon>
+                  {{ formatNumber(post.views) }}
+                </span>
+                <span class="stat">
+                  <NIcon>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                  </NIcon>
+                  {{ formatNumber(post.collects) }}
+                </span>
+              </div>
+            </div>
+          </NCard>
+        </div>
+
+        <!-- 无限滚动哨兵 -->
+        <div ref="sentinel" class="scroll-sentinel"></div>
+        <div v-if="posts.length" class="list-footer">
+          <span v-if="loading" class="footer-text">{{ t('common.loading') }}</span>
+          <span v-else-if="!hasMore" class="footer-text">{{ t('common.noMore') }}</span>
+        </div>
       </div>
     </NSpin>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { NCard, NIcon, NTag, NInput, NButton, NSpin, useMessage } from 'naive-ui'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+import { NCard, NAvatar, NIcon, NTag, NInput, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
+import { getCollectedPosts } from '@/api/collect'
+import { useFormatTime, useFormatNumber } from '@/utils/i18n'
+import ImageCarousel from '@/components/post-detail/ImageCarousel.vue'
 
+const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
+const { formatTime } = useFormatTime()
+const { formatNumber } = useFormatNumber()
 
-const props = defineProps({
-  favorites: {
-    type: Array,
-    default: () => []
-  }
-})
-
-const emit = defineEmits(['remove', 'click'])
+const emit = defineEmits(['total-change'])
 
 const searchKey = ref('')
 const loading = ref(false)
 
-const filteredFavorites = computed(() => {
-  if (!searchKey.value) return props.favorites
-  return props.favorites.filter(fav =>
-    fav.title.toLowerCase().includes(searchKey.value.toLowerCase()) ||
-    fav.description.toLowerCase().includes(searchKey.value.toLowerCase())
-  )
+// 列表与分页状态（/collect/posts 采用 keyset 游标分页）
+const PAGE_SIZE = 10
+const posts = ref([])
+const searchAfter = ref('') // 游标原样字符串，首页为空串；原样透传给下一页
+const hasMore = ref(false)
+const sentinel = ref(null)
+let searchTimer = null
+let observer = null
+
+// 后端 snake_case → 组件 camelCase（结构同帖子列表接口）
+const transformPost = (p) => ({
+  id: p.id,
+  title: p.title || t('post.title'),
+  content: p.summary || p.content || '',
+  authorName: p.author_name || '',
+  authorAvatar: p.author_avatar || '',
+  circleName: p.circle_name || '',
+  images: p.images || [],
+  isPinned: p.is_pinned,
+  isEssence: p.is_essence,
+  timeText: formatTime(p.create_time || ''),
+  comments: p.comment_count || 0,
+  likes: p.like_count || 0,
+  views: p.view_count || 0,
+  collects: p.collect_count || 0
 })
 
-const handleRemove = (item) => {
-  message.info(`${t('common.delete')}: ${item.title}`)
-  emit('remove', item)
+// 拉取收藏帖子：append=true 表示追加下一页
+const fetchPosts = async (append = false) => {
+  if (loading.value) return
+  loading.value = true
+  try {
+    const params = { size: PAGE_SIZE }
+    if (searchKey.value) params.keyword = searchKey.value
+    if (append && searchAfter.value) {
+      // 游标原样透传，不解析/不重新序列化（axios 会自动 URL-encode）
+      params.search_after = searchAfter.value
+    }
+
+    const res = await getCollectedPosts(params)
+    const data = res.data || {}
+    const list = (data.posts || []).map(transformPost)
+    posts.value = append ? [...posts.value, ...list] : list
+
+    // search_after 为空字符串表示已到末页；否则原样保存供下一页透传
+    searchAfter.value = data.search_after || ''
+    hasMore.value = !!data.search_after
+
+    // 仅首页（含新搜索）上报命中总数，供父组件展示 Tab 计数
+    if (!append) {
+      emit('total-change', data.total || 0)
+    }
+  } catch (error) {
+    console.error('获取收藏列表失败:', error)
+    message.error(error.message || t('common.operationFailed'))
+  } finally {
+    loading.value = false
+  }
 }
 
-const handleClick = (item) => {
-  emit('click', item)
+// 关键字搜索（防抖；后端规划支持关键字，传入即前向兼容）
+const handleSearchInput = () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    searchAfter.value = ''
+    hasMore.value = false
+    fetchPosts(false)
+  }, 500)
 }
+
+const handleSearchClear = () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchAfter.value = ''
+  hasMore.value = false
+  fetchPosts(false)
+}
+
+// 无限滚动：sentinel 进入视口时加载下一页
+const setupObserver = () => {
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+  if (!sentinel.value || !hasMore.value || loading.value) return
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && hasMore.value && !loading.value) {
+        fetchPosts(true)
+      }
+    },
+    { rootMargin: '200px' } // 提前 200px 触发，体验更顺滑
+  )
+  observer.observe(sentinel.value)
+}
+
+watch([sentinel, hasMore, loading], setupObserver)
+
+const handleCardClick = (post) => {
+  router.push(`/post/${post.id}`)
+}
+
+onMounted(() => {
+  fetchPosts(false)
+})
+
+onBeforeUnmount(() => {
+  if (observer) observer.disconnect()
+  if (searchTimer) clearTimeout(searchTimer)
+})
 </script>
 
 <style scoped>
@@ -127,11 +256,9 @@ const handleClick = (item) => {
 .tab-header {
   display: flex;
   align-items: center;
-  /* justify-content: space-between; */
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
-  margin-right: 3dvw;
 }
 
 .tab-title {
@@ -141,64 +268,154 @@ const handleClick = (item) => {
   color: rgba(255, 255, 255, 0.95);
 }
 
-.favorites-list {
+.posts-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
-.favorite-card {
+/* 加载占位：列表为空时撑高容器，避免 NSpin 动画被裁剪、页面收缩跳动 */
+.posts-list--loading {
+  min-height: 320px;
+}
+
+.post-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.post-card {
   background: rgba(255, 255, 255, 0.02) !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
   transition: all 0.3s ease;
   cursor: pointer;
 }
 
-.favorite-card:hover {
+.post-card:hover {
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
+  transform: translateY(-2px);
 }
 
-.favorite-content {
+.post-header {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
 
-.favorite-icon {
-  flex-shrink: 0;
-}
-
-.favorite-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.favorite-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-  margin: 0 0 4px 0;
-}
-
-.favorite-description {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 8px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.favorite-meta {
+.post-author {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.favorite-time {
+.author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.author-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.post-time {
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.5);
+}
+
+.post-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px 0;
+}
+
+.post-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+}
+
+.post-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.post-content {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  margin: 0 0 12px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 图片轮播：与帖子列表卡片保持一致 */
+.post-carousel {
+  margin-bottom: 12px;
+}
+
+.post-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.post-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.circle-tag {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+.post-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.post-stats .stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.scroll-sentinel {
+  height: 1px;
+  width: 100%;
+}
+
+.list-footer {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.footer-text {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .empty-state {
@@ -214,12 +431,6 @@ const handleClick = (item) => {
   font-size: 1.1rem;
   color: rgba(255, 255, 255, 0.6);
   margin: 16px 0 4px 0;
-}
-
-.empty-hint {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.4);
-  margin: 0;
 }
 
 /* 响应式 */

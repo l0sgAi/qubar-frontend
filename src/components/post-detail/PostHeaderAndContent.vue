@@ -108,15 +108,21 @@
         {{ post.is_liked ? t('post.actions.liked') : t('post.actions.like') }}
       </NButton>
 
-      <NButton size="large" @click="$emit('collect')">
+      <NButton
+        size="large"
+        :type="post.is_collected ? 'primary' : 'default'"
+        @click="$emit('collect')">
         <template #icon>
           <NIcon size="20">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg v-if="!post.is_collected" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
           </NIcon>
         </template>
-        {{ t('post.actions.favorite') }}
+        {{ post.is_collected ? t('post.actions.favorited') : t('post.actions.favorite') }}
       </NButton>
 
       <NButton size="large">
