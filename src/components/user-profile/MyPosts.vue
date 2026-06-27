@@ -7,7 +7,7 @@
         :placeholder="t('common.searchPosts')"
         clearable
         style="width: 280px;"
-        @input="handleSearchInput"
+        @keyup.enter="handleSearch"
         @clear="handleSearchClear">
         <template #prefix>
           <NIcon>
@@ -18,6 +18,17 @@
           </NIcon>
         </template>
       </NInput>
+      <NButton @click="handleSearch">
+        <template #icon>
+          <NIcon>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </NIcon>
+        </template>
+        {{ t('common.search') }}
+      </NButton>
     </div>
 
     <NSpin :show="loading && !posts.length">
@@ -172,7 +183,6 @@ const posts = ref([])
 const searchAfter = ref('') // 游标原样字符串，首页为空串；原样透传给下一页
 const hasMore = ref(false)
 const sentinel = ref(null)
-let searchTimer = null
 let observer = null
 
 // 后端 snake_case → 组件 camelCase
@@ -231,18 +241,14 @@ const fetchPosts = async (append = false) => {
   }
 }
 
-// 关键字搜索（防抖，服务端匹配）
-const handleSearchInput = () => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    searchAfter.value = ''
-    hasMore.value = false
-    fetchPosts(false)
-  }, 500)
+// 关键字搜索（按钮 / 回车主动触发，服务端匹配）
+const handleSearch = () => {
+  searchAfter.value = ''
+  hasMore.value = false
+  fetchPosts(false)
 }
 
 const handleSearchClear = () => {
-  if (searchTimer) clearTimeout(searchTimer)
   searchAfter.value = ''
   hasMore.value = false
   fetchPosts(false)
@@ -332,7 +338,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (observer) observer.disconnect()
-  if (searchTimer) clearTimeout(searchTimer)
 })
 </script>
 

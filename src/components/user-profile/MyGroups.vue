@@ -6,9 +6,8 @@
         v-model:value="searchKey"
         :placeholder="t('circle.interestCircle')"
         clearable
-        :loading="isFetchMode && loading"
         style="width: 280px;"
-        @input="handleSearchInput"
+        @keyup.enter="handleSearch"
         @clear="handleSearchClear">
         <template #prefix>
           <NIcon>
@@ -19,6 +18,17 @@
           </NIcon>
         </template>
       </NInput>
+      <NButton @click="handleSearch">
+        <template #icon>
+          <NIcon>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </NIcon>
+        </template>
+        {{ t('common.search') }}
+      </NButton>
     </div>
 
     <NSpin :show="loading">
@@ -73,7 +83,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { NCard, NAvatar, NIcon, NInput, NSpin, useMessage } from 'naive-ui'
+import { NCard, NAvatar, NIcon, NInput, NButton, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useFormatNumber } from '@/utils/i18n'
 import { getMyCircles, getUserCircles } from '@/api/post'
@@ -123,7 +133,6 @@ const sentinel = ref(null)
 const browseTotal = ref(0)
 // 搜索模式可能被服务端截断（扫满上限仍未集齐 size 条）
 const truncated = ref(false)
-let searchTimer = null
 let observer = null
 
 // 后端 snake_case → 组件 camelCase
@@ -190,20 +199,16 @@ const resetAndFetch = () => {
 }
 
 // === 搜索 ===
-// 自动拉取模式：服务端关键字匹配（防抖）；外部数据模式：本地过滤
-const handleSearchInput = () => {
+// 自动拉取模式：服务端关键字匹配（按钮 / 回车主动触发）；外部数据模式：本地过滤（响应式）
+const handleSearch = () => {
   if (!isFetchMode.value) return
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    searchAfter.value = ''
-    hasMore.value = false
-    fetchCircles(false)
-  }, 500)
+  searchAfter.value = ''
+  hasMore.value = false
+  fetchCircles(false)
 }
 
 const handleSearchClear = () => {
   if (!isFetchMode.value) return
-  if (searchTimer) clearTimeout(searchTimer)
   searchAfter.value = ''
   hasMore.value = false
   fetchCircles(false)
@@ -264,7 +269,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (observer) observer.disconnect()
-  if (searchTimer) clearTimeout(searchTimer)
 })
 </script>
 

@@ -2,13 +2,13 @@
   <div class="browse-history-tab">
     <div class="tab-header">
       <h2 class="tab-title">{{ t('user.browseHistory') }}</h2>
-      <!-- 搜索框：服务端 keyword 搜索（防抖 500ms），与收藏列表一致 -->
+      <!-- 搜索框：服务端 keyword 搜索，按钮 / 回车主动触发（与收藏列表一致） -->
       <NInput
         v-model:value="searchKey"
         :placeholder="t('common.searchPosts')"
         clearable
         style="width: 280px;"
-        @input="handleSearchInput"
+        @keyup.enter="handleSearch"
         @clear="handleSearchClear">
         <template #prefix>
           <NIcon>
@@ -19,9 +19,20 @@
           </NIcon>
         </template>
       </NInput>
+      <NButton @click="handleSearch">
+        <template #icon>
+          <NIcon>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </NIcon>
+        </template>
+        {{ t('common.search') }}
+      </NButton>
     </div>
 
-    <NSpin :show="loading && !posts.length">
+    <NSpin :show="loading && !isAppending">
       <div class="posts-list" :class="{ 'posts-list--loading': loading && !posts.length }">
         <div v-if="!loading && posts.length === 0" class="empty-state">
           <NIcon size="64" :depth="3">
@@ -131,7 +142,7 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { NCard, NAvatar, NIcon, NTag, NInput, NSpin, useMessage } from 'naive-ui'
+import { NCard, NAvatar, NIcon, NTag, NInput, NButton, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { getHistoryPosts } from '@/api/history'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
@@ -156,6 +167,7 @@ const { formatNumber } = useFormatNumber()
 
 const searchKey = ref('')
 const loading = ref(false)
+const isAppending = ref(false) // true=追加翻页（走底部 loading 文案）；false=首次/搜索/刷新（走 NSpin 遮罩）
 
 // 列表与分页状态（/history/posts 采用 offset 分页，非游标）
 const PAGE_SIZE = 10
@@ -163,7 +175,6 @@ const posts = ref([])
 const offset = ref(0) // 下一页偏移量；首页为 0
 const hasMore = ref(false)
 const sentinel = ref(null)
-let searchTimer = null
 let observer = null
 
 // —— 浏览时间格式化（viewed_at → 卡片徽标文本）——
@@ -223,6 +234,7 @@ const transformPost = (p) => ({
 const fetchPosts = async (append = false) => {
   if (loading.value) return
   loading.value = true
+  isAppending.value = append
   try {
     const params = { size: PAGE_SIZE }
     if (searchKey.value) params.keyword = searchKey.value
@@ -255,18 +267,14 @@ const fetchPosts = async (append = false) => {
   }
 }
 
-// 关键字搜索（防抖 500ms，服务端匹配；与收藏列表一致）
-const handleSearchInput = () => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    offset.value = 0
-    hasMore.value = false
-    fetchPosts(false)
-  }, 500)
+// 关键字搜索（按钮 / 回车主动触发，服务端匹配；与收藏列表一致）
+const handleSearch = () => {
+  offset.value = 0
+  hasMore.value = false
+  fetchPosts(false)
 }
 
 const handleSearchClear = () => {
-  if (searchTimer) clearTimeout(searchTimer)
   offset.value = 0
   hasMore.value = false
   fetchPosts(false)
@@ -316,7 +324,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (observer) observer.disconnect()
-  if (searchTimer) clearTimeout(searchTimer)
 })
 </script>
 
