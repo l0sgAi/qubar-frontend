@@ -49,6 +49,16 @@
                   <span class="post-time">{{ post.timeText }}</span>
                 </div>
               </div>
+              <!-- 本次浏览时间（日期 + 时分，如「今天 12:03」「06-25 12:03」） -->
+              <div v-if="post.viewedText" class="viewed-time">
+                <NIcon size="14">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </NIcon>
+                <span>{{ post.viewedText }}</span>
+              </div>
             </div>
             <div class="post-title-row">
               <h3 class="post-title">{{ post.title }}</h3>
@@ -153,6 +163,40 @@ const hasMore = ref(false)
 const sentinel = ref(null)
 let observer = null
 
+// —— 浏览时间格式化（viewed_at → 卡片徽标文本）——
+const pad2 = (n) => String(n).padStart(2, '0')
+const startOfDayTs = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+
+// 日期部分：今天 / 昨天 / MM-DD（同年）/ YYYY-MM-DD（跨年）
+// 注意：today/yesterday 文案位于 user 命名空间（user.today/user.yesterday），
+// 非 time（time 仅有 justNow/minutesAgo/hoursAgo/daysAgo 相对时间）。
+const viewedDateLabel = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const now = new Date()
+  const diffDays = Math.round((startOfDayTs(now) - startOfDayTs(d)) / 86400000)
+  if (diffDays === 0) return t('user.today')
+  if (diffDays === 1) return t('user.yesterday')
+  const md = `${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+  return d.getFullYear() === now.getFullYear() ? md : `${d.getFullYear()}-${md}`
+}
+
+// 时分部分（HH:mm）
+const viewedTimeLabel = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+}
+
+// 完整浏览时间文本：日期 + 时分，如「今天 12:03」「06-25 12:03」；无 viewed_at 返回空串
+const viewedLabel = (iso) => {
+  const date = viewedDateLabel(iso)
+  const time = viewedTimeLabel(iso)
+  return date && time ? `${date} ${time}` : ''
+}
+
 // 后端 snake_case → 组件 camelCase（结构同帖子列表/收藏接口）
 const transformPost = (p) => ({
   id: p.id,
@@ -168,7 +212,8 @@ const transformPost = (p) => ({
   comments: p.comment_count || 0,
   likes: p.like_count || 0,
   views: p.view_count || 0,
-  collects: p.collect_count || 0
+  collects: p.collect_count || 0,
+  viewedText: viewedLabel(p.viewed_at || '') // 本次浏览时间文本（viewed_at，RFC3339）
 })
 
 // 拉取浏览历史：append=true 表示追加下一页
@@ -342,6 +387,19 @@ onBeforeUnmount(() => {
 .post-time {
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* 浏览时间徽标（post-header 右侧） */
+.viewed-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 3px 10px;
+  border-radius: 10px;
 }
 
 .post-title-row {
