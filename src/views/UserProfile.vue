@@ -293,8 +293,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import {
   NConfigProvider,
   NCard,
@@ -330,12 +330,20 @@ import { useImageUpload } from '@/composables/useImageUpload'
 import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const route = useRoute()
 const message = useMessage()
 const { t } = useI18n()
 const offset = ref(260)
 
-// 当前激活的标签页
-const activeTab = ref('posts')
+// 当前激活的标签页（支持 /profile?tab=groups 等定位）
+const VALID_TABS = ['posts', 'groups', 'favorites', 'history']
+const initialTab = VALID_TABS.includes(route.query.tab) ? route.query.tab : 'posts'
+const activeTab = ref(initialTab)
+
+// 同页 query 变化时同步 tab（路由组件复用不重建）
+watch(() => route.query.tab, (v) => {
+  if (v && VALID_TABS.includes(v)) activeTab.value = v
+})
 
 // 帖子总数（由 MyPosts 通过 total-change 上报，用于 Tab 计数）
 const postsTotal = ref(0)

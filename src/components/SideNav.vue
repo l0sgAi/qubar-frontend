@@ -31,16 +31,18 @@
 </template>
 
 <script setup>
-import { ref, h, computed } from 'vue'
+import { ref, h, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   NLayout,
   NLayoutSider,
   NMenu,
-  NIcon
+  NIcon,
+  NAvatar
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import CreateCircleModal from './CreateCircleModal.vue'
+import { getMyCircles } from '@/api/post'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -86,6 +88,12 @@ const PlusIcon = createIcon([
   'M12 5v14M5 12h14'
 ])
 
+// 查看全部图标（右箭头）
+const ArrowRightIcon = createIcon([
+  'M5 12h14',
+  'M13 6l6 6-6 6'
+])
+
 // 是否折叠
 const isCollapsed = ref(false)
 
@@ -95,13 +103,25 @@ const showCreateModal = ref(false)
 // 当前激活的导航项
 const activeItem = ref('home')
 
-// 我加入的兴趣圈（示例数据）- 每个圈有不同的彩虹色
-const joinedCircles = ref([
-  { id: '1', name: 'Vue.js 开发者', color: '#42b883' },
-  { id: '2', name: '前端技术交流', color: '#3b82f6' },
-  { id: '3', name: 'UI/UX 设计', color: '#ec4899' },
-  { id: '4', name: '摄影爱好者', color: '#f59e0b' }
-])
+// 我加入的兴趣圈（真实数据，取前 5 个）
+const joinedCircles = ref([])
+
+const fetchJoinedCircles = async () => {
+  try {
+    const res = await getMyCircles({ size: 5 })
+    const list = (res.data?.circles || []).map(c => ({
+      id: c.id,
+      name: c.name || t('circle.interestCircle'),
+      avatar: c.avatar_url || ''
+    }))
+    joinedCircles.value = list.slice(0, 5)
+  } catch (e) {
+    console.error('获取我加入的圈子失败:', e)
+    joinedCircles.value = []
+  }
+}
+
+onMounted(fetchJoinedCircles)
 
 // 近期活跃的兴趣圈（示例数据）
 const activeCircles = ref([
@@ -110,15 +130,35 @@ const activeCircles = ref([
   { id: '7', name: 'Python 学习', color: '#8b5cf6' }
 ])
 
-// 渲染兴趣圈图标
+// 兴趣圈图标色调色板（无头像时按名称稳定派生）
+const CIRCLE_PALETTE = ['#42b883', '#3b82f6', '#ec4899', '#f59e0b', '#06b6d4', '#22c55e', '#8b5cf6', '#ef4444']
+const deriveCircleColor = (circle) => {
+  const seed = circle.name || circle.id || ''
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0
+  }
+  return CIRCLE_PALETTE[hash % CIRCLE_PALETTE.length]
+}
+
+// 渲染兴趣圈图标：有头像显示头像，否则首字母 + 派生色
 const renderCircleIcon = (circle) => {
+  if (circle.avatar) {
+    return h(NAvatar, {
+      src: circle.avatar,
+      size: 24,
+      round: false,
+      style: { width: '24px', height: '24px', borderRadius: '6px' }
+    })
+  }
+  const color = circle.color || deriveCircleColor(circle)
   return h('div', {
     class: 'circle-icon',
     style: {
       width: '24px',
       height: '24px',
       borderRadius: '6px',
-      background: `linear-gradient(135deg, ${circle.color}dd, ${circle.color}99)`,
+      background: `linear-gradient(135deg, ${color}dd, ${color}99)`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -126,7 +166,7 @@ const renderCircleIcon = (circle) => {
       fontSize: '12px',
       fontWeight: 'bold'
     }
-  }, circle.name.charAt(0))
+  }, (circle.name || '?').charAt(0))
 }
 
 // 菜单选项
@@ -185,13 +225,20 @@ const menuOptions = computed(() => {
     },
     {
       type: 'group',
-      label: t('circle.myCircles'),
       key: 'joined-group',
-      children: joinedCircles.value.map(circle => ({
-        label: circle.name,
-        key: `circle-${circle.id}`,
-        icon: () => renderCircleIcon(circle)
-      }))
+      label: t('circle.myCircles'),
+      children: [
+        ...joinedCircles.value.map(circle => ({
+          label: circle.name,
+          key: `circle-${circle.id}`,
+          icon: () => renderCircleIcon(circle)
+        })),
+        {
+          label: () => h('span', { style: { color: '#60F8BBDD' } }, t('circle.viewAll')),
+          key: 'view-all-circles',
+          icon: () => h(NIcon, { color: '#60F8BBDD' }, { default: () => h(ArrowRightIcon) })
+        }
+      ]
     },
     {
       type: 'divider',
@@ -218,6 +265,8 @@ const handleMenuSelect = (key) => {
     showCreateModal.value = true
   } else if (key === 'home') {
     router.push('/home')
+  } else if (key === 'view-all-circles') {
+    router.push({ path: '/profile', query: { tab: 'groups' } })
   } else if (key.startsWith('circle-')) {
     // 提取圈子 ID
     const circleId = key.replace('circle-', '')
