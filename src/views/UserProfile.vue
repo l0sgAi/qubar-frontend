@@ -61,13 +61,12 @@
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>{{ t('user.browseHistory') }}</span>
-                  <NTag size="small" :bordered="false" round>{{ mockData.history.length }}</NTag>
+                  <NTag size="small" :bordered="false" round>{{ historyTotal }}</NTag>
                 </NSpace>
               </template>
               <BrowseHistory
-                :history="mockData.history"
-                @clear="handleHistoryClear"
-                @click="handleHistoryClick"/>
+                :active="activeTab === 'history'"
+                @total-change="handleHistoryTotalChange"/>
             </NTabPane>
           </NTabs>
         </NCard>
@@ -356,6 +355,12 @@ const handleFavoritesTotalChange = (total) => {
   favoritesTotal.value = total || 0
 }
 
+// 浏览历史总数（由 BrowseHistory 通过 total-change 上报，用于 Tab 计数）
+const historyTotal = ref(0)
+const handleHistoryTotalChange = (total) => {
+  historyTotal.value = total || 0
+}
+
 // 用户信息
 const userInfo = ref({
   id: null,
@@ -439,14 +444,6 @@ const mockData = ref({
       description: '从零开始学习Webpack的配置和优化',
       time: '2024-01-08'
     }
-  ],
-  history: [
-    { id: 1, type: 'post', title: 'Vue3 Composition API 最佳实践', time: '今天 14:30', date: '今天' },
-    { id: 2, type: 'group', title: 'React技术社区', time: '今天 11:20', date: '今天' },
-    { id: 3, type: 'post', title: 'Node.js性能优化实战', time: '今天 09:15', date: '今天' },
-    { id: 4, type: 'post', title: 'TypeScript高级类型技巧', time: '昨天 16:45', date: '昨天' },
-    { id: 5, type: 'group', title: '前端架构师联盟', time: '昨天 14:20', date: '昨天' },
-    { id: 6, type: 'post', title: '微前端架构设计方案', time: '3天前 10:30', date: '3天前' }
   ]
 })
 
@@ -806,15 +803,6 @@ const getRoleType = (role) => {
     2: 'error'
   }
   return typeMap[role] || 'default'
-}
-
-// 历史操作
-const handleHistoryClear = () => {
-  message.info(t('user.editModal.clearHistory'))
-}
-
-const handleHistoryClick = (item) => {
-  message.info(`跳转到: ${item.title}`)
 }
 
 onMounted(() => {
