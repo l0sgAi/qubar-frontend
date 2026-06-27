@@ -42,7 +42,7 @@ import {
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import CreateCircleModal from './CreateCircleModal.vue'
-import { getMyCircles } from '@/api/post'
+import { getMyCircles, getActiveCircles } from '@/api/post'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -130,14 +130,32 @@ const fetchJoinedCircles = async () => {
   }
 }
 
-onMounted(fetchJoinedCircles)
+onMounted(() => {
+  fetchJoinedCircles()
+  fetchActiveCircles()
+})
 
-// 近期活跃的兴趣圈（示例数据）
-const activeCircles = ref([
-  { id: '5', name: 'React 社区', color: '#06b6d4' },
-  { id: '6', name: 'Node.js 实战', color: '#22c55e' },
-  { id: '7', name: 'Python 学习', color: '#8b5cf6' }
-])
+// 近期活跃的兴趣圈（真实数据，取前 5 个）
+const activeCircles = ref([])
+const activeCirclesLoading = ref(false)
+
+const fetchActiveCircles = async () => {
+  activeCirclesLoading.value = true
+  try {
+    const res = await getActiveCircles({ size: 5, offset: 0 })
+    const list = (res.data?.circles || []).map(c => ({
+      id: c.id,
+      name: c.name || t('circle.interestCircle'),
+      avatar: c.avatar_url || ''
+    }))
+    activeCircles.value = list.slice(0, 5)
+  } catch (e) {
+    console.error('获取近期活跃圈子失败:', e)
+    activeCircles.value = []
+  } finally {
+    activeCirclesLoading.value = false
+  }
+}
 
 // 兴趣圈图标色调色板（无头像时按名称稳定派生）
 const CIRCLE_PALETTE = ['#42b883', '#3b82f6', '#ec4899', '#f59e0b', '#06b6d4', '#22c55e', '#8b5cf6', '#ef4444']
@@ -177,6 +195,23 @@ const renderCircleIcon = (circle) => {
     }
   }, (circle.name || '?').charAt(0))
 }
+
+// 骨架占位样式（加载中）
+const skelStyle = (w, h, radius = '3px') => ({
+  width: w,
+  height: h,
+  borderRadius: radius,
+  background: 'linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.2) 37%, rgba(255,255,255,0.08) 63%)',
+  backgroundSize: '400% 100%',
+  animation: 's-nav-skel-shimmer 1.4s ease infinite'
+})
+// 骨架菜单项（复用于「我的圈子」「近期活跃」两组加载态）
+const renderSkeletonItem = (key) => ({
+  key,
+  label: () => h('div', { style: skelStyle('110px', '14px') }),
+  icon: () => h('div', { style: skelStyle('24px', '24px', '6px') }),
+  disabled: true
+})
 
 // 菜单选项
 const menuOptions = computed(() => {
@@ -237,30 +272,7 @@ const menuOptions = computed(() => {
       key: 'joined-group',
       label: t('circle.myCircles'),
       children: circlesLoading.value
-        ? Array.from({ length: 5 }, (_, i) => ({
-            key: `joined-skeleton-${i}`,
-            label: () => h('div', {
-              style: {
-                width: '110px',
-                height: '14px',
-                borderRadius: '3px',
-                background: 'linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.2) 37%, rgba(255,255,255,0.08) 63%)',
-                backgroundSize: '400% 100%',
-                animation: 's-nav-skel-shimmer 1.4s ease infinite'
-              }
-            }),
-            icon: () => h('div', {
-              style: {
-                width: '24px',
-                height: '24px',
-                borderRadius: '6px',
-                background: 'linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.2) 37%, rgba(255,255,255,0.08) 63%)',
-                backgroundSize: '400% 100%',
-                animation: 's-nav-skel-shimmer 1.4s ease infinite'
-              }
-            }),
-            disabled: true
-          }))
+        ? Array.from({ length: 5 }, (_, i) => renderSkeletonItem(`joined-skeleton-${i}`))
         : [
             ...joinedCircles.value.map(circle => ({
               label: circle.name,
@@ -274,20 +286,23 @@ const menuOptions = computed(() => {
             }
           ]
     },
-    {
-      type: 'divider',
-      key: 'd2'
-    },
-    {
-      type: 'group',
-      label: t('circle.active'),
-      key: 'active-group',
-      children: activeCircles.value.map(circle => ({
-        label: circle.name,
-        key: `circle-${circle.id}`,
-        icon: () => renderCircleIcon(circle)
-      }))
-    }
+    ...(activeCirclesLoading.value || activeCircles.value.length
+      ? [
+          { type: 'divider', key: 'd2' },
+          {
+            type: 'group',
+            label: t('circle.active'),
+            key: 'active-group',
+            children: activeCirclesLoading.value
+              ? Array.from({ length: 5 }, (_, i) => renderSkeletonItem(`active-skeleton-${i}`))
+              : activeCircles.value.map(circle => ({
+                  label: circle.name,
+                  key: `active-circle-${circle.id}`,
+                  icon: () => renderCircleIcon(circle)
+                }))
+          }
+        ]
+      : [])
   ]
 })
 
@@ -301,6 +316,9 @@ const handleMenuSelect = (key) => {
     router.push('/home')
   } else if (key === 'view-all-circles') {
     router.push({ path: '/profile', query: { tab: 'groups' } })
+  } else if (key.startsWith('active-circle-')) {
+    const circleId = key.replace('active-circle-', '')
+    router.push(`/circle/${circleId}`)
   } else if (key.startsWith('circle-')) {
     // 提取圈子 ID
     const circleId = key.replace('circle-', '')

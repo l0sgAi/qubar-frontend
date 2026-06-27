@@ -33,6 +33,21 @@ export function getMyCircles(params) {
 }
 
 /**
+ * 获取近期活跃圈子列表（按近 7 天发帖数降序）
+ * @param {Object} params - 查询参数
+ * @param {number} params.size - 每页数量，默认20，1-100，越界回落20
+ * @param {number} params.offset - 0 基偏移量，默认0，负数回落0
+ * @returns {Promise}
+ */
+export function getActiveCircles(params) {
+  return request({
+    url: '/circle/active',
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 获取指定用户已加入的圈子列表（查看他人主页）
  * 与 /circle/my 的区别：目标用户来自 user_id 查询参数（任意已登录用户均可查看他人加入的圈子）。
  * 响应结构与 /circle/my 一致（circles / total / size / search_after，搜索模式额外可能含 truncated）。
