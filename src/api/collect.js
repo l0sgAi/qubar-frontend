@@ -22,7 +22,7 @@ export function toggleCollect(data) {
  * @param {Object} params
  * @param {number} params.size - 每页数量，默认20，<=0 或 >100 后端回退为20
  * @param {string} [params.search_after] - 上一页响应游标，原样透传（首页不传 / 空串）
- * @param {string} [params.keyword] - 关键字（后端规划中，传入即前向兼容）
+ * @param {string} [params.keyword] - 关键字（服务端匹配标题/摘要/正文/作者等）
  * @returns {Promise} data: { posts: PostListItem[], total: number, size: number, search_after: string }
  *   —— search_after 为空串表示已到末页
  */

@@ -196,7 +196,7 @@ const fetchPosts = async (append = false) => {
   }
 }
 
-// 关键字搜索（防抖；后端规划支持关键字，传入即前向兼容）
+// 关键字搜索（防抖 500ms，服务端匹配）
 const handleSearchInput = () => {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {

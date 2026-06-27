@@ -2,12 +2,14 @@
   <div class="browse-history-tab">
     <div class="tab-header">
       <h2 class="tab-title">{{ t('user.browseHistory') }}</h2>
-      <!-- 搜索框：后端暂无 keyword，当前为已加载页客户端过滤；后端补充后改为服务端搜索 + 重置分页 -->
+      <!-- 搜索框：服务端 keyword 搜索（防抖 500ms），与收藏列表一致 -->
       <NInput
         v-model:value="searchKey"
         :placeholder="t('common.searchPosts')"
         clearable
-        style="width: 280px;">
+        style="width: 280px;"
+        @input="handleSearchInput"
+        @clear="handleSearchClear">
         <template #prefix>
           <NIcon>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -21,7 +23,7 @@
 
     <NSpin :show="loading && !posts.length">
       <div class="posts-list" :class="{ 'posts-list--loading': loading && !posts.length }">
-        <div v-if="!loading && filteredPosts.length === 0" class="empty-state">
+        <div v-if="!loading && posts.length === 0" class="empty-state">
           <NIcon size="64" :depth="3">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <circle cx="12" cy="12" r="10"></circle>
@@ -32,7 +34,7 @@
         </div>
         <div v-else class="post-cards">
           <NCard
-            v-for="post in filteredPosts"
+            v-for="post in posts"
             :key="post.id"
             class="post-card"
             :bordered="false"
@@ -127,7 +129,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { NCard, NAvatar, NIcon, NTag, NInput, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -161,6 +163,7 @@ const posts = ref([])
 const offset = ref(0) // 下一页偏移量；首页为 0
 const hasMore = ref(false)
 const sentinel = ref(null)
+let searchTimer = null
 let observer = null
 
 // —— 浏览时间格式化（viewed_at → 卡片徽标文本）——
@@ -222,6 +225,7 @@ const fetchPosts = async (append = false) => {
   loading.value = true
   try {
     const params = { size: PAGE_SIZE }
+    if (searchKey.value) params.keyword = searchKey.value
     if (append && offset.value) {
       params.offset = offset.value
     }
@@ -251,16 +255,22 @@ const fetchPosts = async (append = false) => {
   }
 }
 
-// 关键字过滤（当前仅过滤已加载页；后端补 keyword 后改为服务端搜索 + 重置分页）
-const filteredPosts = computed(() => {
-  if (!searchKey.value) return posts.value
-  const key = searchKey.value.toLowerCase()
-  return posts.value.filter(p =>
-    (p.title || '').toLowerCase().includes(key) ||
-    (p.content || '').toLowerCase().includes(key) ||
-    (p.authorName || '').toLowerCase().includes(key)
-  )
-})
+// 关键字搜索（防抖 500ms，服务端匹配；与收藏列表一致）
+const handleSearchInput = () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    offset.value = 0
+    hasMore.value = false
+    fetchPosts(false)
+  }, 500)
+}
+
+const handleSearchClear = () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  offset.value = 0
+  hasMore.value = false
+  fetchPosts(false)
+}
 
 // 重置列表并从首页重新拉取（切回本 tab 时使用，刷新 bump 后的顺序）
 const resetAndFetch = () => {
@@ -306,6 +316,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (observer) observer.disconnect()
+  if (searchTimer) clearTimeout(searchTimer)
 })
 </script>
 
