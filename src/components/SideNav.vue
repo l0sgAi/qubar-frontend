@@ -38,7 +38,8 @@ import {
   NLayoutSider,
   NMenu,
   NIcon,
-  NAvatar
+  NAvatar,
+  NSkeleton
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import CreateCircleModal from './CreateCircleModal.vue'
@@ -88,10 +89,15 @@ const PlusIcon = createIcon([
   'M12 5v14M5 12h14'
 ])
 
-// 查看全部图标（右箭头）
-const ArrowRightIcon = createIcon([
-  'M5 12h14',
-  'M13 6l6 6-6 6'
+// 查看全部图标（更多 · 水平三点）
+const MoreDotsIcon = () => h('svg', {
+  viewBox: '0 0 24 24',
+  fill: 'currentColor',
+  style: { width: '20px', height: '20px' }
+}, [
+  h('circle', { cx: '5', cy: '12', r: '1.8' }),
+  h('circle', { cx: '12', cy: '12', r: '1.8' }),
+  h('circle', { cx: '19', cy: '12', r: '1.8' })
 ])
 
 // 是否折叠
@@ -105,8 +111,10 @@ const activeItem = ref('home')
 
 // 我加入的兴趣圈（真实数据，取前 5 个）
 const joinedCircles = ref([])
+const circlesLoading = ref(false)
 
 const fetchJoinedCircles = async () => {
+  circlesLoading.value = true
   try {
     const res = await getMyCircles({ size: 5 })
     const list = (res.data?.circles || []).map(c => ({
@@ -118,6 +126,8 @@ const fetchJoinedCircles = async () => {
   } catch (e) {
     console.error('获取我加入的圈子失败:', e)
     joinedCircles.value = []
+  } finally {
+    circlesLoading.value = false
   }
 }
 
@@ -227,18 +237,25 @@ const menuOptions = computed(() => {
       type: 'group',
       key: 'joined-group',
       label: t('circle.myCircles'),
-      children: [
-        ...joinedCircles.value.map(circle => ({
-          label: circle.name,
-          key: `circle-${circle.id}`,
-          icon: () => renderCircleIcon(circle)
-        })),
-        {
-          label: () => h('span', { style: { color: '#60F8BBDD' } }, t('circle.viewAll')),
-          key: 'view-all-circles',
-          icon: () => h(NIcon, { color: '#60F8BBDD' }, { default: () => h(ArrowRightIcon) })
-        }
-      ]
+      children: circlesLoading.value
+        ? Array.from({ length: 5 }, (_, i) => ({
+            key: `joined-skeleton-${i}`,
+            label: () => h(NSkeleton, { text: true, width: '65%' }),
+            icon: () => h(NSkeleton, { width: 24, height: 24, style: { borderRadius: '6px' } }),
+            disabled: true
+          }))
+        : [
+            ...joinedCircles.value.map(circle => ({
+              label: circle.name,
+              key: `circle-${circle.id}`,
+              icon: () => renderCircleIcon(circle)
+            })),
+            {
+              label: () => h('span', { style: { color: '#18a058' } }, t('circle.viewAll')),
+              key: 'view-all-circles',
+              icon: () => h(NIcon, { color: '#18a058' }, { default: () => h(MoreDotsIcon) })
+            }
+          ]
     },
     {
       type: 'divider',
