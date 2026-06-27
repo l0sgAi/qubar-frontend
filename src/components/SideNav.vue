@@ -38,8 +38,7 @@ import {
   NLayoutSider,
   NMenu,
   NIcon,
-  NAvatar,
-  NSkeleton
+  NAvatar
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import CreateCircleModal from './CreateCircleModal.vue'
@@ -240,8 +239,26 @@ const menuOptions = computed(() => {
       children: circlesLoading.value
         ? Array.from({ length: 5 }, (_, i) => ({
             key: `joined-skeleton-${i}`,
-            label: () => h(NSkeleton, { text: true, width: '65%' }),
-            icon: () => h(NSkeleton, { width: 24, height: 24, style: { borderRadius: '6px' } }),
+            label: () => h('div', {
+              style: {
+                width: '110px',
+                height: '14px',
+                borderRadius: '3px',
+                background: 'linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.2) 37%, rgba(255,255,255,0.08) 63%)',
+                backgroundSize: '400% 100%',
+                animation: 's-nav-skel-shimmer 1.4s ease infinite'
+              }
+            }),
+            icon: () => h('div', {
+              style: {
+                width: '24px',
+                height: '24px',
+                borderRadius: '6px',
+                background: 'linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.2) 37%, rgba(255,255,255,0.08) 63%)',
+                backgroundSize: '400% 100%',
+                animation: 's-nav-skel-shimmer 1.4s ease infinite'
+              }
+            }),
             disabled: true
           }))
         : [
@@ -486,5 +503,13 @@ const handleCreateSuccess = (data) => {
 :deep(.n-layout-toggle-button){
   background-color: transparent !important;
   border: none !important;
+}
+</style>
+
+<!-- 骨架 shimmer 关键帧（全局：骨架元素由 NMenu 内部 render，无 scoped data-v；尺寸/背景改 inline style，此处仅留 keyframes） -->
+<style>
+@keyframes s-nav-skel-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
 }
 </style>
