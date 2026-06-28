@@ -1,15 +1,8 @@
 <template>
   <div class="recent-post-card" @click="handleClick">
-    <!-- 缩略图 -->
-    <div class="post-thumbnail">
-      <img v-if="thumbnail" :src="thumbnail" :alt="title" class="thumbnail-image" />
-      <div v-else class="thumbnail-placeholder">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-          <polyline points="21 15 16 10 5 21"></polyline>
-        </svg>
-      </div>
+    <!-- 缩略图（无图帖子不渲染该区域，正文占满整行宽度） -->
+    <div v-if="thumbnail" class="post-thumbnail">
+      <img :src="thumbnail" :alt="title" class="thumbnail-image" />
     </div>
 
     <!-- 帖子信息 -->
@@ -153,20 +146,6 @@ const handleClick = () => {
 
 .recent-post-card:hover .thumbnail-image {
   transform: scale(1.05);
-}
-
-.thumbnail-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.2);
-}
-
-.thumbnail-placeholder svg {
-  width: 32px;
-  height: 32px;
 }
 
 /* 帖子信息 */
