@@ -74,12 +74,7 @@ const currentIndex = ref(0)
 // 每张图自然尺寸 idx -> { width, height }，用于按真实宽高比缩放
 const imageSizes = ref({})
 
-watch(() => props.images, (imgs) => {
-  currentIndex.value = 0
-  imageSizes.value = {}
-  loadImageSizes(imgs)
-}, { immediate: true })
-
+// 预读每张图自然尺寸，用于按真实宽高比缩放
 const loadImageSizes = (imgs) => {
   imgs.forEach((src, idx) => {
     const img = new Image()
@@ -92,6 +87,12 @@ const loadImageSizes = (imgs) => {
     img.src = src
   })
 }
+
+watch(() => props.images, (imgs) => {
+  currentIndex.value = 0
+  imageSizes.value = {}
+  loadImageSizes(imgs)
+}, { immediate: true })
 
 const containerWidth = computed(() => Math.round(props.parentWidth * props.widthRatio))
 // 上限高度：保持原有 heightRatio 语义，轮播框绝不会比之前更高
