@@ -312,6 +312,7 @@ export default {
     recommend: '推荐',
     following: '关注',
     hot: '热门',
+    latest: '最新',
     discover: '发现',
     create: '创建',
     messages: '消息',
@@ -456,6 +457,14 @@ export default {
     failed: '上传失败，请重试',
     maxImages: '最多上传 {max} 张图片',
     exceedLimit: '已超出上限，仅上传前 {remaining} 张'
+  },
+
+  // 首页信息流
+  feed: {
+    refreshed: '推荐已刷新',
+    empty: '暂无内容',
+    emptyFollowing: '还没有加入圈子，去发现感兴趣的圈子吧',
+    loadFailed: '加载失败'
   },
 
   // 消息提示

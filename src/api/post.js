@@ -149,3 +149,25 @@ export function getPostDetail(id) {
     method: 'get'
   })
 }
+
+/**
+ * 首页信息流（4 个 tab 共用同一端点，通过 tab 参数切换）
+ * 返回统一的 PostItem（含 view/like/comment/collect_count 实时计数与 is_liked/is_collected），
+ * 但翻页机制分两套：
+ *   - recommend：候选池 offset + pool_token 翻页；响应含 pool_token / pool_refreshed
+ *   - hot / latest / following：search_after 游标翻页；响应含 search_after
+ * @param {Object} params - 查询参数
+ * @param {string} params.tab - 必填：recommend | hot | latest | following
+ * @param {number} params.size - 每页条数，默认20，范围 1~100
+ * @param {number} params.offset - 仅 recommend：候选池偏移（首页为 0，翻页累加）
+ * @param {string} params.pool_token - 仅 recommend：上次返回的池版本 token，翻页原样回传
+ * @param {string} params.search_after - 仅 hot/latest/following：上次返回的游标（JSON 数组字符串，原样透传，axios 自动 URL-encode）
+ * @returns {Promise} data 为 FeedPage：{ posts, pool_token?, search_after?, has_more, pool_refreshed? }
+ */
+export function getHomeFeed(params) {
+  return request({
+    url: '/post/home',
+    method: 'get',
+    params
+  })
+}

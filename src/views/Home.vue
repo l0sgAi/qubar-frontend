@@ -12,17 +12,34 @@
       <div class="main-content">
         <div class="home-container">
           <div class="content-header">
-            <NTabs animated>
-              <NTabPane name="recommend" :tab="t('nav.recommend')">
-                <PostList :posts="recommendPosts" />
-              </NTabPane>
-              <NTabPane name="following" :tab="t('nav.following')">
-                <PostList :posts="followingPosts" />
-              </NTabPane>
-              <NTabPane name="hot" :tab="t('nav.hot')">
-                <PostList :posts="hotPosts" />
+            <NTabs animated v-model:value="activeTab" @update:value="handleTabChange">
+              <NTabPane
+                v-for="tab in TABS"
+                :key="tab.name"
+                :name="tab.name"
+                :tab="t(tab.label)"
+                display-directive="if"
+              >
+                <!-- 首屏加载 -->
+                <div v-if="loading && !isAppending" class="feed-loading">
+                  <NSpin size="medium" />
+                </div>
+                <!-- 空态：following 引导加圈，其余通用空文案 -->
+                <div v-else-if="posts.length === 0" class="feed-empty">
+                  {{ activeTab === 'following' ? t('feed.emptyFollowing') : t('feed.empty') }}
+                </div>
+                <!-- 帖子列表 -->
+                <PostList v-else :posts="posts" />
               </NTabPane>
             </NTabs>
+
+            <!-- 翻页加载中 / 没有更多（统一单实例，置于 tabs 之外） -->
+            <template v-if="posts.length > 0">
+              <div v-if="isAppending" class="feed-loading-more">{{ t('common.loading') }}</div>
+              <div v-else-if="!hasMore" class="feed-no-more">{{ t('common.noMore') }}</div>
+            </template>
+            <!-- 无限滚动哨兵 -->
+            <div ref="sentinel" class="feed-sentinel"></div>
           </div>
         </div>
       </div>
@@ -34,14 +51,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { NTabs, NTabPane, useMessage } from 'naive-ui'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { NTabs, NTabPane, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
 import PostList from '@/components/PostList.vue'
 import RightSidebar from '@/components/RightSidebar.vue'
+import { getHomeFeed } from '@/api/post'
 import { auth } from '@/utils/auth'
 import request from '@/utils/request'
 
@@ -50,117 +68,165 @@ const message = useMessage()
 const { t } = useI18n()
 const offset = ref(260)
 
-// 示例帖子数据
-const recommendPosts = ref([
-  {
-    postId: '1',
-    circleId: null,
-    circleName: 'Vue.js 开发者',
-    circleAvatar: '',
-    circleColor: '#42b883',
-    userName: '张三',
-    userColor: '#22c55e',
-    title: 'Vue 3 Composition API 最佳实践',
-    content: '分享一些在 Vue 3 项目中使用 Composition API 的最佳实践，包括响应式数据管理、组件复用等技巧...',
-    images: [
-      'https://picsum.photos/800/500?random=1',
-      'https://picsum.photos/800/500?random=2'
-    ],
-    postTime: new Date(Date.now() - 1000 * 60 * 30),
-    likeCount: 234,
-    commentCount: 45,
-    collectCount: 12
-  },
-  {
-    postId: '2',
-    circleId: null,
-    circleName: 'UI/UX 设计',
-    circleAvatar: '',
-    circleColor: '#ec4899',
-    userName: '李四',
-    userColor: '#f97316',
-    title: '2024年最流行的设计趋势',
-    content: '总结了一下今年最流行的设计趋势，包括玻璃拟态、新拟物化、暗色模式等...',
-    images: [
-      'https://picsum.photos/800/500?random=3',
-      'https://picsum.photos/800/500?random=4',
-      'https://picsum.photos/800/500?random=5'
-    ],
-    postTime: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    likeCount: 567,
-    commentCount: 89,
-    collectCount: 34
-  },
-  {
-    postId: '3',
-    circleId: null,
-    circleName: '前端技术交流',
-    circleAvatar: '',
-    circleColor: '#3b82f6',
-    userName: '王五',
-    userColor: '#8b5cf6',
-    title: '如何优化前端性能',
-    content: '从前端性能优化的角度出发，分享一些实用的技巧和工具...',
-    images: [],
-    postTime: new Date(Date.now() - 1000 * 60 * 60 * 5),
-    likeCount: 892,
-    commentCount: 156,
-    collectCount: 67
-  }
-])
+// 4 个 tab 共用 /post/home 端点（顺序与接口文档一致）
+const TABS = [
+  { name: 'recommend', label: 'nav.recommend' },
+  { name: 'hot', label: 'nav.hot' },
+  { name: 'latest', label: 'nav.latest' },
+  { name: 'following', label: 'nav.following' }
+]
 
-const followingPosts = ref([
-  {
-    postId: '4',
-    circleId: null,
-    circleName: '摄影爱好者',
-    circleAvatar: '',
-    circleColor: '#f59e0b',
-    userName: '赵六',
-    userColor: '#06b6d4',
-    title: '周末去公园拍的照片',
-    content: '今天天气真好，去公园拍了一些风景照，大家觉得怎么样？',
-    images: [
-      'https://picsum.photos/800/500?random=6',
-      'https://picsum.photos/800/500?random=7',
-      'https://picsum.photos/800/500?random=8',
-      'https://picsum.photos/800/500?random=9'
-    ],
-    postTime: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    likeCount: 1234,
-    commentCount: 234,
-    collectCount: 89
-  }
-])
+const PAGE_SIZE = 20
 
-const hotPosts = ref([
-  {
-    postId: '5',
-    circleId: null,
-    circleName: 'React 社区',
-    circleAvatar: '',
-    circleColor: '#06b6d4',
-    userName: '孙七',
-    userColor: '#ec4899',
-    title: 'React 18 新特性详解',
-    content: 'React 18 带来了很多新特性，比如并发渲染、自动批处理等...',
-    images: [
-      'https://picsum.photos/800/500?random=10'
-    ],
-    postTime: new Date(Date.now() - 1000 * 60 * 60 * 48),
-    likeCount: 5678,
-    commentCount: 890,
-    collectCount: 234
+// 统一信息流状态：切 tab 时清空本地列表 + 游标（遵循文档第 8 节，
+// 避免把 recommend 的 pool_token 带到 hot/latest/following）
+const activeTab = ref('recommend')
+const posts = ref([])
+const loading = ref(false)
+const isAppending = ref(false) // true=追加翻页（底部加载条）；false=首屏/切 tab（NSpin）
+const hasMore = ref(false)
+const poolToken = ref('')   // 仅 recommend：候选池版本 token，翻页原样回传
+const searchAfter = ref('') // 仅 hot/latest/following：游标原样透传
+
+// 无限滚动
+const sentinel = ref(null)
+let observer = null
+
+// 首屏/切 tab 的拉取世代：每次自增，用于丢弃切换竞态期间的过期响应
+// （在飞请求未真正 abort，但其响应到达时若世代已变则忽略）
+let fetchGen = 0
+
+// 后端 snake_case → 组件 camelCase（PostList/PostCard 期望的字段）
+const transformPost = (p) => {
+  const ts = new Date(p.create_time || '').getTime()
+  return {
+    postId: p.id,
+    circleId: p.circle_id,
+    circleName: p.circle_name || '',
+    circleAvatar: p.circle_avatar || '',
+    userId: p.user_id,
+    userName: p.author_name || '',
+    userAvatar: p.author_avatar || '',
+    title: p.title || '',
+    content: p.summary || p.content || '',
+    images: p.images || [],
+    postTime: isNaN(ts) ? Date.now() : ts, // NTime 接受 number|Date
+    viewCount: p.view_count || 0,
+    likeCount: p.like_count || 0,
+    commentCount: p.comment_count || 0,
+    collectCount: p.collect_count || 0,
+    // 当前列表项是否已点赞/已收藏（PostCard 暂未渲染高亮，预留后续接入）
+    isLiked: !!p.is_liked,
+    isCollected: !!p.is_collected
   }
-])
+}
+
+// 拉取信息流：append=true 表示追加下一页
+const fetchFeed = async (append = false) => {
+  // 追加翻页：已有请求在飞则跳过，避免重复追加
+  if (append && loading.value) return
+  // 首屏/切 tab：自增世代，使之前在飞的请求响应作废（切换竞态保护）
+  if (!append) fetchGen++
+  const gen = fetchGen
+
+  loading.value = true
+  isAppending.value = append
+  try {
+    const params = { tab: activeTab.value, size: PAGE_SIZE }
+    if (activeTab.value === 'recommend') {
+      // 候选池翻页：首页不传 offset/pool_token；翻页回传 pool_token + offset=已消费条数
+      if (append && poolToken.value) {
+        params.offset = posts.value.length
+        params.pool_token = poolToken.value
+      }
+    } else {
+      // 游标翻页：search_after 原样透传（axios 自动 URL-encode）
+      if (append && searchAfter.value) {
+        params.search_after = searchAfter.value
+      }
+    }
+
+    const res = await getHomeFeed(params)
+    // 切 tab 竞态：期间又发起了新的首屏拉取，丢弃本次过期响应
+    if (gen !== fetchGen) return
+    const data = res.data || {}
+    const list = (data.posts || []).map(transformPost)
+
+    // recommend 池已重建：服务端回了 offset=0 的第 1 页，需重置本地列表到第 1 页
+    if (data.pool_refreshed) {
+      posts.value = list
+      message.info(t('feed.refreshed'))
+    } else {
+      posts.value = append ? [...posts.value, ...list] : list
+    }
+
+    // 更新游标与是否还有更多
+    if (activeTab.value === 'recommend') {
+      poolToken.value = data.pool_token || ''
+      hasMore.value = !!data.has_more
+    } else {
+      searchAfter.value = data.search_after || ''
+      // has_more=false 时不返回 search_after；二者同时判断更稳妥
+      hasMore.value = !!data.has_more && !!searchAfter.value
+    }
+  } catch (error) {
+    // 过期请求的错误不再提示
+    if (gen !== fetchGen) return
+    console.error('获取首页信息流失败:', error)
+    message.error(error.message || t('feed.loadFailed'))
+  } finally {
+    // 仅当前世代才复位 loading，避免过期请求把 loading 提前置 false
+    if (gen === fetchGen) loading.value = false
+  }
+}
+
+// 切 tab：清空本地列表 + 游标，用对应 tab 首页参数重新拉
+const handleTabChange = (tab) => {
+  activeTab.value = tab
+  posts.value = []
+  poolToken.value = ''
+  searchAfter.value = ''
+  hasMore.value = false
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+  fetchFeed(false)
+}
+
+// 无限滚动：sentinel 进入视口时加载下一页（提前 200px 触发，体验更顺滑）
+const setupObserver = () => {
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+  if (!sentinel.value || !hasMore.value || loading.value) return
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && hasMore.value && !loading.value) {
+        fetchFeed(true)
+      }
+    },
+    { rootMargin: '200px' }
+  )
+  observer.observe(sentinel.value)
+}
+
+watch([sentinel, hasMore, loading], setupObserver)
 
 onMounted(() => {
-  // 检查登录状态
+  // 推荐流强制登录：未登录跳登录页
   if (!auth.isAuthenticated()) {
     message.warning(t('messages.loginRequired'))
     router.push('/')
     return
   }
+  fetchFeed(false)
+})
+
+onBeforeUnmount(() => {
+  if (observer) observer.disconnect()
 })
 
 const handleLogout = async () => {
@@ -211,94 +277,31 @@ const handleLogout = async () => {
   margin-bottom: 24px;
 }
 
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #ec4899 0%, #a855f7 25%, #3b82f6 50%, #06b6d4 75%, #22c55e 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 20px;
-}
-
-.home-content {
-  animation: fadeIn 0.5s ease;
-}
-
-.header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-.title {
-  font-size: 2rem;
-  font-weight: 700;
-  background: var(--primary-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 12px;
-}
-
-.subtitle {
-  color: var(--text-secondary);
-  font-size: 1rem;
-}
-
-.user-info {
+/* 信息流：加载 / 空态 / 尾标 / 哨兵 */
+.feed-loading {
   display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.avatar {
-  width: 60px;
-  height: 60px;
-  background: var(--primary-gradient);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 24px;
-  font-weight: bold;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  padding: 48px 0;
 }
 
-.info {
-  flex: 1;
-}
-
-.label {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  margin-bottom: 4px;
-}
-
-.status {
-  color: var(--text-primary);
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.token-debug {
-  margin: 20px 0;
-}
-
-.token-debug h3 {
-  color: var(--text-primary);
-  font-size: 1rem;
-  margin-bottom: 16px;
-}
-
-.token-debug p {
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-  font-size: 0.875rem;
-}
-
-.actions {
-  margin-top: 24px;
+.feed-loading-more,
+.feed-no-more {
   text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  padding: 16px 0;
+}
+
+.feed-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  padding: 64px 24px;
+  line-height: 1.6;
+}
+
+.feed-sentinel {
+  height: 1px;
 }
 
 :deep(.n-card) {

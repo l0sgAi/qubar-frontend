@@ -312,6 +312,7 @@ export default {
     recommend: 'Recommend',
     following: 'Following',
     hot: 'Hot',
+    latest: 'Latest',
     discover: 'Discover',
     create: 'Create',
     messages: 'Messages',
@@ -456,6 +457,14 @@ export default {
     failed: 'Upload failed, please try again',
     maxImages: 'Up to {max} images allowed',
     exceedLimit: 'Limit exceeded, uploading the first {remaining} only'
+  },
+
+  // Home feed
+  feed: {
+    refreshed: 'Recommendations refreshed',
+    empty: 'No content yet',
+    emptyFollowing: "You haven't joined any circles yet — explore circles you might like",
+    loadFailed: 'Failed to load'
   },
 
   // 消息提示
