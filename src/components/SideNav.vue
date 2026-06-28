@@ -157,18 +157,7 @@ const fetchActiveCircles = async () => {
   }
 }
 
-// 兴趣圈图标色调色板（无头像时按名称稳定派生）
-const CIRCLE_PALETTE = ['#42b883', '#3b82f6', '#ec4899', '#f59e0b', '#06b6d4', '#22c55e', '#8b5cf6', '#ef4444']
-const deriveCircleColor = (circle) => {
-  const seed = circle.name || circle.id || ''
-  let hash = 0
-  for (let i = 0; i < seed.length; i++) {
-    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0
-  }
-  return CIRCLE_PALETTE[hash % CIRCLE_PALETTE.length]
-}
-
-// 渲染兴趣圈图标：有头像显示头像，否则首字母 + 派生色
+// 渲染兴趣圈图标：有头像显示头像，否则首字母 + 统一主题色背景
 const renderCircleIcon = (circle) => {
   if (circle.avatar) {
     return h(NAvatar, {
@@ -178,14 +167,13 @@ const renderCircleIcon = (circle) => {
       style: { width: '24px', height: '24px', borderRadius: '6px' }
     })
   }
-  const color = circle.color || deriveCircleColor(circle)
   return h('div', {
     class: 'circle-icon',
     style: {
       width: '24px',
       height: '24px',
       borderRadius: '6px',
-      background: `linear-gradient(135deg, ${color}dd, ${color}99)`,
+      background: 'color-mix(in srgb, var(--theme-color), #000 20%)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -280,9 +268,9 @@ const menuOptions = computed(() => {
               icon: () => renderCircleIcon(circle)
             })),
             {
-              label: () => h('span', { style: { color: '#18a058' } }, t('circle.viewAll')),
+              label: () => h('span', { style: { color: 'var(--theme-color)' } }, t('circle.viewAll')),
               key: 'view-all-circles',
-              icon: () => h(NIcon, { color: '#18a058' }, { default: () => h(MoreDotsIcon) })
+              icon: () => h(NIcon, { color: 'var(--theme-color)' }, { default: () => h(MoreDotsIcon) })
             }
           ]
     },
