@@ -13,7 +13,7 @@
           :key="idx"
           :src="img"
           :alt="`图片 ${idx + 1}`"
-          object-fit="cover"
+          object-fit="contain"
           :width="containerWidth"
           :height="containerHeight"
           :style="{ borderRadius: '8px' }"
@@ -71,13 +71,48 @@ const props = defineProps({
 })
 
 const currentIndex = ref(0)
+// 每张图自然尺寸 idx -> { width, height }，用于按真实宽高比缩放
+const imageSizes = ref({})
 
-watch(() => props.images, () => {
+watch(() => props.images, (imgs) => {
   currentIndex.value = 0
-})
+  imageSizes.value = {}
+  loadImageSizes(imgs)
+}, { immediate: true })
+
+const loadImageSizes = (imgs) => {
+  imgs.forEach((src, idx) => {
+    const img = new Image()
+    img.onload = () => {
+      imageSizes.value = {
+        ...imageSizes.value,
+        [idx]: { width: img.naturalWidth, height: img.naturalHeight }
+      }
+    }
+    img.src = src
+  })
+}
 
 const containerWidth = computed(() => Math.round(props.parentWidth * props.widthRatio))
-const containerHeight = computed(() => Math.round(containerWidth.value * props.heightRatio))
+// 上限高度：保持原有 heightRatio 语义，轮播框绝不会比之前更高
+const maxContainerHeight = computed(() => Math.round(containerWidth.value * props.heightRatio))
+
+// 当前图的真实宽高比
+const currentAspect = computed(() => {
+  const size = imageSizes.value[currentIndex.value]
+  if (!size || !size.width || !size.height) return null
+  return size.width / size.height
+})
+
+// 智能缩放：框宽固定，高度跟随当前图宽高比，但不超过上限。
+// 配合 object-fit:contain，完整显示图像并尽量填满框。
+const containerHeight = computed(() => {
+  const aspect = currentAspect.value
+  if (!aspect) return maxContainerHeight.value
+  const fitted = containerWidth.value / aspect
+  const floor = Math.round(containerWidth.value * 0.2) // 防止超宽图压成细缝
+  return Math.max(floor, Math.min(maxContainerHeight.value, fitted))
+})
 
 const iconSize = computed(() => Math.max(14, Math.round(containerWidth.value / 20)))
 const arrowSize = computed(() => iconSize.value + 14)
@@ -136,6 +171,7 @@ const goTo = (idx) => {
 .carousel-viewport :deep(img) {
   display: block;
   border-radius: 8px;
+  object-fit: contain;
 }
 
 .carousel-arrow {
