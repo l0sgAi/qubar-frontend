@@ -30,11 +30,17 @@
           />
         </div>
 
-        <!-- 加载中（首屏） -->
-        <div v-if="loading" class="load-more">
-          <NButton text disabled>
-            {{ t('common.loading') }}
-          </NButton>
+        <!-- 加载骨架（首屏） -->
+        <div v-if="loading" class="skel-list">
+          <div v-for="i in 4" :key="i" class="skel-card">
+            <div class="skel-thumb"></div>
+            <div class="skel-info">
+              <div class="skel-line skel-circle"></div>
+              <div class="skel-line skel-title"></div>
+              <div class="skel-line skel-title2"></div>
+              <div class="skel-line skel-meta"></div>
+            </div>
+          </div>
         </div>
 
         <!-- 加载更多（search_after 游标翻页） -->
@@ -202,7 +208,7 @@ onMounted(() => fetchLatest(false))
 .title-icon {
   width: 20px;
   height: 20px;
-  color: #6bf9bbcb;
+  color: var(--theme-color);
 }
 
 .sidebar-subtitle {
@@ -215,6 +221,62 @@ onMounted(() => fetchLatest(false))
 .recent-posts-list {
   display: flex;
   flex-direction: column;
+}
+
+/* 加载骨架（仿 RecentPostCard 布局：缩略图 + 文本行） */
+.skel-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.skel-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.skel-thumb {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+}
+
+.skel-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.skel-line {
+  border-radius: 6px;
+}
+
+.skel-circle { width: 60px; height: 12px; }
+.skel-title  { width: 90%; height: 14px; }
+.skel-title2 { width: 65%; height: 14px; }
+.skel-meta   { width: 80px; height: 12px; margin-top: 4px; }
+
+.skel-thumb,
+.skel-line {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.10) 37%,
+    rgba(255, 255, 255, 0.04) 63%
+  );
+  background-size: 400% 100%;
+  animation: sidebar-skel-shimmer 1.4s ease infinite;
+}
+
+@keyframes sidebar-skel-shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
 }
 
 /* 加载更多 */

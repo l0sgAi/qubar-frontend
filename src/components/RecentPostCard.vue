@@ -70,7 +70,7 @@ const props = defineProps({
   },
   circleColor: {
     type: String,
-    default: '#ec4899'
+    default: 'var(--theme-color)'
   },
   title: {
     type: String,
