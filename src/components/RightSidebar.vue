@@ -21,7 +21,6 @@
             :key="post.postId"
             :post-id="post.postId"
             :circle-name="post.circleName"
-            :circle-color="post.circleColor"
             :title="post.title"
             :content="post.content"
             :images="post.images"
@@ -31,9 +30,16 @@
           />
         </div>
 
-        <!-- 加载更多 -->
-        <div v-if="hasMore" class="load-more">
-          <NButton text @click="handleLoadMore">
+        <!-- 加载中（首屏） -->
+        <div v-if="loading" class="load-more">
+          <NButton text disabled>
+            {{ t('common.loading') }}
+          </NButton>
+        </div>
+
+        <!-- 加载更多（search_after 游标翻页） -->
+        <div v-else-if="hasMore" class="load-more">
+          <NButton text :disabled="loadingMore" @click="handleLoadMore">
             <template #icon>
               <NIcon>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -41,12 +47,12 @@
                 </svg>
               </NIcon>
             </template>
-            {{ t('post.recent.loadMore') }}
+            {{ loadingMore ? t('common.loading') : t('post.recent.loadMore') }}
           </NButton>
         </div>
 
         <!-- 空状态 -->
-        <div v-if="recentPosts.length === 0" class="empty-state">
+        <div v-if="recentPosts.length === 0 && !loading" class="empty-state">
           <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
@@ -58,10 +64,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { NConfigProvider, NButton, NIcon, darkTheme, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import RecentPostCard from './RecentPostCard.vue'
+import { getHomeFeed } from '@/api/post'
 
 const message = useMessage()
 const { t } = useI18n()
@@ -87,82 +94,59 @@ const themeOverrides = {
   }
 }
 
-// 示例近期帖子数据（按时间排序）
-const recentPosts = ref([
-  {
-    postId: '101',
-    circleName: 'Vue.js 开发者',
-    circleColor: '#42b883',
-    title: 'Vue 3.4 新特性抢先看',
-    content: 'Vue 3.4 带来了很多令人兴奋的新特性，包括性能优化、新的编译器宏等...',
-    images: ['https://picsum.photos/400/400?random=101'],
-    postTime: new Date(Date.now() - 1000 * 60 * 5), // 5分钟前
-    likeCount: 23,
-    commentCount: 5
-  },
-  {
-    postId: '102',
-    circleName: 'React 社区',
-    circleColor: '#06b6d4',
-    title: 'React Server Components 实践',
-    content: '分享一下在实际项目中使用 React Server Components 的经验和踩坑记录...',
-    images: ['https://picsum.photos/400/400?random=102'],
-    postTime: new Date(Date.now() - 1000 * 60 * 15), // 15分钟前
-    likeCount: 45,
-    commentCount: 12
-  },
-  {
-    postId: '103',
-    circleName: 'UI/UX 设计',
-    circleColor: '#ec4899',
-    title: 'Figma 新插件推荐',
-    content: '最近发现了一些非常好用的 Figma 插件，能大大提升设计效率...',
-    images: ['https://picsum.photos/400/400?random=103'],
-    postTime: new Date(Date.now() - 1000 * 60 * 30), // 30分钟前
-    likeCount: 67,
-    commentCount: 18
-  },
-  {
-    postId: '104',
-    circleName: '前端技术交流',
-    circleColor: '#3b82f6',
-    title: 'Vite 构建优化技巧',
-    content: '整理了一些 Vite 构建优化的实用技巧，包括代码分割、资源优化等...',
-    images: [],
-    postTime: new Date(Date.now() - 1000 * 60 * 45), // 45分钟前
-    likeCount: 89,
-    commentCount: 23
-  },
-  {
-    postId: '105',
-    circleName: '摄影爱好者',
-    circleColor: '#f59e0b',
-    title: '秋日摄影技巧分享',
-    content: '秋天是拍照的好季节，分享一些秋日摄影的构图和用光技巧...',
-    images: ['https://picsum.photos/400/400?random=105'],
-    postTime: new Date(Date.now() - 1000 * 60 * 60), // 1小时前
-    likeCount: 156,
-    commentCount: 34
-  },
-  {
-    postId: '106',
-    circleName: 'Node.js 开发',
-    circleColor: '#22c55e',
-    title: 'NestJS 最佳实践',
-    content: '总结了一些在 NestJS 项目中的最佳实践，包括模块化设计、依赖注入等...',
-    images: [],
-    postTime: new Date(Date.now() - 1000 * 60 * 90), // 1.5小时前
-    likeCount: 78,
-    commentCount: 15
+const PAGE_SIZE = 6
+
+// 最新发布帖子（原首页 latest tab 迁移至此）：search_after 游标翻页
+const recentPosts = ref([])
+const loading = ref(false)     // 首屏
+const loadingMore = ref(false) // 加载更多
+const searchAfter = ref('')    // 游标原样透传
+const hasMore = ref(false)
+
+// 后端 snake_case → RecentPostCard 期望字段
+const transformPost = (p) => {
+  const ts = new Date(p.create_time || '').getTime()
+  return {
+    postId: p.id,
+    circleName: p.circle_name || '',
+    title: p.title || '',
+    content: p.summary || p.content || '',
+    images: p.images || [],
+    postTime: isNaN(ts) ? Date.now() : ts, // NTime 接受 number|Date
+    likeCount: p.like_count || 0,
+    commentCount: p.comment_count || 0
   }
-])
-
-const hasMore = ref(true)
-
-const handleLoadMore = () => {
-  message.info('加载更多功能开发中...')
-  console.log('Load more recent posts')
 }
+
+// 拉取最新帖子：append=true 追加下一页
+const fetchLatest = async (append = false) => {
+  if (append ? loadingMore.value : loading.value) return
+  if (append) loadingMore.value = true
+  else loading.value = true
+  try {
+    const params = { tab: 'latest', size: PAGE_SIZE }
+    if (append && searchAfter.value) params.search_after = searchAfter.value
+
+    const res = await getHomeFeed(params)
+    const data = res.data || {}
+    const list = (data.posts || []).map(transformPost)
+    recentPosts.value = append ? [...recentPosts.value, ...list] : list
+
+    searchAfter.value = data.search_after || ''
+    // has_more=false 时不返回 search_after；二者同时判断更稳妥
+    hasMore.value = !!data.has_more && !!searchAfter.value
+  } catch (error) {
+    console.error('获取最新帖子失败:', error)
+    message.error(error.message || t('feed.loadFailed'))
+  } finally {
+    loading.value = false
+    loadingMore.value = false
+  }
+}
+
+const handleLoadMore = () => fetchLatest(true)
+
+onMounted(() => fetchLatest(false))
 </script>
 
 <style scoped>

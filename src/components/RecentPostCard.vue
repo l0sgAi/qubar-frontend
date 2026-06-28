@@ -56,7 +56,8 @@
 
 <script setup>
 import { computed } from 'vue'
-import { NTime, useMessage } from 'naive-ui'
+import { useRouter } from 'vue-router'
+import { NTime } from 'naive-ui'
 
 const props = defineProps({
   postId: {
@@ -97,7 +98,7 @@ const props = defineProps({
   }
 })
 
-const message = useMessage()
+const router = useRouter()
 
 // 获取第一张图片作为缩略图
 const thumbnail = computed(() => {
@@ -110,7 +111,7 @@ const summary = computed(() => {
 })
 
 const handleClick = () => {
-  // message.info(`查看帖子: ${props.title}`)
+  if (props.postId) router.push(`/post/${props.postId}`)
 }
 </script>
 

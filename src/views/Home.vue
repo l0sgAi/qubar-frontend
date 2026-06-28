@@ -68,11 +68,10 @@ const message = useMessage()
 const { t } = useI18n()
 const offset = ref(260)
 
-// 4 个 tab 共用 /post/home 端点（顺序与接口文档一致）
+// 3 个 tab 共用 /post/home 端点（latest 已迁移至 RightSidebar）
 const TABS = [
   { name: 'recommend', label: 'nav.recommend' },
   { name: 'hot', label: 'nav.hot' },
-  { name: 'latest', label: 'nav.latest' },
   { name: 'following', label: 'nav.following' }
 ]
 
