@@ -8,16 +8,29 @@
         class="carousel-track"
         :style="{ transform: `translateX(-${currentIndex * containerWidth}px)` }"
       >
-        <NImage
+        <!-- 每张图独立 slide：flex 基准锁死为 containerWidth 且禁止伸缩，
+             slide 占位与图片自然尺寸/比例完全解耦，translateX(index*width) 永不错位，
+             彻底杜绝相邻图片漏边。图片在 slide 内 100% 填充并 contain 居中。 -->
+        <div
           v-for="(img, idx) in images"
           :key="idx"
-          :src="img"
-          :alt="`图片 ${idx + 1}`"
-          object-fit="contain"
-          :width="containerWidth"
-          :height="containerHeight"
-          :style="{ borderRadius: '8px' }"
-        />
+          class="carousel-slide"
+          :style="{
+            width: containerWidth + 'px',
+            height: containerHeight + 'px',
+            flexBasis: containerWidth + 'px',
+            flexShrink: 0,
+            flexGrow: 0
+          }"
+        >
+          <NImage
+            :src="img"
+            :alt="`图片 ${idx + 1}`"
+            object-fit="contain"
+            :width="containerWidth"
+            :height="containerHeight"
+          />
+        </div>
       </div>
 
       <template v-if="images.length > 1">
@@ -71,49 +84,17 @@ const props = defineProps({
 })
 
 const currentIndex = ref(0)
-// 每张图自然尺寸 idx -> { width, height }，用于按真实宽高比缩放
-const imageSizes = ref({})
 
-// 预读每张图自然尺寸，用于按真实宽高比缩放
-const loadImageSizes = (imgs) => {
-  imgs.forEach((src, idx) => {
-    const img = new Image()
-    img.onload = () => {
-      imageSizes.value = {
-        ...imageSizes.value,
-        [idx]: { width: img.naturalWidth, height: img.naturalHeight }
-      }
-    }
-    img.src = src
-  })
-}
-
-watch(() => props.images, (imgs) => {
+// 切换图片组时回到第一张
+watch(() => props.images, () => {
   currentIndex.value = 0
-  imageSizes.value = {}
-  loadImageSizes(imgs)
-}, { immediate: true })
+})
 
+// 固定整体尺寸：宽度按父宽比例，高度按宽高比。
+// 轮播框大小恒定，不随图片内容变化，配合 object-fit:contain 完整展示图片，
+// 留白区域由渐变背景填充，从而清晰区分轮播区域。
 const containerWidth = computed(() => Math.round(props.parentWidth * props.widthRatio))
-// 上限高度：保持原有 heightRatio 语义，轮播框绝不会比之前更高
-const maxContainerHeight = computed(() => Math.round(containerWidth.value * props.heightRatio))
-
-// 当前图的真实宽高比
-const currentAspect = computed(() => {
-  const size = imageSizes.value[currentIndex.value]
-  if (!size || !size.width || !size.height) return null
-  return size.width / size.height
-})
-
-// 智能缩放：框宽固定，高度跟随当前图宽高比，但不超过上限。
-// 配合 object-fit:contain，完整显示图像并尽量填满框。
-const containerHeight = computed(() => {
-  const aspect = currentAspect.value
-  if (!aspect) return maxContainerHeight.value
-  const fitted = containerWidth.value / aspect
-  const floor = Math.round(containerWidth.value * 0.2) // 防止超宽图压成细缝
-  return Math.max(floor, Math.min(maxContainerHeight.value, fitted))
-})
+const containerHeight = computed(() => Math.round(containerWidth.value * props.heightRatio))
 
 const iconSize = computed(() => Math.max(14, Math.round(containerWidth.value / 20)))
 const arrowSize = computed(() => iconSize.value + 14)
@@ -162,6 +143,17 @@ const goTo = (idx) => {
   overflow: hidden;
   line-height: 0;
   flex-shrink: 0;
+  border-radius: 8px;
+  /* 默认渐变背景：与周围卡片区分、突出轮播区域，
+     object-fit:contain 产生的留白也由此渐变填充。
+     深色底沿用全局变量保证图片为视觉焦点，光晕用项目主题绿
+     (#66eac2 薄荷 / #22b36a 深绿，即 --primary-gradient 的两端)，
+     与 --theme-color 主题色保持一致。 */
+  background:
+    radial-gradient(ellipse at top left, rgba(105, 245, 203, 0.201), transparent 55%),
+    radial-gradient(ellipse at bottom right, rgba(17, 214, 142, 0.288), transparent 55%),
+    linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--glass-border);
 }
 
 .carousel-track {
@@ -169,11 +161,6 @@ const goTo = (idx) => {
   transition: transform 0.35s ease;
 }
 
-.carousel-viewport :deep(img) {
-  display: block;
-  border-radius: 8px;
-  object-fit: contain;
-}
 
 .carousel-arrow {
   position: absolute;
