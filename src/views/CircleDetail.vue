@@ -10,14 +10,13 @@
     <div class="main-content" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
       <!-- 加载骨架：切换圈子时显示，避免停留在上一个圈子的内容 -->
       <div v-if="loading" class="detail-skeleton">
-        <!-- 头部骨架 -->
+        <!-- 头部 banner：全宽，对齐真实 .circle-header -->
         <div class="sk-header">
-          <div class="sk-cover"></div>
-          <div class="sk-header-row">
+          <div class="sk-header-overlay">
             <div class="sk-avatar"></div>
             <div class="sk-title-block">
-              <div class="sk-line sk-line--title"></div>
-              <div class="sk-line sk-line--sub"></div>
+              <div class="sk-hline sk-hline--title"></div>
+              <div class="sk-hline sk-hline--sub"></div>
             </div>
           </div>
         </div>
@@ -1048,53 +1047,70 @@ onUnmounted(() => {
 }
 
 /* ===== 切换圈子时的加载骨架 ===== */
-.detail-skeleton {
-  padding: 24px;
-  max-width: 1280px;
-  margin: 0 auto;
-}
+/* 容器不加 padding/max-width：头部 banner 需要全宽，与真实 .circle-header 一致；内容由 .sk-content 自行居中 */
 
+/* 头部 banner：全宽、无圆角/边框，cover 占满整块（对齐真实 .circle-header） */
 .sk-header {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 24px;
-  margin-bottom: 24px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
+  position: relative;
+  padding: 32px 24px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.10) 37%,
+    rgba(255, 255, 255, 0.04) 63%);
+  background-size: 400% 100%;
+  animation: cd-skel-shimmer 1.4s ease infinite;
 }
 
-.sk-cover {
-  height: 120px;
-  border-radius: 8px;
-}
-
-.sk-header-row {
+/* 头部内容：max-width 900px 居中，对齐真实 .header-overlay */
+.sk-header-overlay {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 16px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
+/* 头像占位：实色 + 白边，压在 shimmer banner 上可辨（边框对齐真实 .circle-avatar） */
 .sk-avatar {
   width: 72px;
   height: 72px;
   border-radius: 50%;
   flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.18);
+  border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
 .sk-title-block {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 1;
 }
 
+/* 头部标题占位：实色，确保在 shimmer banner 上可辨 */
+.sk-hline {
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.sk-hline--title {
+  width: 220px;
+  height: 22px;
+}
+
+.sk-hline--sub {
+  width: 120px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* 内容区：居中容器，对齐真实 .content-container */
 .sk-content {
   display: flex;
   gap: 24px;
   align-items: flex-start;
   justify-content: center;
+  padding: 24px;
 }
 
 .sk-posts {
@@ -1129,9 +1145,7 @@ onUnmounted(() => {
   border-radius: 12px;
 }
 
-/* 骨架通用 shimmer 外观 */
-.sk-cover,
-.sk-avatar,
+/* 骨架通用 shimmer 外观（内容区的卡片/线条/标签） */
 .sk-line,
 .sk-tabs,
 .sk-post-card {
@@ -1146,15 +1160,6 @@ onUnmounted(() => {
 .sk-line {
   height: 14px;
   border-radius: 6px;
-}
-
-.sk-line--title {
-  width: 220px;
-  height: 22px;
-}
-
-.sk-line--sub {
-  width: 120px;
 }
 
 .sk-line--card-title {
@@ -1189,16 +1194,12 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  .detail-skeleton {
+  .sk-content {
     padding: 16px;
   }
 
   .sk-posts {
     width: 100%;
-  }
-
-  .sk-header {
-    padding: 16px;
   }
 }
 </style>
