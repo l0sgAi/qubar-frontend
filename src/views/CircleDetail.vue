@@ -8,6 +8,36 @@
 
     <!-- 主内容区域 -->
     <div class="main-content" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+      <!-- 加载骨架：切换圈子时显示，避免停留在上一个圈子的内容 -->
+      <div v-if="loading" class="detail-skeleton">
+        <!-- 头部骨架 -->
+        <div class="sk-header">
+          <div class="sk-cover"></div>
+          <div class="sk-header-row">
+            <div class="sk-avatar"></div>
+            <div class="sk-title-block">
+              <div class="sk-line sk-line--title"></div>
+              <div class="sk-line sk-line--sub"></div>
+            </div>
+          </div>
+        </div>
+        <!-- 内容骨架：左帖子 + 右信息栏 -->
+        <div class="sk-content">
+          <div class="sk-posts">
+            <div class="sk-tabs"></div>
+            <div class="sk-post-card" v-for="n in 4" :key="n"></div>
+          </div>
+          <div class="sk-sidebar">
+            <div class="sk-card">
+              <div class="sk-line sk-line--card-title"></div>
+              <div class="sk-line sk-line--full"></div>
+              <div class="sk-line sk-line--full"></div>
+              <div class="sk-line sk-line--short"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template v-else>
       <!-- 圈子头部信息 -->
       <div class="circle-header" :style="{ backgroundImage: coverImageStyle }">
         <div class="header-overlay">
@@ -244,6 +274,7 @@
         </div>
       </div>
       </div>
+      </template>
     </div>
   </div>
 </template>
@@ -312,7 +343,8 @@ const circleDetail = ref({
 })
 
 const categoryName = ref('')
-const loading = ref(false)
+// 初始为 true：首次进入与切换圈子时都先显示骨架，避免闪现空内容/旧内容
+const loading = ref(true)
 const joinLoading = ref(false)
 const activeTab = ref('hot')
 const isButtonHovered = ref(false)
@@ -610,6 +642,32 @@ const setupObservers = () => {
 }
 
 onMounted(async () => {
+  await fetchCircleDetail()
+  fetchPosts(activeTab.value)
+  setupObservers()
+})
+
+// 路由参数变化时（同组件复用，例如从 /circle/A 跳到 /circle/B）重新加载圈子数据。
+// 否则 onMounted 不会再次执行，URL 变了但页面仍是上一个圈子的内容。
+watch(() => route.params.id, async (newId, oldId) => {
+  if (!newId || newId === oldId) return
+
+  // 立即显示骨架，遮住上一个圈子的内容
+  loading.value = true
+
+  // 重置上一个圈子的帖子相关状态，避免残留数据
+  activeTab.value = 'hot'
+  categoryName.value = ''
+  hotPosts.value = []
+  newPosts.value = []
+  topPosts.value = []
+  hotSearchAfter.value = ''
+  newSearchAfter.value = ''
+  topSearchAfter.value = ''
+  hotHasMore.value = true
+  newHasMore.value = true
+  topHasMore.value = true
+
   await fetchCircleDetail()
   fetchPosts(activeTab.value)
   setupObservers()
@@ -986,6 +1044,161 @@ onUnmounted(() => {
 
   .circle-stats-sidebar {
     gap: 12px;
+  }
+}
+
+/* ===== 切换圈子时的加载骨架 ===== */
+.detail-skeleton {
+  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.sk-header {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.sk-cover {
+  height: 120px;
+  border-radius: 8px;
+}
+
+.sk-header-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sk-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sk-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.sk-content {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.sk-posts {
+  width: 55dvw;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sk-tabs {
+  height: 36px;
+  border-radius: 8px;
+}
+
+.sk-post-card {
+  height: 120px;
+  border-radius: 12px;
+}
+
+.sk-sidebar {
+  width: 384px;
+  flex-shrink: 0;
+}
+
+.sk-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+/* 骨架通用 shimmer 外观 */
+.sk-cover,
+.sk-avatar,
+.sk-line,
+.sk-tabs,
+.sk-post-card {
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.05) 63%);
+  background-size: 400% 100%;
+  animation: cd-skel-shimmer 1.4s ease infinite;
+}
+
+.sk-line {
+  height: 14px;
+  border-radius: 6px;
+}
+
+.sk-line--title {
+  width: 220px;
+  height: 22px;
+}
+
+.sk-line--sub {
+  width: 120px;
+}
+
+.sk-line--card-title {
+  width: 140px;
+  height: 18px;
+}
+
+.sk-line--full {
+  width: 100%;
+}
+
+.sk-line--short {
+  width: 60%;
+}
+
+@keyframes cd-skel-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* 骨架响应式：与真实布局断点保持一致 */
+@media (max-width: 1400px) {
+  .sk-sidebar {
+    width: 320px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .sk-sidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .detail-skeleton {
+    padding: 16px;
+  }
+
+  .sk-posts {
+    width: 100%;
+  }
+
+  .sk-header {
+    padding: 16px;
   }
 }
 </style>
