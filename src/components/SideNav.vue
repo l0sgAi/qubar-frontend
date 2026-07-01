@@ -302,6 +302,8 @@ const handleMenuSelect = (key) => {
     showCreateModal.value = true
   } else if (key === 'home') {
     router.push('/home')
+  } else if (key === 'hot') {
+    router.push('/hot')
   } else if (key === 'view-all-circles') {
     router.push({ path: '/profile', query: { tab: 'groups' } })
   } else if (key.startsWith('active-circle-')) {

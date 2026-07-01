@@ -22,6 +22,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/hot',
+      name: 'hot',
+      component: () => import('../views/Hot.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/create-post',
       name: 'create-post',
       component: () => import('../views/CreatePost.vue'),

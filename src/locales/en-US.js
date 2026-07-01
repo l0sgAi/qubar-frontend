@@ -323,6 +323,22 @@ export default {
     keyword: 'Keyword'
   },
 
+  // Trending page (/hot)
+  trending: {
+    title: 'Trending',
+    window24h: '24h',
+    window7d: '7d',
+    posts: 'Trending Posts',
+    circles: 'Trending Circles',
+    users: 'Trending Users',
+    refreshedJustNow: 'Updated just now',
+    refreshedMinutesAgo: 'Updated {n} min ago',
+    refreshedHoursAgo: 'Updated {n} h ago',
+    refreshedNever: 'No data yet',
+    empty: 'No trending data',
+    loadFailed: 'Failed to load trending'
+  },
+
   // 登录页
   login: {
     tagline: 'Connect interests, discover possibilities',

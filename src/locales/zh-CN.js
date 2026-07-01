@@ -323,6 +323,22 @@ export default {
     keyword: '关键词'
   },
 
+  // 热点页（/hot）
+  trending: {
+    title: '热点',
+    window24h: '24 小时',
+    window7d: '7 天',
+    posts: '热门帖子',
+    circles: '热门圈子',
+    users: '热门用户',
+    refreshedJustNow: '刚刚更新',
+    refreshedMinutesAgo: '{n} 分钟前更新',
+    refreshedHoursAgo: '{n} 小时前更新',
+    refreshedNever: '暂无数据',
+    empty: '暂无热点数据',
+    loadFailed: '加载热点失败'
+  },
+
   // 登录页
   login: {
     tagline: '连接多元兴趣，发现无限可能',
