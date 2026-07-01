@@ -32,7 +32,7 @@
 
 <script setup>
 import { ref, h, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import {
   NLayout,
   NLayoutSider,
@@ -45,6 +45,7 @@ import CreateCircleModal from './CreateCircleModal.vue'
 import { getMyCircles, getActiveCircles } from '@/api/post'
 
 const router = useRouter()
+const route = useRoute()
 const { t } = useI18n()
 const emit = defineEmits(['collapsed', 'expanded'])
 
@@ -104,9 +105,6 @@ const isCollapsed = ref(false)
 
 // 新建兴趣圈弹窗状态
 const showCreateModal = ref(false)
-
-// 当前激活的导航项
-const activeItem = ref('home')
 
 // 我加入的兴趣圈（真实数据，取前 5 个）
 const joinedCircles = ref([])
@@ -199,6 +197,24 @@ const renderSkeletonItem = (key) => ({
   label: () => h('div', { style: skelStyle('110px', '14px') }),
   icon: () => h('div', { style: skelStyle('24px', '24px', '6px') }),
   disabled: true
+})
+
+// 当前激活的导航项：根据路由派生
+// SideNav 在每个视图里独立挂载（非常驻布局），若用写死的 ref，
+// 跳转后新挂载的实例会重置为默认值，导致高亮跟不上路由。
+const activeItem = computed(() => {
+  const path = route.path
+  if (path === '/home') return 'home'
+  if (path === '/hot') return 'hot'
+  if (path.startsWith('/circle/')) {
+    const id = path.split('/')[2]
+    // 匹配「我的圈子」或「近期活跃」中的对应条目
+    if (joinedCircles.value.some(c => String(c.id) === id)) return `circle-${id}`
+    if (activeCircles.value.some(c => String(c.id) === id)) return `active-circle-${id}`
+    return `circle-${id}`
+  }
+  if (path === '/profile' && route.query.tab === 'groups') return 'view-all-circles'
+  return null
 })
 
 // 菜单选项
@@ -296,8 +312,6 @@ const menuOptions = computed(() => {
 
 // 菜单选择处理
 const handleMenuSelect = (key) => {
-  activeItem.value = key
-
   if (key === 'create') {
     showCreateModal.value = true
   } else if (key === 'home') {
