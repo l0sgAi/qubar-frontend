@@ -28,6 +28,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      // 发现页：可选登录，允许匿名访问（新用户落地页）
+      path: '/discover',
+      name: 'discover',
+      component: () => import('../views/Discover.vue')
+    },
+    {
       path: '/create-post',
       name: 'create-post',
       component: () => import('../views/CreatePost.vue'),

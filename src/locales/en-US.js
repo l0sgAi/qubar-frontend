@@ -339,6 +339,27 @@ export default {
     loadFailed: 'Failed to load trending'
   },
 
+  // Discover page (/discover): random circles + posts to expand your interests
+  discover: {
+    title: 'Discover',
+    subtitle: 'Step out of your bubble and explore content you haven\'t seen',
+    modeStream: 'Stream',
+    modeSectioned: 'Sections',
+    modeWall: 'Wall',
+    circlesSection: 'Discover Circles',
+    postsSection: 'Discover Posts',
+    exploreHint: 'Explore',
+    joinDirect: 'Open',
+    joinReview: 'Review',
+    refreshed: 'Fresh content just dropped in',
+    refresh: 'Refresh',
+    refreshing: 'Refreshing…',
+    empty: 'Nothing to discover yet. Try Refresh.',
+    loadFailed: 'Failed to load discover content',
+    members: 'members',
+    posts: 'posts'
+  },
+
   // 登录页
   login: {
     tagline: 'Connect interests, discover possibilities',

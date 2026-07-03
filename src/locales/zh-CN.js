@@ -339,6 +339,27 @@ export default {
     loadFailed: '加载热点失败'
   },
 
+  // 发现页（/discover）：随机推送圈子 + 帖子，鼓励探索兴趣边界
+  discover: {
+    title: '发现',
+    subtitle: '跳出信息气泡，探索你还没看过的新内容',
+    modeStream: '探索流',
+    modeSectioned: '分区',
+    modeWall: '灵感墙',
+    circlesSection: '发现新圈子',
+    postsSection: '发现新帖子',
+    exploreHint: '探索',
+    joinDirect: '直接加入',
+    joinReview: '需审核',
+    refreshed: '已为你换一批新内容',
+    refresh: '换一批',
+    refreshing: '换一批中…',
+    empty: '暂无发现内容，点「换一批」试试',
+    loadFailed: '加载发现内容失败',
+    members: '成员',
+    posts: '帖子'
+  },
+
   // 登录页
   login: {
     tagline: '连接多元兴趣，发现无限可能',

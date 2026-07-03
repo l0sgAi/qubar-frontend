@@ -75,6 +75,7 @@ import { NConfigProvider, NButton, NIcon, darkTheme, useMessage } from 'naive-ui
 import { useI18n } from 'vue-i18n'
 import RecentPostCard from './RecentPostCard.vue'
 import { getHomeFeed } from '@/api/post'
+import { auth } from '@/utils/auth'
 
 const message = useMessage()
 const { t } = useI18n()
@@ -152,7 +153,10 @@ const fetchLatest = async (append = false) => {
 
 const handleLoadMore = () => fetchLatest(true)
 
-onMounted(() => fetchLatest(false))
+// 匿名态（如发现页落地）不拉取 /post/home，避免触发 401 重定向
+onMounted(() => {
+  if (auth.isAuthenticated()) fetchLatest(false)
+})
 </script>
 
 <style scoped>

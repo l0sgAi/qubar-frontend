@@ -43,6 +43,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import CreateCircleModal from './CreateCircleModal.vue'
 import { getMyCircles, getActiveCircles } from '@/api/post'
+import { auth } from '@/utils/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -129,6 +130,8 @@ const fetchJoinedCircles = async () => {
 }
 
 onMounted(() => {
+  // 匿名态（如发现页落地）不拉取登录态圈子，避免 /circle/my、/circle/active 触发 401 重定向
+  if (!auth.isAuthenticated()) return
   fetchJoinedCircles()
   fetchActiveCircles()
 })
@@ -206,6 +209,7 @@ const activeItem = computed(() => {
   const path = route.path
   if (path === '/home') return 'home'
   if (path === '/hot') return 'hot'
+  if (path === '/discover') return 'explore'
   if (path.startsWith('/circle/')) {
     const id = path.split('/')[2]
     // 匹配「我的圈子」或「近期活跃」中的对应条目
@@ -318,6 +322,8 @@ const handleMenuSelect = (key) => {
     router.push('/home')
   } else if (key === 'hot') {
     router.push('/hot')
+  } else if (key === 'explore') {
+    router.push('/discover')
   } else if (key === 'view-all-circles') {
     router.push({ path: '/profile', query: { tab: 'groups' } })
   } else if (key.startsWith('active-circle-')) {

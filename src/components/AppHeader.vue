@@ -79,6 +79,13 @@
       <!-- 语言切换器 -->
       <LanguageSwitcher />
 
+      <!-- 匿名态：显示「登录」按钮（发现页等公开页落地用） -->
+      <NButton v-if="!isLoggedIn" size="large" type="primary" class="login-btn" @click="goLogin">
+        {{ t('login.tabs.login') }}
+      </NButton>
+
+      <!-- 登录态：发帖 + 消息 + 头像下拉 -->
+      <template v-else>
       <!-- 消息中心铃铛 -->
       <div class="notification-wrapper">
         <!-- 发帖按钮 -->
@@ -119,6 +126,7 @@
           </NAvatar>
         </div>
       </NDropdown>
+      </template>
     </div>
   </div>
 </template>
@@ -148,6 +156,9 @@ const clearCircleSearch = inject('clearCircleSearch', () => {})
 const username = ref('User')
 const userAvatarUrl = ref('')
 const notificationCount = ref(0)
+
+// 是否登录（匿名态如发现页落地时，顶栏改显「登录」按钮）
+const isLoggedIn = computed(() => auth.isAuthenticated())
 
 // 搜索关键词
 const searchKeyword = ref('')
@@ -295,9 +306,14 @@ const handleNotification = () => {
   // TODO: 打开消息中心
 }
 
-// 返回主页
+// 返回主页（匿名态回到发现页，避免被 /home 的登录守卫弹走）
 const goHome = () => {
-  router.push('/home')
+  router.push(auth.isAuthenticated() ? '/home' : '/discover')
+}
+
+// 匿名态点击「登录」
+const goLogin = () => {
+  router.push('/')
 }
 
 // 搜索
@@ -610,6 +626,19 @@ const handleClearCircleSearch = () => {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* 匿名态「登录」按钮：覆盖下方全局透明按钮样式，给主题色 */
+.login-btn {
+  --n-color: rgba(102, 234, 194, 0.16) !important;
+  --n-color-hover: rgba(102, 234, 194, 0.26) !important;
+  --n-color-pressed: rgba(102, 234, 194, 0.34) !important;
+  --n-border: 1px solid rgba(102, 234, 194, 0.5) !important;
+  --n-border-hover: 1px solid rgba(102, 234, 194, 0.7) !important;
+  --n-text-color: #66eac2 !important;
+  --n-text-color-hover: #8af0d0 !important;
+  border-radius: 20px !important;
+  padding: 0 18px !important;
 }
 
 /* 消息中心 */
