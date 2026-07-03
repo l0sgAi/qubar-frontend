@@ -526,6 +526,12 @@ const handleCreateSuccess = (data) => {
   background-color: transparent !important;
   border: none !important;
 }
+
+
+:deep(.n-menu-item-content .n-menu-item-content--selected){
+  padding: 0%;
+}
+
 </style>
 
 <!-- 骨架 shimmer 关键帧（全局：骨架元素由 NMenu 内部 render，无 scoped data-v；尺寸/背景改 inline style，此处仅留 keyframes） -->
