@@ -6,6 +6,7 @@
         v-model:value="searchKey"
         :placeholder="t('common.searchPosts')"
         clearable
+        round
         style="width: 280px;"
         @keyup.enter="handleSearch"
         @clear="handleSearchClear">
@@ -18,7 +19,7 @@
           </NIcon>
         </template>
       </NInput>
-      <NButton @click="handleSearch">
+      <NButton round @click="handleSearch">
         <template #icon>
           <NIcon>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -381,6 +382,8 @@ onBeforeUnmount(() => {
 .post-card {
   background: rgba(255, 255, 255, 0.02) !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
   transition: all 0.3s ease;
   cursor: pointer;
 }
