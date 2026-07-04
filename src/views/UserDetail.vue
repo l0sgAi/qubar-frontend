@@ -30,6 +30,7 @@
               </template>
               <MyPosts
                 :user-id="String(route.params.id || '')"
+                :active="activeTab === 'posts'"
                 readonly
                 @total-change="handlePostsTotalChange"/>
             </NTabPane>
@@ -44,6 +45,7 @@
               </template>
               <MyGroups
                 :user-id="String(route.params.id || '')"
+                :active="activeTab === 'groups'"
                 @total-change="handleGroupsTotalChange"
                 @click="handleGroupClick"/>
             </NTabPane>
