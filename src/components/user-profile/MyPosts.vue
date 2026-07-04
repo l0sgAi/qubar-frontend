@@ -32,8 +32,8 @@
       </NButton>
     </div>
 
-    <NSpin :show="loading && !posts.length">
-      <div class="posts-list" :class="{ 'posts-list--loading': loading && !posts.length }">
+    <NSpin :show="loading && (!posts.length || refreshing)">
+      <div class="posts-list" :class="{ 'posts-list--loading': loading && (!posts.length || refreshing) }">
         <div v-if="!loading && posts.length === 0" class="empty-state">
           <NIcon size="64" :depth="3">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -177,6 +177,9 @@ const emit = defineEmits(['edit', 'delete', 'total-change'])
 
 const searchKey = ref('')
 const loading = ref(false)
+// 整页刷新态（首次加载 / 关键字搜索 / 清空搜索）：与「追加下一页」区分，
+// 用于在列表已有数据时也展示 loading 覆盖层
+const refreshing = ref(false)
 
 // 列表与分页状态（两种接口共用，响应结构一致）
 const PAGE_SIZE = 10
@@ -210,6 +213,8 @@ const transformPost = (p) => ({
 const fetchPosts = async (append = false) => {
   if (loading.value) return
   loading.value = true
+  // 非追加（首页 / 新搜索）属于整页刷新，触发 loading 覆盖层
+  refreshing.value = !append
   try {
     const params = { size: PAGE_SIZE }
     if (searchKey.value) params.keyword = searchKey.value
@@ -239,6 +244,7 @@ const fetchPosts = async (append = false) => {
     message.error(error.message || t('common.operationFailed'))
   } finally {
     loading.value = false
+    refreshing.value = false
   }
 }
 
