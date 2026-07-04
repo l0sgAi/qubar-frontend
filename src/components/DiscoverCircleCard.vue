@@ -96,16 +96,12 @@ const handleClick = () => {
   position: relative;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    radial-gradient(120% 120% at 0% 0%, rgba(96, 248, 187,0.10), transparent 55%),
-    rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.03);
   transition: all 0.2s ease;
 }
 
 .discover-circle-card:hover {
-  background:
-    radial-gradient(120% 120% at 0% 0%, rgba(96, 248, 187,0.16), transparent 55%),
-    rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.06);
   border-color: rgba(96, 248, 187,0.35);
   transform: translateY(-2px);
 }

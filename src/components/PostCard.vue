@@ -270,6 +270,8 @@ const goToUser = () => {
   margin-bottom: 20px;
   background: rgba(255, 255, 255, 0.03) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
   transition: all 0.3s ease;
 }
 
