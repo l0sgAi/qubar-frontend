@@ -14,7 +14,7 @@
           <!-- 顶部：标题 + 视图模式切换 + 换一批 -->
           <div class="discover-header">
             <div class="header-left">
-              <h1 class="page-title">🧭 {{ t('discover.title') }}</h1>
+              <h1 class="page-title"> {{ t('discover.title') }}</h1>
               <span class="page-subtitle">{{ t('discover.subtitle') }}</span>
             </div>
             <div class="header-right">
@@ -29,7 +29,7 @@
                   <span class="mode-btn"><WallIcon />{{ t('discover.modeWall') }}</span>
                 </NRadioButton>
               </NRadioGroup>
-              <NButton size="small" secondary :loading="firstLoading" @click="refresh">
+              <NButton size="small" secondary class="refresh-btn" :loading="firstLoading" @click="refresh">
                 <template #icon><RefreshIcon /></template>
                 {{ firstLoading ? t('discover.refreshing') : t('discover.refresh') }}
               </NButton>
@@ -59,7 +59,10 @@
           <div v-else-if="mode === 'sectioned'" class="sectioned">
             <!-- 圈子网格 -->
             <section class="d-section">
-              <div class="section-title">{{ t('discover.circlesSection') }}</div>
+              <div class="section-title">
+                {{ t('discover.circlesSection') }}
+                <span v-if="circles.length" class="section-count">{{ circles.length }}</span>
+              </div>
               <div v-if="circles.length" class="circle-grid">
                 <DiscoverCircleCard
                   v-for="c in circles"
@@ -76,7 +79,10 @@
 
             <!-- 帖子流 -->
             <section class="d-section">
-              <div class="section-title">{{ t('discover.postsSection') }}</div>
+              <div class="section-title">
+                {{ t('discover.postsSection') }}
+                <span v-if="posts.length" class="section-count">{{ posts.length }}</span>
+              </div>
               <PostList v-if="posts.length" :posts="posts" />
               <div v-else class="section-sub-empty">{{ t('discover.empty') }}</div>
               <div ref="postsSentinel" class="sentinel"></div>
@@ -145,6 +151,32 @@ const postsLoading = ref(false)
 
 const firstLoading = ref(true)
 const isEmpty = computed(() => !circles.value.length && !posts.value.length)
+
+// 探索流：帖子为主干，每隔几条插入一张「圈子」卡片（打破信息气泡），多余圈子追加到末尾
+const streamItems = computed(() => {
+  const out = []
+  let ci = 0
+  const STEP = 3
+  posts.value.forEach((p, i) => {
+    out.push({ type: 'post', data: p })
+    if ((i + 1) % STEP === 0 && ci < circles.value.length) {
+      out.push({ type: 'circle', data: circles.value[ci++] })
+    }
+  })
+  while (ci < circles.value.length) out.push({ type: 'circle', data: circles.value[ci++] })
+  return out
+})
+
+// 卡片墙：帖子方块与圈子卡片交替混排成统一网格
+const wallItems = computed(() => {
+  const out = []
+  const max = Math.max(posts.value.length, circles.value.length)
+  for (let i = 0; i < max; i++) {
+    if (i < posts.value.length) out.push({ type: 'post', data: posts.value[i] })
+    if (i < circles.value.length) out.push({ type: 'circle', data: circles.value[i] })
+  }
+  return out
+})
 
 // 后端 snake_case → 组件 camelCase（与首页信息流帖子项字段完全一致，照搬 Home.vue）
 const transformPost = (p) => {
@@ -399,6 +431,51 @@ const RefreshIcon = svg('M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M
   flex-wrap: wrap;
 }
 
+/* —— 顶部切换 Tab：3 个按钮拼成「一个大胶囊」（去掉内层小胶囊与分割线）—— */
+.header-right :deep(.n-radio-group) {
+  display: inline-flex;
+  border-radius: 999px;
+  overflow: hidden;            /* 首尾段由容器圆角统一裁剪，呈现单一胶囊外形 */
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.header-right :deep(.n-radio-button) {
+  border-radius: 0 !important; /* 内部方正拼接，不各自成小胶囊 */
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* 抹掉 NaiveUI 默认描边与按钮间分割线，三段无缝相接 */
+.header-right :deep(.n-radio-button__state-border) {
+  border-color: transparent !important;
+}
+
+/* 选中段：主题色渐变填充 + 深色文字（首/尾段被容器圆角裁成弧形） */
+.header-right :deep(.n-radio-button--checked) {
+  background: var(--primary-gradient) !important;
+}
+
+.header-right :deep(.n-radio-button--checked .n-radio__label) {
+  color: #06281f !important;
+  font-weight: 600;
+}
+
+/* —— 刷新按钮：胶囊圆角 + 主题色描边/文字 —— */
+.header-right :deep(.refresh-btn) {
+  border-radius: 999px !important;
+  color: #60F8BB !important;
+  border: 1px solid rgba(96, 248, 187, 0.35) !important;
+  background: rgba(96, 248, 187, 0.08) !important;
+}
+
+.header-right :deep(.refresh-btn:hover) {
+  background: rgba(96, 248, 187, 0.16) !important;
+  border-color: rgba(96, 248, 187, 0.55) !important;
+}
+
+.header-right :deep(.refresh-btn .n-button__content) {
+  color: #60F8BB !important;
+}
+
 .mode-btn {
   display: inline-flex;
   align-items: center;
@@ -430,6 +507,17 @@ const RefreshIcon = svg('M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M
   padding: 20px 0;
 }
 
+/* 探索流：单列混排，统一间距（抹掉 PostCard 自带的 margin-bottom，交给容器 gap） */
+.stream {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stream :deep(.post-card) {
+  margin-bottom: 0;
+}
+
 /* 分区模式 */
 .sectioned {
   display: flex;
@@ -458,7 +546,18 @@ const RefreshIcon = svg('M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M
   width: 4px;
   height: 16px;
   border-radius: 2px;
-  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+  background: var(--primary-gradient);
+}
+
+.section-count {
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #60F8BB;
+  background: rgba(96, 248, 187, 0.12);
+  border-radius: 999px;
+  padding: 1px 9px;
+  line-height: 1.6;
 }
 
 .section-sub-empty {

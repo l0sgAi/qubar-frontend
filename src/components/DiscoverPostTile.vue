@@ -82,7 +82,7 @@ const handleClick = () => {
 
 .discover-post-tile:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(102, 234, 194, 0.3);
+  border-color: rgba(96, 248, 187, 0.3);
   transform: translateY(-2px);
 }
 
@@ -146,7 +146,7 @@ const handleClick = () => {
 }
 
 .meta-circle {
-  color: #66eac2;
+  color: #60F8BB;
 }
 
 .tile-stats {

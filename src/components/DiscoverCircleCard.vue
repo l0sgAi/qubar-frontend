@@ -81,8 +81,8 @@ const memberCount = computed(() => props.circle.member_count || 0)
 const postCount = computed(() => props.circle.post_count || 0)
 const joinType = computed(() => props.circle.join_type || 0)
 
-// 无头像时的渐变背景（发现页用蓝绿色调，区别于热点的粉紫）
-const avatarBg = 'linear-gradient(135deg, #06b6d4, #3b82f6)'
+// 无头像时的渐变背景：沿用项目主题色（薄荷绿 #60F8BB），区别于热点的粉紫
+const avatarBg = 'var(--primary-gradient)'
 const fallbackChar = computed(() => (name.value || '?').charAt(0))
 
 const handleClick = () => {
@@ -97,16 +97,16 @@ const handleClick = () => {
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
-    radial-gradient(120% 120% at 0% 0%, rgba(6, 182, 212, 0.10), transparent 55%),
+    radial-gradient(120% 120% at 0% 0%, rgba(96, 248, 187,0.10), transparent 55%),
     rgba(255, 255, 255, 0.03);
   transition: all 0.2s ease;
 }
 
 .discover-circle-card:hover {
   background:
-    radial-gradient(120% 120% at 0% 0%, rgba(6, 182, 212, 0.16), transparent 55%),
+    radial-gradient(120% 120% at 0% 0%, rgba(96, 248, 187,0.16), transparent 55%),
     rgba(255, 255, 255, 0.06);
-  border-color: rgba(6, 182, 212, 0.35);
+  border-color: rgba(96, 248, 187,0.35);
   transform: translateY(-2px);
 }
 
@@ -154,9 +154,9 @@ const handleClick = () => {
   right: 10px;
   font-size: 10px;
   letter-spacing: 0.3px;
-  color: #67e8f9;
-  background: rgba(6, 182, 212, 0.14);
-  border: 1px solid rgba(6, 182, 212, 0.3);
+  color: #60F8BB;
+  background: rgba(96, 248, 187,0.14);
+  border: 1px solid rgba(96, 248, 187,0.3);
   border-radius: 999px;
   padding: 1px 8px;
 }
@@ -196,8 +196,8 @@ const handleClick = () => {
 .join-tag {
   margin-left: 8px;
   font-size: 11px;
-  color: #67e8f9;
-  background: rgba(6, 182, 212, 0.12);
+  color: #60F8BB;
+  background: rgba(96, 248, 187,0.12);
   border-radius: 6px;
   padding: 1px 6px;
 }
@@ -248,9 +248,9 @@ const handleClick = () => {
   align-self: flex-start;
   font-size: 12px;
   font-weight: 600;
-  color: #67e8f9;
-  background: rgba(6, 182, 212, 0.12);
-  border: 1px solid rgba(6, 182, 212, 0.3);
+  color: #60F8BB;
+  background: rgba(96, 248, 187,0.12);
+  border: 1px solid rgba(96, 248, 187,0.3);
   border-radius: 999px;
   padding: 3px 12px;
 }
