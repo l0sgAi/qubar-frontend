@@ -23,7 +23,18 @@
             flexGrow: 0
           }"
         >
+          <!-- 裁剪背景：同图放大铺满 cover + 模糊 + 暗化，
+               填充 object-fit:contain 产生的留白，原渐变背景弃用。 -->
+          <img
+            class="slide-bg"
+            :src="img"
+            alt=""
+            aria-hidden="true"
+            :style="{ width: containerWidth + 'px', height: containerHeight + 'px' }"
+          />
+          <div class="slide-bg-overlay"></div>
           <NImage
+            class="slide-fg"
             :src="img"
             :alt="`图片 ${idx + 1}`"
             object-fit="contain"
@@ -144,21 +155,48 @@ const goTo = (idx) => {
   line-height: 0;
   flex-shrink: 0;
   border-radius: 8px;
-  /* 默认渐变背景：与周围卡片区分、突出轮播区域，
-     object-fit:contain 产生的留白也由此渐变填充。
-     深色底沿用全局变量保证图片为视觉焦点，光晕用项目主题绿
-     (#66eac2 薄荷 / #22b36a 深绿，即 --primary-gradient 的两端)，
-     与 --theme-color 主题色保持一致。 */
-  background:
-    radial-gradient(ellipse at top left, rgba(105, 245, 203, 0.201), transparent 55%),
-    radial-gradient(ellipse at bottom right, rgba(17, 214, 142, 0.288), transparent 55%),
-    linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  /* 背景由每张幻灯片的 .slide-bg 提供（同图放大+模糊+暗化），
+     viewport 仅保留深色兜底，避免图片加载前留白突兀。 */
+  background: var(--bg-tertiary);
   border: 1px solid var(--glass-border);
 }
 
 .carousel-track {
   display: flex;
   transition: transform 0.35s ease;
+}
+
+.carousel-slide {
+  position: relative;
+  overflow: hidden;
+}
+
+/* 裁剪背景：同图 object-fit:cover 铺满 → blur 模糊 + brightness 暗化，
+   scale 放大 1.1 防止模糊后边缘出现透明白边。
+   层级最低，仅作氛围背景。 */
+.slide-bg {
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+  filter: blur(22px) brightness(0.45);
+  transform: scale(1.1);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 暗化叠加层，压住模糊背景，凸显上层 contain 主图。 */
+.slide-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 主图层级高于背景，确保 contain 图为视觉焦点。 */
+.slide-fg {
+  position: relative;
+  z-index: 1;
 }
 
 
