@@ -170,6 +170,11 @@ const props = defineProps({
   readonly: {
     type: Boolean,
     default: false
+  },
+  // 当前 Tab 是否激活：离开时清空关键字搜索，切回即为干净的全量列表
+  active: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -235,8 +240,8 @@ const fetchPosts = async (append = false) => {
     searchAfter.value = data.search_after || ''
     hasMore.value = !!data.search_after
 
-    // 仅首页（含新搜索）上报命中总数，供父组件展示 Tab 计数
-    if (!append) {
+    // 仅在「非追加 + 无关键字」时上报真实总数，避免搜索结果数污染 Tab 徽标
+    if (!append && !searchKey.value) {
       emit('total-change', data.total || 0)
     }
   } catch (error) {
@@ -261,8 +266,9 @@ const handleSearchClear = () => {
   fetchPosts(false)
 }
 
-// 重置列表并从首页重新拉取（切换目标用户 / 重新搜索时使用）
+// 重置列表并从首页重新拉取（切换目标用户 / 离开 Tab 清搜索时使用）
 const resetAndFetch = () => {
+  searchKey.value = ''
   searchAfter.value = ''
   hasMore.value = false
   posts.value = []
@@ -293,6 +299,11 @@ watch([sentinel, hasMore, loading], setupObserver)
 // 切换目标用户（路由参数变化）时重置并重新拉取首页
 watch(() => props.userId, (next, prev) => {
   if (next !== prev) resetAndFetch()
+})
+
+// 离开本 Tab：若存在关键字搜索，清空并恢复全量列表（切回即为干净状态）
+watch(() => props.active, (next, prev) => {
+  if (prev && !next && searchKey.value) resetAndFetch()
 })
 
 // 状态文案 / 标签颜色

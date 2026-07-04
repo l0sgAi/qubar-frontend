@@ -113,6 +113,11 @@ const props = defineProps({
   userId: {
     type: String,
     default: ''
+  },
+  // 当前 Tab 是否激活：离开时清空关键字搜索，切回即为干净的全量列表
+  active: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -130,8 +135,6 @@ const circles = ref([])
 const searchAfter = ref('')
 const hasMore = ref(false)
 const sentinel = ref(null)
-// 浏览模式下的真实总数（搜索模式 total 恒为 0，需缓存此值供 Tab 计数稳定）
-const browseTotal = ref(0)
 // 搜索模式可能被服务端截断（扫满上限仍未集齐 size 条）
 const truncated = ref(false)
 let observer = null
@@ -170,16 +173,9 @@ const fetchCircles = async (append = false) => {
     hasMore.value = !!data.search_after
     truncated.value = !!data.truncated
 
-    // 仅首页（含新搜索）上报命中总数，供父组件展示 Tab 计数
-    if (!append) {
-      if (searchKey.value) {
-        // 搜索模式 total 恒为 0：保留浏览模式总数，避免覆盖 Tab 计数
-        emit('total-change', browseTotal.value || circles.value.length)
-      } else {
-        // 浏览模式：total 为该用户加入圈子总数（准确）
-        browseTotal.value = data.total || 0
-        emit('total-change', browseTotal.value)
-      }
+    // 仅在「非追加 + 无关键字」时上报真实总数，避免搜索结果数污染 Tab 徽标
+    if (!append && !searchKey.value) {
+      emit('total-change', data.total || 0)
     }
   } catch (error) {
     console.error('获取圈子列表失败:', error)
@@ -189,12 +185,12 @@ const fetchCircles = async (append = false) => {
   }
 }
 
-// 重置列表并从首页重新拉取（切换目标用户 / 路由变化时使用）
+// 重置列表并从首页重新拉取（切换目标用户 / 离开 Tab 清搜索时使用）
 const resetAndFetch = () => {
+  searchKey.value = ''
   searchAfter.value = ''
   hasMore.value = false
   truncated.value = false
-  browseTotal.value = 0
   circles.value = []
   fetchCircles(false)
 }
@@ -252,6 +248,18 @@ watch([sentinel, hasMore, loading], setupObserver)
 // 切换目标用户（路由参数变化）时重置并重新拉取首页
 watch(() => props.userId, (next, prev) => {
   if (next !== prev) resetAndFetch()
+})
+
+// 离开本 Tab：若存在关键字搜索则清空。
+// 接口模式需重新拉取全量首页；外部数据模式仅清关键字（filteredGroups 自动反应）
+watch(() => props.active, (next, prev) => {
+  if (prev && !next && searchKey.value) {
+    if (isFetchMode.value) {
+      resetAndFetch()
+    } else {
+      searchKey.value = ''
+    }
+  }
 })
 
 // 点击圈子：跳转圈子详情，同时上抛 click 供父组件兜底

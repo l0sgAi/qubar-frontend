@@ -29,6 +29,7 @@
                 </NSpace>
               </template>
               <MyPosts
+                :active="activeTab === 'posts'"
                 @edit="handlePostEdit"
                 @delete="handlePostDelete"
                 @total-change="handlePostsTotalChange"/>
@@ -42,7 +43,7 @@
                   <NTag size="small" :bordered="false" round>{{ groupsTotal }}</NTag>
                 </NSpace>
               </template>
-              <MyGroups :auto-fetch="true" @total-change="handleGroupsTotalChange"/>
+              <MyGroups :auto-fetch="true" :active="activeTab === 'groups'" @total-change="handleGroupsTotalChange"/>
             </NTabPane>
 
             <!-- 我的收藏 Tab -->
@@ -53,7 +54,7 @@
                   <NTag size="small" :bordered="false" round>{{ favoritesTotal }}</NTag>
                 </NSpace>
               </template>
-              <MyFavorites @total-change="handleFavoritesTotalChange"/>
+              <MyFavorites :active="activeTab === 'favorites'" @total-change="handleFavoritesTotalChange"/>
             </NTabPane>
 
             <!-- 浏览历史 Tab -->

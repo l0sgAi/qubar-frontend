@@ -256,8 +256,8 @@ const fetchPosts = async (append = false) => {
       hasMore.value = false
     }
 
-    // 仅首页（含重新拉取）上报命中总数，供父组件展示 Tab 计数
-    if (!append) {
+    // 仅在「非追加 + 无关键字」时上报真实总数，避免搜索结果数污染 Tab 徽标
+    if (!append && !searchKey.value) {
       emit('total-change', data.total || 0)
     }
   } catch (error) {
@@ -281,8 +281,9 @@ const handleSearchClear = () => {
   fetchPosts(false)
 }
 
-// 重置列表并从首页重新拉取（切回本 tab 时使用，刷新 bump 后的顺序）
+// 重置列表并从首页重新拉取（切回本 tab 时使用：刷新 bump 后的顺序 + 清空搜索）
 const resetAndFetch = () => {
+  searchKey.value = ''
   offset.value = 0
   hasMore.value = false
   posts.value = []
