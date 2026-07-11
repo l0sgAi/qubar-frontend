@@ -408,6 +408,20 @@ export default {
       rateLimit: 'Too many requests, please try again later'
     },
 
+    forgotPasswordModal: {
+      title: 'Reset Password',
+      stepSendCode: 'Send Code',
+      stepVerify: 'Verify',
+      stepReset: 'New Password',
+      sendCode: 'Send Code',
+      resetButton: 'Reset Password',
+      emailNotFound: 'This email is not registered',
+      accountDisabled: 'Account has been disabled, password cannot be reset',
+      verificationExpired: 'Verification expired, please request a new code',
+      resetSuccess: 'Password reset successful, please log in with your new password',
+      resetFailed: 'Failed to reset password'
+    },
+
     passwordStrength: {
       weak: 'Weak',
       medium: 'Medium',

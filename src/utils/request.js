@@ -44,7 +44,11 @@ request.interceptors.request.use(
  * 应直接 reject 交由调用方（如 LoginCard）展示错误信息。
  */
 function isAuthRequest(url = '') {
-  return typeof url === 'string' && (url.includes('/auth/login') || url.includes('/auth/register'))
+  return typeof url === 'string' && (
+    url.includes('/auth/login') ||
+    url.includes('/auth/register') ||
+    url.includes('/auth/password')
+  )
 }
 
 // 响应拦截器

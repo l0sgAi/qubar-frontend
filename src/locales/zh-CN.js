@@ -408,6 +408,20 @@ export default {
       rateLimit: '请求过于频繁，请稍后再试'
     },
 
+    forgotPasswordModal: {
+      title: '找回密码',
+      stepSendCode: '发送验证码',
+      stepVerify: '验证',
+      stepReset: '设置新密码',
+      sendCode: '发送验证码',
+      resetButton: '重置密码',
+      emailNotFound: '该邮箱未注册，请检查或先注册',
+      accountDisabled: '账号已被禁用，无法重置密码',
+      verificationExpired: '验证已过期，请重新获取验证码',
+      resetSuccess: '密码重置成功，请使用新密码登录',
+      resetFailed: '重置密码失败'
+    },
+
     passwordStrength: {
       weak: '弱',
       medium: '中',

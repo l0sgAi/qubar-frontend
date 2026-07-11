@@ -58,7 +58,7 @@
           </NFormItem>
 
           <div class="forgot-row">
-            <span class="forgot-link disabled">{{ t('login.forgotPassword') }}</span>
+            <span class="forgot-link" @click="forgotModalShow = true">{{ t('login.forgotPassword') }}</span>
           </div>
 
           <NButton
@@ -316,6 +316,9 @@
       {{ t('login.and') }}
       <router-link to="/privacy" class="footer-link">{{ t('login.privacyPolicy') }}</router-link>
     </p>
+
+    <!-- 找回密码弹窗 -->
+    <ForgotPasswordModal v-model:show="forgotModalShow" @success="handleForgotSuccess" />
   </NCard>
 </template>
 
@@ -326,6 +329,7 @@ import { NCard, NButton, NTabs, NTabPane, NForm, NFormItem, NInput, NIcon, NDivi
 import { Email as EmailIcon, Locked, User as UserIcon } from '@vicons/carbon'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import ForgotPasswordModal from '@/components/ForgotPasswordModal.vue'
 import { loginWithEmail, sendVerificationCode, verifyEmailCode, registerWithEmail } from '@/api/auth'
 import { auth } from '@/utils/auth'
 
@@ -345,6 +349,7 @@ const loginFormRef = ref(null)
 const loginLoading = ref(false)
 const oauthLoading = ref(false)
 const loginData = ref({ email: '', password: '' })
+const forgotModalShow = ref(false)
 
 const loginRules = computed(() => ({
   email: [
@@ -353,7 +358,8 @@ const loginRules = computed(() => ({
   ],
   password: [
     { required: true, message: t('login.validation.passwordRequired'), trigger: 'blur' },
-    { min: 8, message: t('login.validation.passwordMinLength'), trigger: 'blur' }
+    { min: 8, message: t('login.validation.passwordMinLength'), trigger: 'blur' },
+    { pattern: /^(?=.*[a-zA-Z])(?=.*\d)/, message: t('login.validation.passwordPattern'), trigger: 'blur' }
   ]
 }))
 
@@ -498,6 +504,13 @@ async function handleLogin() {
   } finally {
     loginLoading.value = false
   }
+}
+
+// ---- 找回密码成功：回填邮箱，切回登录 Tab ----
+function handleForgotSuccess(email) {
+  loginData.value.email = email
+  loginData.value.password = ''
+  activeTab.value = 'login'
 }
 
 // ---- 注册 Step 1: 发送验证码 ----
@@ -744,18 +757,13 @@ function handleAzureLogin() {
 
 .forgot-link {
   font-size: 0.85rem;
-  color: var(--accent-color);
+  color: var(--theme-color);
   cursor: pointer;
   transition: color 0.2s ease;
 }
 
 .forgot-link:hover {
   color: var(--accent-secondary);
-}
-
-.forgot-link.disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 
 /* 主色按钮 */
