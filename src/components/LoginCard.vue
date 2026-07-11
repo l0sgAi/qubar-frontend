@@ -978,7 +978,7 @@ function handleAzureLogin() {
 }
 
 .footer-link {
-  color: var(--accent-color);
+  color: var(--theme-color);
   text-decoration: none;
   font-weight: 500;
   transition: all 0.3s ease;
@@ -986,8 +986,9 @@ function handleAzureLogin() {
 }
 
 .footer-link:hover {
-  color: var(--accent-secondary);
-  border-bottom-color: var(--accent-secondary);
+  color: var(--theme-color);
+  border-bottom-color: var(--theme-color);
+  opacity: 0.8;
 }
 
 /* NCard 深色覆盖 */

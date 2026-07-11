@@ -519,5 +519,312 @@ export default {
     likeFeaturePending: 'Like feature pending',
     favoriteFeaturePending: 'Favorite feature pending',
     likeFailed: 'Like operation failed'
+  },
+
+  // Terms of Service
+  terms: {
+    title: 'User Agreement',
+    lastUpdated: 'Last updated: January 2025',
+    backToLogin: 'Back to Login',
+    sections: [
+      {
+        title: '1. Acceptance of Terms',
+        paragraphs: [
+          'Welcome to Quba (the "Service"). By accessing or using the Service, you confirm that you have read, understood, and agree to be bound by this User Agreement (the "Agreement"). If you do not agree to any of the terms of this Agreement, please do not use the Service.'
+        ]
+      },
+      {
+        title: '2. Service Description',
+        paragraphs: [
+          'Quba is an interest-based social platform designed to help users discover and connect with various interest communities. The Service includes, but is not limited to:'
+        ],
+        lists: [
+          [
+            'User account creation and authentication',
+            'Interest tags and community discovery',
+            'Interaction and communication with other users',
+            'Content sharing and discussion',
+            'Personalized recommendations and matching'
+          ]
+        ]
+      },
+      {
+        title: '3. User Accounts',
+        subsections: [
+          {
+            title: '3.1 Account Registration',
+            paragraphs: ['To use the Service, you need to create an account. You represent and warrant that:'],
+            lists: [
+              [
+                'The registration information you provide is true, accurate, and complete',
+                'You are at least 13 years old or meet the legal age in your region',
+                'You are the sole person using your account',
+                'You will maintain the security of your account information'
+              ]
+            ]
+          },
+          {
+            title: '3.2 Account Security',
+            paragraphs: [
+              'You are responsible for all activities that occur under your account, whether authorized or not. If you become aware of any unauthorized use of your account, please notify us immediately.'
+            ]
+          }
+        ]
+      },
+      {
+        title: '4. User Conduct',
+        paragraphs: ['When using the Service, you agree not to:'],
+        lists: [
+          [
+            'Upload, post, or transmit any illegal, harmful, threatening, abusive, harassing, defamatory, vulgar, obscene, or otherwise objectionable content',
+            'Impersonate any person or entity, or falsely state or otherwise misrepresent your affiliation with any person or entity',
+            'Upload, post, or transmit any content that infringes any patent, trademark, trade secret, copyright, or other proprietary rights of any party',
+            'Interfere with or disrupt the Service or servers and networks connected to the Service',
+            'Intentionally or unintentionally violate any applicable local, state, national, or international law',
+            'Harass or otherwise harm another user',
+            'Collect or store personal data of other users'
+          ]
+        ]
+      },
+      {
+        title: '5. Intellectual Property',
+        paragraphs: [
+          'The Service and its original content, features, and design are the exclusive property of Quba and its licensors, protected by copyright, trademark, and other intellectual property laws. You agree not to copy, modify, distribute, or otherwise use any part of the Service without our express written permission.'
+        ]
+      },
+      {
+        title: '6. Content Rights',
+        paragraphs: [
+          'You retain ownership of all content you submit, post, or display through the Service ("Your Content"). By submitting, posting, or displaying Your Content, you grant us a worldwide, royalty-free, non-exclusive license to use, copy, modify, distribute, and display Your Content in order to:'
+        ],
+        lists: [
+          [
+            'Provide, maintain, and improve the Service',
+            'Develop and provide new services',
+            'Prevent abuse and illegal activities',
+            'Fulfill our legal obligations'
+          ]
+        ]
+      },
+      {
+        title: '7. Termination',
+        paragraphs: [
+          'We may, at our sole discretion and at any time, with or without notice, suspend or terminate your account and right to access the Service, for reasons including but not limited to:'
+        ],
+        lists: [
+          [
+            'Violation of this Agreement',
+            'Engaging in fraudulent or illegal activities',
+            'Posing a security risk to other users or our service',
+            'Prolonged inactivity'
+          ]
+        ]
+      },
+      {
+        title: '8. Disclaimer',
+        paragraphs: [
+          'The Service is provided on an "as is" and "as available" basis, without any express or implied warranties. We are not liable for:'
+        ],
+        lists: [
+          [
+            'The continuous availability, timeliness, or security of the Service',
+            'The accuracy, reliability, or content of any content, advertising, products, or other materials included in or linked from the Service',
+            'Any direct, indirect, incidental, special, or consequential damages arising from the use of the Service'
+          ]
+        ]
+      },
+      {
+        title: '9. Indemnification',
+        paragraphs: [
+          'You agree to indemnify and hold Quba and its officers, directors, employees, agents, and licensors harmless from any claims, damages, obligations, losses, liabilities, costs, or expenses arising from your use of the Service or your breach of this Agreement.'
+        ]
+      },
+      {
+        title: '10. Changes to the Agreement',
+        paragraphs: [
+          'We reserve the right to modify or replace this Agreement at any time. If the revisions are material, we will provide notice before the new terms take effect. Continued use of the Service constitutes your acceptance of the revised Agreement.'
+        ]
+      },
+      {
+        title: '11. Governing Law',
+        paragraphs: [
+          'This Agreement is governed by and construed in accordance with the laws of the People\'s Republic of China. Any disputes arising from this Agreement shall be submitted to a court with jurisdiction for resolution.'
+        ]
+      },
+      {
+        title: '12. Contact Us',
+        paragraphs: ['If you have any questions or concerns about this Agreement, please contact us at:'],
+        lists: [['Email: legal@quba.com', 'Address: Pudong New Area, Shanghai, China']]
+      }
+    ]
+  },
+
+  // Privacy Policy
+  privacy: {
+    title: 'Privacy Policy',
+    lastUpdated: 'Last updated: January 2025',
+    backToLogin: 'Back to Login',
+    intro:
+      'Quba ("we", "us", or "the Service") respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, disclose, and protect your information. By using the Service, you agree to the practices described in this Privacy Policy.',
+    sections: [
+      {
+        title: '1. Information We Collect',
+        subsections: [
+          {
+            title: '1.1 Information You Provide',
+            paragraphs: ['When you use the Service, we may collect the following information:'],
+            lists: [
+              [
+                { strong: 'Account information: ', text: 'name, email address, profile picture, date of birth' },
+                { strong: 'Authentication information: ', text: 'information provided when authenticating via third-party services (e.g., Google)' },
+                { strong: 'Interest tags: ', text: 'your selected or generated interests and tags' },
+                { strong: 'Content: ', text: 'posts, comments, images, videos, and other content you publish' },
+                { strong: 'Communications: ', text: 'correspondence between you and us' }
+              ]
+            ]
+          },
+          {
+            title: '1.2 Automatically Collected Information',
+            paragraphs: ['When you access or use the Service, we automatically collect:'],
+            lists: [
+              [
+                { strong: 'Device information: ', text: 'device type, operating system, browser type, unique device identifier' },
+                { strong: 'Usage information: ', text: 'access time, pages viewed, features used, links clicked' },
+                { strong: 'Location information: ', text: 'approximate geographic location based on IP address' },
+                { strong: 'Log information: ', text: 'server logs, error reports, performance data' }
+              ]
+            ]
+          },
+          {
+            title: '1.3 Cookies and Similar Technologies',
+            paragraphs: [
+              'We use cookies, web beacons, and similar technologies to collect and store information. Cookies are small text files stored on your device to remember your preferences, improve user experience, and analyze usage trends.'
+            ]
+          }
+        ]
+      },
+      {
+        title: '2. How We Use Your Information',
+        paragraphs: ['We use the collected information to:'],
+        lists: [
+          [
+            { strong: 'Provide, maintain, and improve the service: ', text: 'process your requests, personalize your experience, develop new features' },
+            { strong: 'Authentication and security: ', text: 'verify your identity, prevent fraud and abuse, protect account security' },
+            { strong: 'Personalized recommendations: ', text: 'recommend content, users, and communities based on your interests' },
+            { strong: 'Communication: ', text: 'send service notifications, updates, security alerts, and marketing messages (optional)' },
+            { strong: 'Analytics: ', text: 'analyze usage trends, improve service performance, understand user behavior' },
+            { strong: 'Legal compliance: ', text: 'comply with legal obligations, respond to legal requests, protect our rights' }
+          ]
+        ]
+      },
+      {
+        title: '3. Information Sharing',
+        subsections: [
+          {
+            title: '3.1 We Do Not Sell Your Personal Information',
+            paragraphs: ['We do not sell your personal information to third parties.']
+          },
+          {
+            title: '3.2 Circumstances Under Which We May Share Information',
+            lists: [
+              [
+                { strong: 'Service providers: ', text: 'sharing necessary information with third-party service providers that help us operate the Service (e.g., cloud storage, data analytics, payment processing)' },
+                { strong: 'Business transfers: ', text: 'in the event of a merger, acquisition, or asset sale, your information may be transferred to the relevant party' },
+                { strong: 'Legal requirements: ', text: 'disclosing information when we believe in good faith that the law requires it, to protect our rights, or to prevent illegal activities' },
+                { strong: 'With your consent: ', text: 'sharing information in other ways with your explicit consent' }
+              ]
+            ]
+          },
+          {
+            title: '3.3 Public Information',
+            paragraphs: [
+              'Your profile information (name, photo, interest tags) is visible to other users. You can control what information is public through your account settings.'
+            ]
+          }
+        ]
+      },
+      {
+        title: '4. Data Security',
+        paragraphs: ['We take reasonable technical and organizational measures to protect your information from unauthorized access, use, or disclosure:'],
+        lists: [
+          [
+            { strong: 'Encryption: ', text: 'SSL/TLS encryption during transmission' },
+            { strong: 'Access control: ', text: 'restricting access to personal information' },
+            { strong: 'Security audits: ', text: 'conducting regular security reviews and assessments' },
+            { strong: 'Data retention: ', text: 'retaining information for the necessary period, then securely deleting it' }
+          ]
+        ],
+        warning:
+          'While we strive to protect your information, no method of internet transmission or electronic storage is 100% secure. Although we seek to protect your personal information with reasonable means, we cannot guarantee its absolute security.'
+      },
+      {
+        title: '5. Your Privacy Rights',
+        paragraphs: ['Under applicable law, you may have the following rights:'],
+        lists: [
+          [
+            { strong: 'Right of access: ', text: 'request a copy of the personal information we hold about you' },
+            { strong: 'Right to rectification: ', text: 'request correction of inaccurate or incomplete information' },
+            { strong: 'Right to erasure: ', text: 'request deletion of your personal information' },
+            { strong: 'Right to restrict processing: ', text: 'request that we limit how we use your information' },
+            { strong: 'Right to data portability: ', text: 'request to receive your information in a structured format' },
+            { strong: 'Right to object: ', text: 'object to our processing of your information' },
+            { strong: 'Withdraw consent: ', text: 'withdraw consent previously given (without affecting legality prior to withdrawal)' }
+          ]
+        ],
+        paragraphs2: ['To exercise these rights, please contact us using the contact details at the bottom of this Policy. We will respond to your request promptly.']
+      },
+      {
+        title: '6. Third-Party Links',
+        paragraphs: [
+          'The Service may contain links to third-party websites or services. We are not responsible for the practices or content of third-party websites. We encourage you to read the privacy policies of these third parties when you leave our Service.'
+        ]
+      },
+      {
+        title: '7. Children\'s Privacy',
+        paragraphs: [
+          'The Service is not directed at children under 13. We do not knowingly collect personal information from children under 13. If we discover that we have collected such information, we will take steps to delete it.'
+        ]
+      },
+      {
+        title: '8. Cross-Border Data Transfer',
+        paragraphs: [
+          'Your information may be transferred to and processed in countries or regions outside your own. The data protection laws of these countries or regions may differ from those in your country or region.',
+          'When we transfer your information across borders, we will take appropriate measures to ensure your information receives protection consistent with this Privacy Policy.'
+        ]
+      },
+      {
+        title: '9. Changes to the Privacy Policy',
+        paragraphs: [
+          'We may update this Privacy Policy from time to time. After changes, we will post the new Privacy Policy on this page and update the "Last updated" date. We recommend that you review this Privacy Policy periodically.',
+          'Material changes will be communicated via email or prominent notices within the Service. Continued use of the Service constitutes your acceptance of the updated Privacy Policy.'
+        ]
+      },
+      {
+        title: '10. Contact Us',
+        paragraphs: ['If you have any questions, concerns, or requests regarding this Privacy Policy or our information practices, please contact us at:'],
+        lists: [
+          [
+            { strong: 'Email: ', text: 'privacy@quba.com' },
+            { strong: 'Address: ', text: 'Zhangjiang Hi-Tech Park, Pudong New Area, Shanghai, China' },
+            { strong: 'Phone: ', text: '+86 21-1234-5678' }
+          ]
+        ],
+        paragraphs2: ['Data Protection Officer contact:', 'Email: dpo@quba.com']
+      },
+      {
+        title: '11. Governing Law',
+        paragraphs: [
+          'This Privacy Policy is governed by and construed in accordance with the laws of the People\'s Republic of China. We comply with applicable data protection laws, including the Personal Information Protection Law (PIPL) and the Cybersecurity Law of the People\'s Republic of China.'
+        ]
+      }
+    ],
+    summaryTitle: 'Summary of Privacy Principles',
+    summary: [
+      '✓ Transparency: We clearly explain how we use your data',
+      '✓ Control: You have rights to control your personal information',
+      '✓ Security: We implement strong security measures to protect your information',
+      '✓ Compliance: We comply with global privacy regulations',
+      '✓ Minimization: We only collect necessary information'
+    ]
   }
 }
