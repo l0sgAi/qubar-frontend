@@ -131,3 +131,403 @@ body {
 .md-editor-preview .md-editor-code .md-editor-code-header {
   z-index: 10 !important;
 }
+
+/* =========================================================
+ * 全局下拉菜单主题样式
+ * 由于 NDropdown 默认 render-to-body=true，菜单被传送到 <body>，
+ * 无法被组件 <style scoped> 的 :deep() 选中，必须写在全局样式表。
+ * 覆盖 AppHeader 头像菜单、LanguageSwitcher 语言切换等所有下拉。
+ * 设计：暗色玻璃拟态 + 大圆角 + 主题绿高亮 + 弹性进入动画。
+ * ========================================================= */
+
+/* 菜单容器：暗色玻璃 + 圆角 + 阴影 */
+.n-dropdown-menu {
+  background: rgba(22, 22, 38, 0.82) !important;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  padding: 6px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* 菜单进入/离开动画 */
+.n-dropdown-menu.fade-in-scale-up-transition-enter-active,
+.n-dropdown-menu.fade-in-scale-up-transition-leave-active {
+  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.n-dropdown-menu.fade-in-scale-up-transition-enter-from,
+.n-dropdown-menu.fade-in-scale-up-transition-leave-to {
+  opacity: 0;
+  transform: scale(0.92) translateY(-6px);
+}
+
+/* 菜单选项基础样式。
+ * 注意：hover 高亮不要直接给 .n-dropdown-option-body 设 background——
+ * Naive UI 自带的 .n-dropdown-option-body::before 是带 border-radius 的
+ * 圆角高亮层（由 --n-option-color-hover 控制），若再给 body 设方形背景，
+ * 两者色差 + 一圆一方会产生明显的"圆角处方角溢出"色差。
+ * 正确做法：保持 body 透明，只通过下面的变量驱动原生圆角 ::before。 */
+.n-dropdown-option .n-dropdown-option-body {
+  border-radius: 10px !important;
+  transition: color 0.18s ease;
+}
+
+/* 用 Naive UI 的 CSS 变量喂给原生圆角 ::before，保持一层圆角高亮。
+ * 菜单/选项各设一组，覆盖默认的中性灰 hover。 */
+.n-dropdown-menu,
+.n-dropdown-option .n-dropdown-option-body {
+  --n-option-color-hover: rgba(102, 234, 194, 0.14) !important;
+  --n-option-color-active: rgba(102, 234, 194, 0.18) !important;
+  --n-option-text-color-hover: #8af0d0 !important;
+}
+
+.n-dropdown-option-body__label {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 0.9rem;
+}
+
+.n-dropdown-option-body__prefix {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* hover 文字色（由变量驱动的圆角高亮在上一条规则里） */
+.n-dropdown-option:hover .n-dropdown-option-body__label {
+  color: #8af0d0 !important;
+}
+
+.n-dropdown-option:hover .n-dropdown-option-body__prefix {
+  color: rgba(138, 240, 208, 0.9) !important;
+}
+
+/* 已选中/禁用态（如当前语言）：以主题绿微底标识。
+ * 这里同样走原生圆角 ::before，避免方形背景。 */
+.n-dropdown-option--disabled .n-dropdown-option-body {
+  --n-option-color-hover: rgba(102, 234, 194, 0.08) !important;
+  cursor: default;
+}
+
+.n-dropdown-option--disabled .n-dropdown-option-body::before {
+  background-color: rgba(102, 234, 194, 0.08) !important;
+}
+
+.n-dropdown-option--disabled .n-dropdown-option-body__label {
+  color: #8af0d0 !important;
+  font-weight: 600;
+}
+
+/* 分隔线 */
+.n-dropdown-divider {
+  background: rgba(255, 255, 255, 0.08) !important;
+  margin: 4px 8px;
+  height: 1px;
+}
+
+/* 语言切换器自定义 label：当前语言加 ✓ 图标对齐 */
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.lang-option .lang-check {
+  margin-left: auto;
+  color: #66eac2;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.lang-option.is-active .lang-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* =========================================================
+ * 全局对话框（NDialog / useDialog）主题样式
+ * NDialog 由 NDialogProvider 管理，DOM 被传送到 <body> 下，
+ * 因此覆盖样式必须写在全局，scoped 的 :deep() 无法命中。
+ * 覆盖 AppHeader 退出登录确认弹窗等所有 useDialog 调用。
+ * 设计：暗色玻璃拟态 + 大圆角 + 弹性进入动画 + 主题绿按钮。
+ * ========================================================= */
+
+/* 遮罩：加深 + 轻微模糊，聚焦弹窗内容 */
+.n-modal-mask {
+  background: rgba(8, 8, 18, 0.6) !important;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* 对话框容器：暗色玻璃 + 大圆角 */
+.n-dialog {
+  background: rgba(22, 22, 38, 0.88) !important;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55) !important;
+  overflow: hidden;
+}
+
+/* 标题：白色高对比，稍大字重 */
+.n-dialog__title {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+/* 内容文字：次要白 */
+.n-dialog__content {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+/* 图标：警告用琥珀，错误用红，成功用主题绿，信息用蓝青 */
+.n-dialog__icon {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* 关闭按钮 */
+.n-dialog__close {
+  color: rgba(255, 255, 255, 0.55) !important;
+  transition: color 0.2s ease, background 0.2s ease !important;
+}
+
+.n-dialog__close:hover {
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 按钮区：留出间距，右对齐 */
+.n-dialog__action {
+  margin-top: 4px !important;
+}
+
+/* 弹窗内的按钮（确认/取消）：大圆角 + 主题色，呼应整体玻璃风格。
+ * NButton 圆角由内部 --n-border-radius 控制，且按钮被 teleport 到
+ * <body> 下（弹窗本身已 teleport），故必须在全局用 !important 覆盖。 */
+.n-dialog__action .n-button,
+.n-modal .n-card__action .n-button {
+  border-radius: 12px !important;
+}
+
+/* 确认（positive）按钮：主题绿实底 */
+.n-dialog__action .n-button--primary-type,
+.n-modal .n-card__action .n-button--primary-type {
+  --n-border-radius: 12px !important;
+  background: rgba(102, 234, 194, 0.18) !important;
+  border: 1px solid rgba(102, 234, 194, 0.5) !important;
+  color: #8af0d0 !important;
+  transition: background 0.2s ease, border-color 0.2s ease !important;
+}
+
+.n-dialog__action .n-button--primary-type:hover,
+.n-modal .n-card__action .n-button--primary-type:hover {
+  background: rgba(102, 234, 194, 0.28) !important;
+  border-color: rgba(102, 234, 194, 0.7) !important;
+}
+
+/* 取消（negative）按钮：透明描边 */
+.n-dialog__action .n-button--default-type,
+.n-dialog__action .n-button--tertiary-type,
+.n-modal .n-card__action .n-button--default-type,
+.n-modal .n-card__action .n-button--tertiary-type {
+  --n-border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  transition: background 0.2s ease, border-color 0.2s ease !important;
+}
+
+.n-dialog__action .n-button--default-type:hover,
+.n-dialog__action .n-button--tertiary-type:hover,
+.n-modal .n-card__action .n-button--default-type:hover,
+.n-modal .n-card__action .n-button--tertiary-type:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 对话框与模态共用遮罩已在上方 .n-modal-mask 定义。
+ * Naive UI 的 useDialog 弹窗底层即为 NModal，进入动画复用
+ * 下方 .n-modal.fade-in-scale-up-transition-* 规则。 */
+
+/* =========================================================
+ * 全局模态框（NModal + preset="card"）主题样式
+ * NModal 默认 render-to-body=true，DOM 传送到 <body>。
+ * 覆盖 ImageCropperModal/CreateCircleModal/ForgotPasswordModal/
+ * UserProfile 编辑/改密弹窗等所有 NModal。
+ * preset="card" 内部渲染 NCard，故需同时覆盖 .n-card。
+ * ========================================================= */
+
+/* 模态容器：暗色玻璃，圆角较对话框更大 */
+.n-modal-body-wrapper .n-modal {
+  background: transparent !important;
+}
+
+/* preset card 渲染的卡片本体 */
+.n-modal .n-card,
+.n-card.n-modal {
+  background: rgba(22, 22, 38, 0.88) !important;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  overflow: hidden;
+}
+
+/* 卡片标题区 */
+.n-modal .n-card-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.n-modal .n-card-header__title {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.n-modal .n-card-header__close {
+  color: rgba(255, 255, 255, 0.55) !important;
+  transition: color 0.2s ease, background 0.2s ease !important;
+}
+
+.n-modal .n-card-header__close:hover {
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 卡片内容区 */
+.n-modal .n-card__content {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+/* 卡片底部操作区 */
+.n-modal .n-card__action {
+  background: transparent !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 模态进入/离开动画：复用 fade-in-scale-up（与下拉一致） */
+.n-modal.fade-in-scale-up-transition-enter-active {
+  transition: opacity 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.n-modal.fade-in-scale-up-transition-leave-active {
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.n-modal.fade-in-scale-up-transition-enter-from,
+.n-modal.fade-in-scale-up-transition-leave-to {
+  opacity: 0;
+  transform: scale(0.94) translateY(-8px);
+}
+
+/* =========================================================
+ * 全局消息（NMessage / useMessage）主题样式
+ * NMessage 由 NMessageProvider 管理，Teleport 到 <body>。
+ * 覆盖全项目 ~88 处 message.success/error/info/warning 调用。
+ * 设计：暗色玻璃胶囊 + 左侧类型色条 + 弹入动画。
+ * ========================================================= */
+
+/* 消息容器：暗色玻璃胶囊 */
+.n-message {
+  background: rgba(22, 22, 38, 0.92) !important;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 左侧类型色条（4px，覆盖 padding-left 留位） */
+.n-message::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 各类型色条颜色 */
+.n-message--info-type::before { background: #60a5fa; }
+.n-message--success-type::before { background: #66eac2; }
+.n-message--warning-type::before { background: #fbbf24; }
+.n-message--error-type::before { background: #f87171; }
+.n-message--loading-type::before { background: rgba(138, 240, 208, 0.7); }
+
+/* 消息图标：与色条同色系，更醒目 */
+.n-message--success-type .n-message__icon { color: #66eac2 !important; }
+.n-message--error-type .n-message__icon { color: #f87171 !important; }
+.n-message--warning-type .n-message__icon { color: #fbbf24 !important; }
+.n-message--info-type .n-message__icon { color: #60a5fa !important; }
+.n-message--loading-type .n-message__icon { color: #8af0d0 !important; }
+
+/* 消息文字 */
+.n-message__content {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 消息进入动画：从上滑入 + 淡入（高度展开由组件处理，这里补充位移） */
+.n-message.fade-in-height-expand-transition-enter-active {
+  transition: opacity 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.n-message.fade-in-height-expand-transition-leave-active {
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.n-message.fade-in-height-expand-transition-enter-from {
+  opacity: 0;
+  transform: translateY(-12px) scale(0.96);
+}
+
+/* =========================================================
+ * 全局气泡（NTooltip / NPopover）主题样式
+ * NPopover 默认 render-to-body=true，DOM 传送到 <body>。
+ * 覆盖 LoginCard 的三个第三方登录 tooltip 等。
+ * 设计：紧凑暗色玻璃 + 小圆角 + 弹性进入。
+ * ========================================================= */
+
+.n-popover.n-tooltip,
+.n-popover {
+  background: rgba(22, 22, 38, 0.92) !important;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.n-popover .n-popover__content,
+.n-popover .base-wave,
+.n-tooltip .n-tooltip__content {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+/* 气泡箭头：与背景同色，保持玻璃一致 */
+.n-popover:not(.n-tooltip) .n-popover-arrow,
+.n-tooltip .n-popover-arrow {
+  background: rgba(22, 22, 38, 0.92) !important;
+}
+
+/* 气泡进入动画 */
+.n-popover.popover-transition-enter-active {
+  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.n-popover.popover-transition-enter-from {
+  opacity: 0;
+  transform: scale(0.92);
+}

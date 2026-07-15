@@ -115,7 +115,7 @@
       </div>
 
       <!-- 用户信息下拉菜单 -->
-      <NDropdown :options="userMenuOptions" @select="handleMenuSelect">
+      <NDropdown :options="userMenuOptions" trigger="hover" placement="bottom-end" @select="handleMenuSelect">
         <div class="user-info-trigger">
           <NAvatar
             round
@@ -728,28 +728,9 @@ const handleClearCircleSearch = () => {
   --n-border: none !important;
 }
 
-:deep(.n-dropdown-menu) {
-  background: rgba(30, 30, 46, 0.95) !important;
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-:deep(.n-dropdown-option) {
-  color: rgba(255, 255, 255, 0.85) !important;
-}
-
-:deep(.n-dropdown-option:hover) {
-  background: rgba(102, 126, 234, 0.15) !important;
-}
-
-:deep(.n-dropdown-option .n-dropdown-option-body__prefix) {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-:deep(.n-dropdown-divider) {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
+/* 下拉菜单的暗色玻璃主题样式已移至全局 main.css：
+ * NDropdown 默认 render-to-body=true，菜单被传送到 <body> 下，
+ * 此处的 scoped :deep() 无法命中，写在全局才能生效。 */
 
 :deep(.n-badge) {
   --n-color: #f56c6c !important;
