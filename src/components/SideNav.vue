@@ -399,17 +399,24 @@ const handleCreateSuccess = (data) => {
   transition: all 0.2s ease !important;
 }
 
-/* :deep(.n-menu-item:hover) {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-} */
+/* 选中态：不要自己叠方形背景（会和原生圆角层打架、且产生色差）。
+ * Naive UI 的高亮是 .n-menu-item-content::before，带 border-radius 的圆角层，
+ * 由一组 --n-item-* 变量驱动。直接喂主题绿变量给它，高亮自带圆角且配色统一。 */
+:deep(.n-menu-item-content) {
+  --n-border-radius: 10px !important;
+  --n-item-color-hover: rgba(255, 255, 255, 0.06) !important;
+  --n-item-color-active: rgba(102, 234, 194, 0.16) !important;
+  --n-item-color-active-hover: rgba(102, 234, 194, 0.24) !important;
+  --n-item-color-active-collapsed: rgba(102, 234, 194, 0.16) !important;
+  --n-item-text-color-hover: rgba(255, 255, 255, 0.92) !important;
+  --n-item-text-color-active: #8af0d0 !important;
+  --n-item-text-color-active-hover: #8af0d0 !important;
+  --n-item-icon-color-hover: rgba(255, 255, 255, 0.92) !important;
+  --n-item-icon-color-active: #8af0d0 !important;
+  --n-item-icon-color-active-hover: #8af0d0 !important;
+}
 
-:deep(.n-menu-item.n-menu-item--selected) {
-  background: linear-gradient(135deg,
-    rgba(236, 72, 153, 0.2) 0%,
-    rgba(168, 85, 247, 0.2) 50%,
-    rgba(59, 130, 246, 0.2) 100%) !important;
-  color: #ec4899 !important;
+:deep(.n-menu-item-content--selected) {
   font-weight: 600;
 }
 
@@ -434,6 +441,18 @@ const handleCreateSuccess = (data) => {
 :deep(.n-menu--collapsed .n-menu-item-content) {
   padding: 12px !important;
   justify-content: center !important;
+}
+
+/* 折叠态高亮条优化：侧栏仅 64px，菜单默认 padding:12px 会让高亮 ::before
+ * （左右再各内缩 8px）挤得很窄。折叠时收窄菜单左右内边距、并把高亮条内缩改小，
+ * 让圆角方块在图标周围舒展开，视觉更稳。 */
+:deep(.n-menu--collapsed) {
+  padding: 12px 8px !important;
+}
+
+:deep(.n-menu--collapsed .n-menu-item-content::before) {
+  left: 4px !important;
+  right: 4px !important;
 }
 
 :deep(.n-menu--collapsed .n-menu-item-content__icon) {
@@ -531,11 +550,6 @@ const handleCreateSuccess = (data) => {
 :deep(.n-layout-toggle-button){
   background-color: transparent !important;
   border: none !important;
-}
-
-
-:deep(.n-menu-item-content .n-menu-item-content--selected){
-  padding: 0%;
 }
 
 </style>
