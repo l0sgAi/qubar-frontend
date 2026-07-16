@@ -14,12 +14,17 @@
     </div>
 
     <!-- 登录/注册 Tab 切换 -->
-    <NTabs
-      v-model:value="activeTab"
-      class="auth-tabs"
-      @update:value="handleTabChange"
-      justify-content="space-evenly"
+    <div
+      class="auth-tabs-viewport"
+      :style="{ height: authTabsHeight }"
     >
+      <div ref="authTabsContentRef" class="auth-tabs-content">
+        <NTabs
+          v-model:value="activeTab"
+          class="auth-tabs"
+          @update:value="handleTabChange"
+          justify-content="space-evenly"
+        >
       <!-- ========== 登录 Tab ========== -->
       <NTabPane :name="'login'" :tab="t('login.tabs.login')">
         <NForm
@@ -264,8 +269,10 @@
             </NForm>
           </div>
         </Transition>
-      </NTabPane>
-    </NTabs>
+          </NTabPane>
+        </NTabs>
+      </div>
+    </div>
 
     <NDivider class="auth-divider">{{ t('login.dividerText') }}</NDivider>
 
@@ -323,7 +330,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { NCard, NButton, NTabs, NTabPane, NForm, NFormItem, NInput, NIcon, NDivider, NTooltip, useMessage } from 'naive-ui'
 import { Email as EmailIcon, Locked, User as UserIcon } from '@vicons/carbon'
@@ -343,6 +350,28 @@ function getLangParam() {
 
 // ---- 通用状态 ----
 const activeTab = ref('login')
+const authTabsContentRef = ref(null)
+const authTabsHeight = ref(null)
+let authTabsResizeObserver = null
+
+function updateAuthTabsHeight() {
+  const content = authTabsContentRef.value
+  if (!content) return
+
+  const nextHeight = Math.ceil(content.getBoundingClientRect().height)
+  if (nextHeight > 0) authTabsHeight.value = `${nextHeight}px`
+}
+
+onMounted(() => {
+  nextTick(() => {
+    if (typeof ResizeObserver === 'undefined') return
+    const content = authTabsContentRef.value
+    if (!content) return
+    updateAuthTabsHeight()
+    authTabsResizeObserver = new ResizeObserver(updateAuthTabsHeight)
+    authTabsResizeObserver.observe(content)
+  })
+})
 
 // ---- 登录状态 ----
 const loginFormRef = ref(null)
@@ -465,6 +494,7 @@ function startCountdown() {
 
 onUnmounted(() => {
   if (countdownTimer) clearInterval(countdownTimer)
+  authTabsResizeObserver?.disconnect()
 })
 
 // ---- Tab 切换 ----
@@ -666,6 +696,18 @@ function handleAzureLogin() {
 /* Tab 切换 */
 .auth-tabs {
   margin-top: 8px;
+}
+
+.auth-tabs-viewport {
+  box-sizing: content-box;
+  margin: 0 -16px -16px;
+  padding: 0 16px 16px;
+  overflow: hidden;
+  transition: height 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-tabs-content {
+  width: 100%;
 }
 
 :deep(.n-tabs .n-tabs-nav) {
@@ -1017,6 +1059,12 @@ function handleAzureLogin() {
 
   .step-label {
     font-size: 0.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-tabs-viewport {
+    transition: none;
   }
 }
 </style>
