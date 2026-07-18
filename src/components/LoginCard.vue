@@ -274,6 +274,14 @@
       </div>
     </div>
 
+    <!-- 访客入口：未登录先逛逛（跳发现页，访客可读） -->
+    <div class="guest-entry">
+      <button class="guest-entry-btn" @click="handleBrowseAsGuest">
+        <NIcon :component="ExploreIcon" size="18" />
+        <span>{{ t('login.browseAsGuest') }}</span>
+      </button>
+    </div>
+
     <NDivider class="auth-divider">{{ t('login.dividerText') }}</NDivider>
 
     <!-- OAuth 按钮 -->
@@ -331,9 +339,10 @@
 
 <script setup>
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { NCard, NButton, NTabs, NTabPane, NForm, NFormItem, NInput, NIcon, NDivider, NTooltip, useMessage } from 'naive-ui'
 import { Email as EmailIcon, Locked, User as UserIcon } from '@vicons/carbon'
+import { Compass as ExploreIcon } from '@vicons/tabler'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import ForgotPasswordModal from '@/components/ForgotPasswordModal.vue'
@@ -341,6 +350,7 @@ import { loginWithEmail, sendVerificationCode, verifyEmailCode, registerWithEmai
 import { auth } from '@/utils/auth'
 
 const router = useRouter()
+const route = useRoute()
 const message = useMessage()
 const { t, locale } = useI18n()
 
@@ -363,6 +373,12 @@ function updateAuthTabsHeight() {
 }
 
 onMounted(() => {
+  // 支持外部指定初始 tab（如 LoginPromptModal「去注册」按钮携带 query.tab=register）
+  const tab = route.query.tab
+  if (tab === 'register' || tab === 'login') {
+    activeTab.value = tab
+    if (tab === 'register') registerStep.value = 1
+  }
   nextTick(() => {
     if (typeof ResizeObserver === 'undefined') return
     const content = authTabsContentRef.value
@@ -372,6 +388,21 @@ onMounted(() => {
     authTabsResizeObserver.observe(content)
   })
 })
+
+// 访客浏览：跳发现页（已验证的访客落地页，所有接口 anonymous 可读）
+function handleBrowseAsGuest() {
+  router.push('/discover')
+}
+
+// 登录/注册成功后的跳转：优先返回来源页（query.redirect），无则默认 /home
+function redirectAfterAuth() {
+  const redirect = route.query.redirect
+  if (typeof redirect === 'string' && redirect.startsWith('/') && redirect !== '/') {
+    router.push(redirect)
+  } else {
+    router.push('/home')
+  }
+}
 
 // ---- 登录状态 ----
 const loginFormRef = ref(null)
@@ -528,7 +559,7 @@ async function handleLogin() {
     })
     auth.setToken(res.data.token)
     message.success(t('login.messages.loginSuccess'))
-    router.push('/home')
+    redirectAfterAuth()
   } catch (err) {
     message.error(err.message || t('login.messages.loginFailed', { error: '' }))
   } finally {
@@ -603,7 +634,7 @@ async function handleRegister() {
     })
     auth.setToken(res.data.token, res.data.expire)
     message.success(t('login.register.success'))
-    router.push('/home')
+    redirectAfterAuth()
   } catch (err) {
     message.error(t('login.messages.registerFailed', { error: err.message || '' }))
   } finally {
@@ -832,6 +863,38 @@ function handleAzureLogin() {
 /* 分隔线 */
 .auth-divider {
   margin: 20px 0 16px;
+}
+
+/* 访客入口：次级玻璃描边按钮（区别于主渐变登录按钮） */
+.guest-entry {
+  margin-top: 16px;
+}
+
+.guest-entry-btn {
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.guest-entry-btn:hover {
+  color: var(--theme-color, #66eac2);
+  border-color: rgba(102, 234, 194, 0.4);
+  background: rgba(102, 234, 194, 0.08);
+}
+
+.guest-entry-btn:active {
+  transform: scale(0.99);
 }
 
 :deep(.n-divider .n-divider__title) {

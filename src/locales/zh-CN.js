@@ -386,6 +386,7 @@ export default {
     },
     submit: '登录',
     dividerText: '或通过以下方式继续',
+    browseAsGuest: '先逛逛',
 
     forgotPassword: '忘记密码？',
 
@@ -450,6 +451,22 @@ export default {
       codeVerified: '邮箱验证成功',
       codeInvalid: '验证码无效或已过期',
       sendCodeFailed: '发送验证码失败'
+    },
+
+    // 访客点击写操作时的登录引导 Modal
+    guestPrompt: {
+      title: '登录后继续',
+      desc: '登录后即可使用完整功能，还能记录你的浏览历史。',
+      descWithAction: '登录后即可{action}，还能收藏与互动。',
+      goLogin: '去登录',
+      goRegister: '注册新账号',
+      continueGuest: '暂不登录，继续浏览',
+      actions: {
+        like: '点赞',
+        collect: '收藏',
+        comment: '发表评论',
+        join: '加入圈子'
+      }
     }
   },
 
@@ -472,7 +489,8 @@ export default {
       submit: '发表评论',
       success: '评论成功',
       failed: '评论失败',
-      uploadImage: '上传图片'
+      uploadImage: '上传图片',
+      loginToComment: '登录后发表评论...'
     },
     list: {
       title: '评论 ({count})',
@@ -515,7 +533,8 @@ export default {
     refreshed: '推荐已刷新',
     empty: '暂无内容',
     emptyFollowing: '还没有加入圈子，去发现感兴趣的圈子吧',
-    loadFailed: '加载失败'
+    loadFailed: '加载失败',
+    loginRequiredTab: '此内容需要登录后查看'
   },
 
   // 消息提示

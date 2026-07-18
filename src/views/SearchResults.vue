@@ -75,7 +75,6 @@ import UserList from '@/components/UserList.vue'
 import { searchCircles, getCircleDetail } from '@/api/circle'
 import { searchPosts } from '@/api/post'
 import { searchUsers } from '@/api/user'
-import { auth } from '@/utils/auth'
 import PostList from '@/components/PostList.vue'
 
 const route = useRoute()
@@ -121,12 +120,7 @@ const postsObserver = ref(null)
 
 // 初始化
 onMounted(async () => {
-  // 检查登录状态
-  if (!auth.isAuthenticated()) {
-    message.warning('请先登录')
-    router.push('/')
-    return
-  }
+  // 搜索页访客可读：/post/list /circle/list /user/search 已开放 anonymous
 
   // 获取搜索关键词
   keyword.value = route.query.q || ''

@@ -134,7 +134,6 @@ import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
 import MyPosts from '@/components/user-profile/MyPosts.vue'
 import MyGroups from '@/components/user-profile/MyGroups.vue'
-import { auth } from '@/utils/auth'
 import { getUserDetail } from '@/api/user'
 
 const router = useRouter()
@@ -254,11 +253,7 @@ const getRoleType = (role) => {
 }
 
 onMounted(() => {
-  if (!auth.isAuthenticated()) {
-    message.warning('请先登录')
-    router.push('/')
-    return
-  }
+  // 用户公开主页访客可读：/user/detail/:id 已开放 anonymous
   fetchUserInfo()
 })
 </script>

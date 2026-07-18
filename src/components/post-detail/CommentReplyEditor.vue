@@ -79,6 +79,8 @@ import { createComment } from '@/api/comment'
 import { getUserInfo } from '@/api/auth'
 import { useImageUpload } from '@/composables/useImageUpload'
 import UploadImageWall from '@/components/UploadImageWall.vue'
+import { auth } from '@/utils/auth'
+import { requireLogin } from '@/utils/guest-action'
 
 const props = defineProps({
   postId: {
@@ -128,6 +130,11 @@ const removeImage = (idx) => {
 }
 
 const handleSubmit = async () => {
+  // 访客发回复前置拦截：弹登录引导
+  if (!auth.isAuthenticated()) {
+    requireLogin('comment')
+    return
+  }
   if ((!content.value.trim() && !uploadedImages.value.length) || submitting.value) return
   submitting.value = true
   try {

@@ -386,6 +386,7 @@ export default {
     },
     submit: 'Login',
     dividerText: 'or continue with',
+    browseAsGuest: 'Browse as guest',
 
     forgotPassword: 'Forgot password?',
 
@@ -450,6 +451,22 @@ export default {
       codeVerified: 'Email verified successfully',
       codeInvalid: 'Invalid or expired code',
       sendCodeFailed: 'Failed to send verification code'
+    },
+
+    // Guest login prompt modal (shown when anonymous user clicks a write action)
+    guestPrompt: {
+      title: 'Login to continue',
+      desc: 'Log in to unlock full features and track your browsing history.',
+      descWithAction: 'Log in to {action}, save posts, and interact.',
+      goLogin: 'Log in',
+      goRegister: 'Create an account',
+      continueGuest: 'Not now, keep browsing',
+      actions: {
+        like: 'like posts',
+        collect: 'collect posts',
+        comment: 'post comments',
+        join: 'join circles'
+      }
     }
   },
 
@@ -472,7 +489,8 @@ export default {
       submit: 'Post Comment',
       success: 'Comment posted',
       failed: 'Comment failed',
-      uploadImage: 'Upload Image'
+      uploadImage: 'Upload Image',
+      loginToComment: 'Log in to post a comment...'
     },
     list: {
       title: 'Comments ({count})',
@@ -515,7 +533,8 @@ export default {
     refreshed: 'Recommendations refreshed',
     empty: 'No content yet',
     emptyFollowing: "You haven't joined any circles yet — explore circles you might like",
-    loadFailed: 'Failed to load'
+    loadFailed: 'Failed to load',
+    loginRequiredTab: 'This content requires login to view'
   },
 
   // 消息提示

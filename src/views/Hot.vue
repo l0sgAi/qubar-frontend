@@ -77,7 +77,6 @@ import SideNav from '@/components/SideNav.vue'
 import RightSidebar from '@/components/RightSidebar.vue'
 import TrendingCard from '@/components/TrendingCard.vue'
 import { getTrending } from '@/api/trending'
-import { auth } from '@/utils/auth'
 
 const router = useRouter()
 const message = useMessage()
@@ -153,11 +152,7 @@ const handleWindowChange = () => {
 }
 
 onMounted(() => {
-  if (!auth.isAuthenticated()) {
-    message.warning(t('messages.loginRequired'))
-    router.push('/')
-    return
-  }
+  // 热点页访客可读：/trending 已开放 anonymous，无需登录检查
   fetchTrending()
   // 每分钟刷新一次「X 分钟前」文案
   ticker = setInterval(() => { nowMs.value = Date.now() }, 60000)

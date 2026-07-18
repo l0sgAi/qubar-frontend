@@ -287,6 +287,8 @@ import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
 import PostList from '@/components/PostList.vue'
 import { getCircleDetail, joinCircle, leaveCircle, getCirclePosts } from '@/api/circle'
+import { auth } from '@/utils/auth'
+import { requireLogin } from '@/utils/guest-action'
 import { Bell as BellIcon, BellOff as BellOffIcon, Edit as EditIcon, DotsVertical as MoreIcon } from '@vicons/tabler'
 import { User as UserIcon, FileText as FileTextIcon, Flame as FlameIcon } from '@vicons/tabler'
 
@@ -552,6 +554,11 @@ const fetchCircleDetail = async () => {
 
 // 加入圈子
 const handleJoinCircle = async () => {
+  // 访客加圈前置拦截：弹登录引导
+  if (!auth.isAuthenticated()) {
+    requireLogin('join')
+    return
+  }
   joinLoading.value = true
   try {
     await joinCircle({ circle_id: circleDetail.value.id })
@@ -567,6 +574,11 @@ const handleJoinCircle = async () => {
 
 // 退出圈子
 const handleLeaveCircle = async () => {
+  // 防御性检查：退出需登录（按钮本身只在已加入成员处显示）
+  if (!auth.isAuthenticated()) {
+    requireLogin('join')
+    return
+  }
   joinLoading.value = true
   isButtonHovered.value = false
   try {

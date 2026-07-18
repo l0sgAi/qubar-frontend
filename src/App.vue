@@ -4,6 +4,8 @@
     <NMessageProvider>
       <NDialogProvider>
         <router-view />
+        <!-- 全局访客操作登录引导（写操作前置拦截，避免触发 401 硬跳转） -->
+        <LoginPromptModal />
       </NDialogProvider>
     </NMessageProvider>
   </NConfigProvider>
@@ -15,6 +17,7 @@ import { useRouter } from 'vue-router'
 import { darkTheme, zhCN, enUS } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { NConfigProvider, NGlobalStyle, NMessageProvider, NDialogProvider } from 'naive-ui'
+import LoginPromptModal from '@/components/LoginPromptModal.vue'
 
 const router = useRouter()
 const { locale } = useI18n()

@@ -44,14 +44,14 @@
         </div>
       </div>
 
-      <!-- 右侧信息栏 -->
-      <RightSidebar />
+      <!-- 右侧信息栏（匿名态隐藏，主内容自动占满；参考 Discover.vue） -->
+      <RightSidebar v-if="isLoggedIn" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { NTabs, NTabPane, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -61,6 +61,7 @@ import PostList from '@/components/PostList.vue'
 import RightSidebar from '@/components/RightSidebar.vue'
 import { getHomeFeed } from '@/api/post'
 import { auth } from '@/utils/auth'
+import { requireLogin } from '@/utils/guest-action'
 import request from '@/utils/request'
 
 const router = useRouter()
@@ -68,18 +69,23 @@ const message = useMessage()
 const { t } = useI18n()
 const offset = ref(260)
 
+const isLoggedIn = computed(() => auth.isAuthenticated())
+
 // 3 个 tab 共用 /post/home 端点（latest 已迁移至 RightSidebar）
 const TABS = [
   { name: 'recommend', label: 'nav.recommend' },
   { name: 'hot', label: 'nav.hot' },
   { name: 'following', label: 'nav.following' }
 ]
+// recommend/following 依赖登录用户数据池，访客访问会 401（'This feed tab requires login'）
+const RESTRICTED_TABS = ['recommend', 'following']
 
 const PAGE_SIZE = 20
 
 // 统一信息流状态：切 tab 时清空本地列表 + 游标（遵循文档第 8 节，
 // 避免把 recommend 的 pool_token 带到 hot/latest/following）
-const activeTab = ref('recommend')
+// 访客默认 hot tab；登录用户默认 recommend（原行为）
+const activeTab = ref(auth.isAuthenticated() ? 'recommend' : 'hot')
 const posts = ref([])
 const loading = ref(false)
 const isAppending = ref(false) // true=追加翻页（底部加载条）；false=首屏/切 tab（NSpin）
@@ -181,6 +187,14 @@ const fetchFeed = async (append = false) => {
 
 // 切 tab：清空本地列表 + 游标，用对应 tab 首页参数重新拉
 const handleTabChange = (tab) => {
+  // 访客访问 recommend/following tab：拦截并弹登录引导，保持在当前可读 tab
+  if (!auth.isAuthenticated() && RESTRICTED_TABS.includes(tab)) {
+    message.info(t('feed.loginRequiredTab'))
+    requireLogin()
+    // NTabs 已切换 DOM，需回滚到当前实际可读的 tab
+    nextTick(() => { activeTab.value = isLoggedIn.value ? 'recommend' : 'hot' })
+    return
+  }
   activeTab.value = tab
   posts.value = []
   poolToken.value = ''
@@ -215,12 +229,8 @@ const setupObserver = () => {
 watch([sentinel, hasMore, loading], setupObserver)
 
 onMounted(() => {
-  // 推荐流强制登录：未登录跳登录页
-  if (!auth.isAuthenticated()) {
-    message.warning(t('messages.loginRequired'))
-    router.push('/')
-    return
-  }
+  // 首页访客可读：activeTab 已在初始化时按登录态选定（访客=hot，登录=recommend）
+  // recommend/following tab 的访客拦截在 handleTabChange 中处理
   fetchFeed(false)
 })
 

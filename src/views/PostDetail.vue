@@ -74,6 +74,8 @@ import { toggleLike } from '@/api/like'
 import { toggleCollect } from '@/api/collect'
 import { getCircleDetail } from '@/api/circle'
 import { useThrottleFn, useDebounceFn } from '@/utils/throttle'
+import { auth } from '@/utils/auth'
+import { requireLogin } from '@/utils/guest-action'
 import {ArticleRound} from '@vicons/material'
 
 const route = useRoute()
@@ -150,6 +152,11 @@ const debouncedPostLike = useDebounceFn(async () => {
 
 const handleLike = () => {
   if (!post.value) return
+  // 访客点赞前置拦截：避免触发 401 硬跳转，改为弹登录引导
+  if (!auth.isAuthenticated()) {
+    requireLogin('like')
+    return
+  }
   const newLiked = !post.value.is_liked
   post.value.is_liked = newLiked
   post.value.like_count = newLiked
@@ -175,6 +182,11 @@ const debouncedPostCollect = useDebounceFn(async () => {
 
 const handleCollect = () => {
   if (!post.value) return
+  // 访客收藏前置拦截
+  if (!auth.isAuthenticated()) {
+    requireLogin('collect')
+    return
+  }
   post.value.is_collected = !post.value.is_collected
   debouncedPostCollect()
 }

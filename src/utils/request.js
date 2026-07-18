@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { useMessage } from 'naive-ui'
 import { sanitizePayload } from '@/utils/sanitize'
+import { isFeedTabRestricted } from '@/utils/guest-access'
 
 // 创建 axios 实例
 const request = axios.create({
@@ -63,7 +64,9 @@ request.interceptors.response.use(
       // 处理特定错误码
       // 登录/注册等认证请求返回的 401 表示“凭证错误”，而非“会话过期”，
       // 此时不应重定向（会刷掉错误提示），应直接交由调用方展示错误。
-      if (res.code === 401 && !isAuthRequest(response.config.url)) {
+      // 另：/post/home?tab=recommend|following 访客访问时返回的 401（message='This feed tab requires login'）
+      // 仅表示该 tab 需要登录，不应清 token 或跳转，交由调用方降级（如切 hot tab）。
+      if (res.code === 401 && !isAuthRequest(response.config.url) && !isFeedTabRestricted(res.message)) {
         // token 无效或过期，清除本地存储并跳转到登录页
         localStorage.removeItem('quba_token')
         window.location.href = '/'
@@ -85,7 +88,10 @@ request.interceptors.response.use(
 
       // 处理 401 未授权
       // 登录/注册等认证请求的 401 表示“凭证错误”，应交由调用方展示，不重定向。
-      if (!isAuthRequest(error.config?.url) && (error.response.status === 401 || res.code === 401)) {
+      // /post/home 的 feed-tab 限制 401 也不在此处理——交由调用方降级。
+      if (!isAuthRequest(error.config?.url)
+          && !isFeedTabRestricted(res.message)
+          && (error.response.status === 401 || res.code === 401)) {
         localStorage.removeItem('quba_token')
         window.location.href = '/'
       }

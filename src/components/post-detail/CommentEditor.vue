@@ -3,7 +3,13 @@
     <div class="comment-editor-header">
       <span class="comment-section-title">{{ t('comment.editor.title') }}</span>
     </div>
-    <div class="comment-editor-wrapper">
+    <!-- 访客态：隐藏编辑器，展示「登录后评论」引导 -->
+    <div v-if="!isLoggedIn" class="guest-comment-prompt" @click="requireLogin('comment')">
+      <NIcon size="20" :component="CommentIcon" />
+      <span>{{ t('comment.editor.loginToComment') }}</span>
+    </div>
+    <!-- 登录态：原编辑器 -->
+    <div v-else class="comment-editor-wrapper">
       <MdEditor
         v-model="content"
         :language="language"
@@ -70,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { NCard, NButton, NIcon, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { MdEditor } from 'md-editor-v3'
@@ -79,6 +85,9 @@ import { createComment } from '@/api/comment'
 import { getUserInfo } from '@/api/auth'
 import { useImageUpload } from '@/composables/useImageUpload'
 import UploadImageWall from '@/components/UploadImageWall.vue'
+import { auth } from '@/utils/auth'
+import { requireLogin } from '@/utils/guest-action'
+import { MessageCircle as CommentIcon } from '@vicons/tabler'
 
 const props = defineProps({
   postId: {
@@ -99,6 +108,7 @@ const emit = defineEmits(['update:modelValue', 'submit'])
 
 const { t } = useI18n()
 const message = useMessage()
+const isLoggedIn = computed(() => auth.isAuthenticated())
 const content = ref(props.modelValue)
 const submitting = ref(false)
 const { uploading, uploadingCount, progress, uploadMany } = useImageUpload({ withProgress: true })
@@ -213,6 +223,27 @@ const uploadFiles = async (files) => {
 <style scoped>
 .comment-editor-card {
   border-radius: 16px !important;
+}
+
+/* 访客态「登录后评论」引导：玻璃拟态按钮风格，hover 主题绿 */
+.guest-comment-prompt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.guest-comment-prompt:hover {
+  border-color: rgba(102, 234, 194, 0.4);
+  background: rgba(102, 234, 194, 0.08);
+  color: var(--theme-color, #66eac2);
 }
 
 .comment-section-title {

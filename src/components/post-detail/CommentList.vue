@@ -252,6 +252,8 @@ import CommentReplyEditor from './CommentReplyEditor.vue'
 import {CommentRound} from '@vicons/material'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 import { useThrottleFn, useDebounceFn } from '@/utils/throttle'
+import { auth } from '@/utils/auth'
+import { requireLogin } from '@/utils/guest-action'
 
 const props = defineProps({
   postId: {
@@ -444,6 +446,11 @@ const debouncedLikeRequest = useDebounceFn(async (type, target) => {
 }, 600)
 
 const handleToggleLike = (type, target) => {
+  // 访客点赞前置拦截：弹登录引导，不触发 401 硬跳转
+  if (!auth.isAuthenticated()) {
+    requireLogin('like')
+    return
+  }
   const newLiked = !target.liked
   target.liked = newLiked
   target.like_count = newLiked
