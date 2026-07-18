@@ -6,8 +6,10 @@
     class="login-prompt-modal"
     :style="{ width: '420px', maxWidth: '90vw', borderRadius: '24px' }"
     :bordered="false"
+    :closable="false"
     size="huge"
     :mask-closable="true"
+    content-style="padding: 28px 28px 24px;"
   >
     <!-- 顶部图标 -->
     <div class="prompt-icon-area">
@@ -27,7 +29,7 @@
       <NButton
         size="large"
         block
-        class="gradient-btn"
+        class="prompt-primary-btn"
         @click="goLogin"
       >
         {{ t('login.guestPrompt.goLogin') }}
@@ -98,12 +100,12 @@ const handleShowChange = (val) => {
 .prompt-icon-area {
   display: flex;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .prompt-icon-wrap {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -135,7 +137,34 @@ const handleShowChange = (val) => {
   gap: 10px;
 }
 
+/* 两个按钮统一圆角：覆盖 Naive UI 内部 --n-border-radius（默认直角/小圆角） */
+.prompt-actions :deep(.n-button) {
+  --n-border-radius: 14px !important;
+  border-radius: 14px !important;
+}
+
+/* 主按钮：主题绿实底 + 渐变，呼应登录卡片 .gradient-btn 视觉 */
+.prompt-primary-btn {
+  height: 46px;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--primary-gradient) !important;
+  border: none !important;
+  color: #0e1530 !important;
+  box-shadow: 0 4px 16px rgba(102, 234, 194, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.prompt-primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(102, 234, 194, 0.38) !important;
+}
+
+/* 次按钮：玻璃描边 */
 .prompt-secondary-btn {
+  height: 46px;
+  font-size: 15px;
+  font-weight: 500;
   margin-top: 0 !important;
 }
 
