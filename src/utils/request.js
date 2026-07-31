@@ -17,7 +17,7 @@ const request = axios.create({
 request.interceptors.request.use(
   config => {
     // 从 localStorage 获取 token
-    const token = localStorage.getItem('quba_token')
+    const token = localStorage.getItem('qubar_token')
     if (token) {
       // 设置 sa-token 的请求头
       config.headers['satoken'] = token
@@ -68,7 +68,7 @@ request.interceptors.response.use(
       // 仅表示该 tab 需要登录，不应清 token 或跳转，交由调用方降级（如切 hot tab）。
       if (res.code === 401 && !isAuthRequest(response.config.url) && !isFeedTabRestricted(res.message)) {
         // token 无效或过期，清除本地存储并跳转到登录页
-        localStorage.removeItem('quba_token')
+        localStorage.removeItem('qubar_token')
         window.location.href = '/'
       }
 
@@ -92,7 +92,7 @@ request.interceptors.response.use(
       if (!isAuthRequest(error.config?.url)
           && !isFeedTabRestricted(res.message)
           && (error.response.status === 401 || res.code === 401)) {
-        localStorage.removeItem('quba_token')
+        localStorage.removeItem('qubar_token')
         window.location.href = '/'
       }
 

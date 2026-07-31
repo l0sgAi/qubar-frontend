@@ -563,13 +563,13 @@ export default {
       {
         title: '1. Acceptance of Terms',
         paragraphs: [
-          'Welcome to Quba (the "Service"). By accessing or using the Service, you confirm that you have read, understood, and agree to be bound by this User Agreement (the "Agreement"). If you do not agree to any of the terms of this Agreement, please do not use the Service.'
+          'Welcome to Qubar (the "Service"). By accessing or using the Service, you confirm that you have read, understood, and agree to be bound by this User Agreement (the "Agreement"). If you do not agree to any of the terms of this Agreement, please do not use the Service.'
         ]
       },
       {
         title: '2. Service Description',
         paragraphs: [
-          'Quba is an interest-based social platform designed to help users discover and connect with various interest communities. The Service includes, but is not limited to:'
+          'Qubar is an interest-based social platform designed to help users discover and connect with various interest communities. The Service includes, but is not limited to:'
         ],
         lists: [
           [
@@ -622,7 +622,7 @@ export default {
       {
         title: '5. Intellectual Property',
         paragraphs: [
-          'The Service and its original content, features, and design are the exclusive property of Quba and its licensors, protected by copyright, trademark, and other intellectual property laws. You agree not to copy, modify, distribute, or otherwise use any part of the Service without our express written permission.'
+          'The Service and its original content, features, and design are the exclusive property of Qubar and its licensors, protected by copyright, trademark, and other intellectual property laws. You agree not to copy, modify, distribute, or otherwise use any part of the Service without our express written permission.'
         ]
       },
       {
@@ -669,7 +669,7 @@ export default {
       {
         title: '9. Indemnification',
         paragraphs: [
-          'You agree to indemnify and hold Quba and its officers, directors, employees, agents, and licensors harmless from any claims, damages, obligations, losses, liabilities, costs, or expenses arising from your use of the Service or your breach of this Agreement.'
+          'You agree to indemnify and hold Qubar and its officers, directors, employees, agents, and licensors harmless from any claims, damages, obligations, losses, liabilities, costs, or expenses arising from your use of the Service or your breach of this Agreement.'
         ]
       },
       {
@@ -687,7 +687,7 @@ export default {
       {
         title: '12. Contact Us',
         paragraphs: ['If you have any questions or concerns about this Agreement, please contact us at:'],
-        lists: [['Email: legal@quba.com', 'Address: Pudong New Area, Shanghai, China']]
+        lists: [['Email: legal@qubar.com', 'Address: Pudong New Area, Shanghai, China']]
       }
     ]
   },
@@ -698,7 +698,7 @@ export default {
     lastUpdated: 'Last updated: January 2025',
     backToLogin: 'Back to Login',
     intro:
-      'Quba ("we", "us", or "the Service") respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, disclose, and protect your information. By using the Service, you agree to the practices described in this Privacy Policy.',
+      'Qubar ("we", "us", or "the Service") respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, disclose, and protect your information. By using the Service, you agree to the practices described in this Privacy Policy.',
     sections: [
       {
         title: '1. Information We Collect',
@@ -837,12 +837,12 @@ export default {
         paragraphs: ['If you have any questions, concerns, or requests regarding this Privacy Policy or our information practices, please contact us at:'],
         lists: [
           [
-            { strong: 'Email: ', text: 'privacy@quba.com' },
+            { strong: 'Email: ', text: 'privacy@qubar.com' },
             { strong: 'Address: ', text: 'Zhangjiang Hi-Tech Park, Pudong New Area, Shanghai, China' },
             { strong: 'Phone: ', text: '+86 21-1234-5678' }
           ]
         ],
-        paragraphs2: ['Data Protection Officer contact:', 'Email: dpo@quba.com']
+        paragraphs2: ['Data Protection Officer contact:', 'Email: dpo@qubar.com']
       },
       {
         title: '11. Governing Law',

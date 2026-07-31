@@ -26,7 +26,7 @@ https://your-backend.com/auth/google/login
 
 ```
 HTTP 302 Redirect
-Location: https://l0sgAi.github.io/interestBar-frontend/success?token=465f4e12-e538-40a4-98bd-6a50bb337a65&expire=259200&email=user@example.com
+Location: https://qubar.site/success?token=465f4e12-e538-40a4-98bd-6a50bb337a65&expire=259200&email=user@example.com
 ```
 
 **示例代码（Go）：**
@@ -41,7 +41,7 @@ func GoogleCallback(c *gin.Context) {
 
     // 3. 重定向到前端
     redirectURL := fmt.Sprintf(
-        "https://l0sgAi.github.io/interestBar-frontend/success?token=%s&expire=%s&email=%s",
+        "https://qubar.site/success?token=%s&expire=%s&email=%s",
         token,
         expire,
         "user@example.com",
@@ -69,7 +69,7 @@ func GoogleCallback(c *gin.Context) {
 **前端会发送的请求：**
 
 ```javascript
-POST https://undeclared-porsha-nonformatively.ngrok-free.dev/auth/google/callback
+POST https://api.qubar.site/auth/google/callback
 Content-Type: application/json
 
 {
@@ -106,19 +106,19 @@ Content-Type: application/json
 在 Google Cloud Console 配置授权重定向 URI：
 
 ```
-https://l0sgAi.github.io/interestBar-frontend/success
+https://qubar.site/success
 ```
 
 **注意：** 由于使用了 History 模式路由，不需要 `#/`。
 
 ## 测试登录流程
 
-1. 访问：`https://l0sgAi.github.io/interestBar-frontend/`
+1. 访问：`https://qubar.site/`
 2. 点击"使用 Google 账号继续"
 3. 完成 Google 认证
-4. 自动跳转到：`https://l0sgAi.github.io/interestBar-frontend/success`
+4. 自动跳转到：`https://qubar.site/success`
 5. 显示欢迎信息（带 token 调试信息）
-6. 1.5秒后自动跳转到：`https://l0sgAi.github.io/interestBar-frontend/home`
+6. 1.5秒后自动跳转到：`https://qubar.site/home`
 
 ## Token 使用
 
@@ -143,7 +143,7 @@ satoken: 465f4e12-e538-40a4-98bd-6a50bb337a65
 
 **检查：**
 1. 打开浏览器开发者工具 > Application > Local Storage
-2. 查找 `quba_token` 和 `quba_token_expire`
+2. 查找 `qubar_token` 和 `qubar_token_expire`
 3. 如果不存在，检查回调 URL 格式
 
 ### 问题：跳转到 /home 后又被重定向回登录页
@@ -162,7 +162,7 @@ satoken: 465f4e12-e538-40a4-98bd-6a50bb337a65
 - 后端可以使用 ngrok URL 进行测试
 
 ### 生产环境
-- URL: `https://l0sgAi.github.io/interestBar-frontend/success?token=xxx`
+- URL: `https://qubar.site/success?token=xxx`
 - 需要配置正确的 GitHub Pages 域名
 
 ## 安全建议

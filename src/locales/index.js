@@ -9,7 +9,8 @@ const messages = {
 
 // 从 localStorage 获取保存的语言设置，默认使用浏览器语言
 const getLocale = () => {
-  const savedLocale = localStorage.getItem('quba_locale')
+  const savedLocale = localStorage.getItem('qubar_locale') || localStorage.getItem('quba_locale')
+  localStorage.removeItem('quba_locale')
   if (savedLocale && messages[savedLocale]) {
     return savedLocale
   }

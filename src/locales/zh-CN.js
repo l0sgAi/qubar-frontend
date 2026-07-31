@@ -687,7 +687,7 @@ export default {
       {
         title: '12. 联系我们',
         paragraphs: ['如果您对本协议有任何疑问或疑虑，请通过以下方式与我们联系：'],
-        lists: [['邮箱：legal@quba.com', '地址：中国上海市浦东新区']]
+        lists: [['邮箱：legal@qubar.com', '地址：中国上海市浦东新区']]
       }
     ]
   },
@@ -837,12 +837,12 @@ export default {
         paragraphs: ['如果您对本隐私政策或我们的信息实践有任何疑问、疑虑或请求，请通过以下方式联系我们：'],
         lists: [
           [
-            { strong: '邮箱：', text: 'privacy@quba.com' },
+            { strong: '邮箱：', text: 'privacy@qubar.com' },
             { strong: '地址：', text: '中国上海市浦东新区张江高科技园区' },
             { strong: '联系电话：', text: '+86 21-1234-5678' }
           ]
         ],
-        paragraphs2: ['数据保护官联系方式：', '邮箱：dpo@quba.com']
+        paragraphs2: ['数据保护官联系方式：', '邮箱：dpo@qubar.com']
       },
       {
         title: '11. 适用法律',

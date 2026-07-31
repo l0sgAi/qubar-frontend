@@ -55,7 +55,7 @@ const languageOptions = computed(() => [
 
 const handleLanguageChange = (lang) => {
   currentLocale.value = lang
-  localStorage.setItem('quba_locale', lang)
+  localStorage.setItem('qubar_locale', lang)
   message.success(lang === 'zh-CN' ? '已切换至中文' : 'Switched to English')
 }
 </script>

@@ -13,7 +13,7 @@
 
 ### 2. 配置基础路径 (重要)
 
-如果你的仓库名不是 `interestBar-frontend`，需要修改 [vite.config.js](vite.config.js#L17) 中的 `base` 配置：
+如果你的仓库名不是 `qubar-frontend`，需要修改 [vite.config.js](vite.config.js) 中的 `base` 配置：
 
 ```javascript
 base: '/your-repo-name/' // 替换为你的仓库名
@@ -33,7 +33,7 @@ git push origin main
 
 1. 在 GitHub 仓库中点击 **Actions** 标签
 2. 查看最新的工作流运行状态
-3. 构建成功后，访问 `https://your-username.github.io/interestBar-frontend/`
+3. 构建成功后，访问 `https://qubar.site/`
 
 ## 手动触发部署
 
@@ -61,10 +61,10 @@ git push origin main
 在 Google Cloud Console 中，将以下地址添加到授权重定向 URI：
 
 ```
-https://your-username.github.io/interestBar-frontend/success
+https://qubar.site/success
 ```
 
-替换 `your-username` 为你的 GitHub 用户名，`interestBar-frontend` 为你的仓库名。
+本项目已配置自定义域名 `qubar.site`（见 `public/CNAME`），直接使用该域名即可；若使用默认 GitHub Pages 域名，请将上述地址替换为 `https://your-username.github.io/your-repo-name/success`。
 
 ## 本地开发
 
