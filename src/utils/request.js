@@ -2,6 +2,7 @@ import axios from 'axios'
 import { useMessage } from 'naive-ui'
 import { sanitizePayload } from '@/utils/sanitize'
 import { isFeedTabRestricted } from '@/utils/guest-access'
+import { auth } from '@/utils/auth'
 
 // 创建 axios 实例
 const request = axios.create({
@@ -67,8 +68,8 @@ request.interceptors.response.use(
       // 另：/post/home?tab=recommend|following 访客访问时返回的 401（message='This feed tab requires login'）
       // 仅表示该 tab 需要登录，不应清 token 或跳转，交由调用方降级（如切 hot tab）。
       if (res.code === 401 && !isAuthRequest(response.config.url) && !isFeedTabRestricted(res.message)) {
-        // token 无效或过期，清除本地存储并跳转到登录页
-        localStorage.removeItem('qubar_token')
+        // token 无效或过期，清除本地存储（token 与过期时间）并跳转到登录页
+        auth.clearToken()
         window.location.href = '/'
       }
 
@@ -92,7 +93,7 @@ request.interceptors.response.use(
       if (!isAuthRequest(error.config?.url)
           && !isFeedTabRestricted(res.message)
           && (error.response.status === 401 || res.code === 401)) {
-        localStorage.removeItem('qubar_token')
+        auth.clearToken()
         window.location.href = '/'
       }
 
