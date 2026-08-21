@@ -27,10 +27,8 @@
                  新内容再淡入，全程单份内容在 DOM，无 pane 共存闪动 -->
             <Transition name="feed-switch" mode="out-in">
               <div :key="`${activeTab}-${feedView}`" class="feed-body">
-                <!-- 首屏加载 -->
-                <div v-if="loading && !isAppending" class="feed-loading">
-                  <NSpin size="medium" />
-                </div>
+                <!-- 首屏加载：骨架屏模拟列表结构，弱网长加载时感知更流畅 -->
+                <PostListSkeleton v-if="loading && !isAppending" />
                 <!-- 空态：following 引导加圈，其余通用空文案 -->
                 <div v-else-if="posts.length === 0" class="feed-empty">
                   {{ activeTab === 'following' ? t('feed.emptyFollowing') : t('feed.empty') }}
@@ -59,12 +57,13 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import { NTabs, NTab, NSpin, useMessage } from 'naive-ui'
+import { NTabs, NTab, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
 import PostList from '@/components/PostList.vue'
+import PostListSkeleton from '@/components/PostListSkeleton.vue'
 import RightSidebar from '@/components/RightSidebar.vue'
 import { getHomeFeed } from '@/api/post'
 import { auth } from '@/utils/auth'
@@ -303,12 +302,6 @@ const handleLogout = async () => {
 .feed-body {
   /* 切 tab 后列表清空、等待新数据期间保持最小高度，避免页面塌陷跳动 */
   min-height: 400px;
-}
-
-.feed-loading {
-  display: flex;
-  justify-content: center;
-  padding: 48px 0;
 }
 
 .feed-loading-more,

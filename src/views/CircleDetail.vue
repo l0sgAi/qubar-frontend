@@ -139,7 +139,9 @@
                   <PostList :posts="hotPosts" />
                 </div>
                 <div ref="hotSentinel" class="load-sentinel"></div>
-                <div v-if="hotLoading" class="loading-state">
+                <!-- 首次加载用骨架屏；追加翻页保留底部小 spinner -->
+                <PostListSkeleton v-if="hotLoading && hotPosts.length === 0" />
+                <div v-else-if="hotLoading" class="loading-state">
                   <NSpin size="small" />
                 </div>
               </div>
@@ -153,7 +155,9 @@
                   <PostList :posts="newPosts" />
                 </div>
                 <div ref="newSentinel" class="load-sentinel"></div>
-                <div v-if="newLoading" class="loading-state">
+                <!-- 首次加载用骨架屏；追加翻页保留底部小 spinner -->
+                <PostListSkeleton v-if="newLoading && newPosts.length === 0" />
+                <div v-else-if="newLoading" class="loading-state">
                   <NSpin size="small" />
                 </div>
               </div>
@@ -167,7 +171,9 @@
                   <PostList :posts="topPosts" />
                 </div>
                 <div ref="topSentinel" class="load-sentinel"></div>
-                <div v-if="topLoading" class="loading-state">
+                <!-- 首次加载用骨架屏；追加翻页保留底部小 spinner -->
+                <PostListSkeleton v-if="topLoading && topPosts.length === 0" />
+                <div v-else-if="topLoading" class="loading-state">
                   <NSpin size="small" />
                 </div>
               </div>
@@ -286,6 +292,7 @@ import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
 import PostList from '@/components/PostList.vue'
+import PostListSkeleton from '@/components/PostListSkeleton.vue'
 import { getCircleDetail, joinCircle, leaveCircle, getCirclePosts } from '@/api/circle'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
