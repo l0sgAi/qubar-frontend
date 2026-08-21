@@ -300,6 +300,8 @@ const handleLogout = async () => {
 
 /* 信息流：加载 / 空态 / 尾标 / 哨兵 */
 .feed-body {
+  /* 与上方 tab 栏拉开间距，避免首张卡片紧贴切换条 */
+  margin-top: 16px;
   /* 切 tab 后列表清空、等待新数据期间保持最小高度，避免页面塌陷跳动 */
   min-height: 400px;
 }
