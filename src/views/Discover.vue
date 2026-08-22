@@ -18,17 +18,18 @@
               <span class="page-subtitle">{{ t('discover.subtitle') }}</span>
             </div>
             <div class="header-right">
-              <NRadioGroup v-model:value="mode" size="small" @update:value="handleModeChange">
-                <NRadioButton value="stream">
+              <!-- 仅渲染 tab 栏（NTab 不生成内容面板），样式与首页/个人页的 line 式 Tab 保持一致 -->
+              <NTabs v-model:value="mode" type="line" size="small" class="mode-tabs" @update:value="handleModeChange">
+                <NTab name="stream">
                   <span class="mode-btn"><StreamIcon />{{ t('discover.modeStream') }}</span>
-                </NRadioButton>
-                <NRadioButton value="sectioned">
+                </NTab>
+                <NTab name="sectioned">
                   <span class="mode-btn"><GridIcon />{{ t('discover.modeSectioned') }}</span>
-                </NRadioButton>
-                <NRadioButton value="wall">
+                </NTab>
+                <NTab name="wall">
                   <span class="mode-btn"><WallIcon />{{ t('discover.modeWall') }}</span>
-                </NRadioButton>
-              </NRadioGroup>
+                </NTab>
+              </NTabs>
               <NButton size="small" secondary class="refresh-btn" :loading="firstLoading" @click="refresh">
                 <template #icon><RefreshIcon /></template>
                 {{ firstLoading ? t('discover.refreshing') : t('discover.refresh') }}
@@ -114,7 +115,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, h } from 'vue'
-import { NRadioGroup, NRadioButton, NButton, NSpin, useMessage } from 'naive-ui'
+import { NTabs, NTab, NButton, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
@@ -431,32 +432,19 @@ const RefreshIcon = svg('M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M
   flex-wrap: wrap;
 }
 
-/* —— 顶部切换 Tab：3 个按钮拼成「一个大胶囊」（去掉内层小胶囊与分割线）—— */
-.header-right :deep(.n-radio-group) {
-  display: inline-flex;
-  border-radius: 999px;
-  overflow: hidden;            /* 首尾段由容器圆角统一裁剪，呈现单一胶囊外形 */
-  background: rgba(255, 255, 255, 0.05);
+/* —— 顶部切换 Tab：line 式下划线风格，与首页 / 个人页的切换 Tab 保持一致 —— */
+.header-right .mode-tabs {
+  flex: none;
+  width: auto;
 }
 
-.header-right :deep(.n-radio-button) {
-  border-radius: 0 !important; /* 内部方正拼接，不各自成小胶囊 */
-  transition: background 0.2s ease, color 0.2s ease;
+/* 收紧 tab 间距与内边距，使其与右侧刷新按钮在标题栏内对齐 */
+.header-right .mode-tabs :deep(.n-tabs-nav) {
+  line-height: 1.5;
 }
 
-/* 抹掉 NaiveUI 默认描边与按钮间分割线，三段无缝相接 */
-.header-right :deep(.n-radio-button__state-border) {
-  border-color: transparent !important;
-}
-
-/* 选中段：主题色渐变填充 + 深色文字（首/尾段被容器圆角裁成弧形） */
-.header-right :deep(.n-radio-button--checked) {
-  background: var(--primary-gradient) !important;
-}
-
-.header-right :deep(.n-radio-button--checked .n-radio__label) {
-  color: #06281f !important;
-  font-weight: 600;
+.header-right .mode-tabs :deep(.n-tabs-tab) {
+  padding: 4px 10px;
 }
 
 /* —— 刷新按钮：胶囊圆角 + 主题色描边/文字 —— */
