@@ -40,7 +40,10 @@
 
             <!-- 翻页加载中 / 没有更多（统一单实例，置于 tabs 之外） -->
             <template v-if="posts.length > 0">
-              <div v-if="isAppending" class="feed-loading-more">{{ t('common.loading') }}</div>
+              <div v-if="isAppending" class="feed-loading-more">
+                <NSpin size="small" />
+                <span>{{ t('common.loading') }}</span>
+              </div>
               <div v-else-if="!hasMore" class="feed-no-more">{{ t('common.noMore') }}</div>
             </template>
             <!-- 无限滚动哨兵 -->
@@ -57,7 +60,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import { NTabs, NTab, useMessage } from 'naive-ui'
+import { NTabs, NTab, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
@@ -93,8 +96,10 @@ const PAGE_SIZE = 20
 // 访客默认 hot tab；登录用户默认 recommend（原行为）
 const activeTab = ref(auth.isAuthenticated() ? 'recommend' : 'hot')
 const posts = ref([])
-const loading = ref(false)
-const isAppending = ref(false) // true=追加翻页（底部加载条）；false=首屏/切 tab（NSpin）
+// 初始为 true：onMounted 的首次 fetchFeed 完成前即视为加载中，
+// 避免首帧渲染出空态闪一下再切骨架屏
+const loading = ref(true)
+const isAppending = ref(false) // true=追加翻页（底部加载条 + NSpin）；false=首屏/切 tab（骨架屏）
 const hasMore = ref(false)
 const poolToken = ref('')   // 仅 recommend：候选池版本 token，翻页原样回传
 const searchAfter = ref('') // 仅 hot/latest/following：游标原样透传
@@ -192,8 +197,11 @@ const fetchFeed = async (append = false) => {
     console.error('获取首页信息流失败:', error)
     message.error(error.message || t('feed.loadFailed'))
   } finally {
-    // 仅当前世代才复位 loading，避免过期请求把 loading 提前置 false
-    if (gen === fetchGen) loading.value = false
+    // 仅当前世代才复位 loading/isAppending，避免过期请求把二者提前置 false
+    if (gen === fetchGen) {
+      loading.value = false
+      isAppending.value = false
+    }
   }
 }
 
@@ -312,6 +320,13 @@ const handleLogout = async () => {
   color: var(--text-secondary);
   font-size: 0.875rem;
   padding: 16px 0;
+}
+
+.feed-loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .feed-empty {
