@@ -16,17 +16,18 @@ https://your-backend.com/auth/google/login
 后端收到 Google 回调后，需要：
 1. 处理 OAuth 认证
 2. 生成 sa-token
-3. **重定向到前端成功页面，并传递 token**
+3. **重定向到前端成功页面，并传递一次性 code（不要直接传递 token）**
 
 ## 后端回调配置（重要！）
 
-### 推荐方式：后端直接重定向带参数
+### 推荐方式：后端重定向携带一次性 code
 
-后端处理完 OAuth 后，应该重定向到前端：
+后端处理完 OAuth 后，应该重定向到前端，URL 中只携带一次性 code。
+token、email 等敏感信息不出现在 URL 中，避免被浏览器历史、代理日志和分析工具留存：
 
 ```
 HTTP 302 Redirect
-Location: https://l0sgAi.github.io/interestBar-frontend/success?token=465f4e12-e538-40a4-98bd-6a50bb337a65&expire=259200&email=user@example.com
+Location: https://qubar.site/success?code=4/0ATX87lPy3pP...
 ```
 
 **示例代码（Go）：**
@@ -35,41 +36,38 @@ Location: https://l0sgAi.github.io/interestBar-frontend/success?token=465f4e12-e
 // OAuth 回调处理
 func GoogleCallback(c *gin.Context) {
     // 1. 获取 Google 用户信息
-    // 2. 生成 sa-token
-    token := "465f4e12-e538-40a4-98bd-6a50bb337a65"
-    expire := "259200" // 3天，单位秒
+    // 2. 生成一次性授权码（建议短时有效、仅可使用一次）
+    code := "4/0ATX87lPy3pP..."
 
-    // 3. 重定向到前端
+    // 3. 重定向到前端（不携带 token/email）
     redirectURL := fmt.Sprintf(
-        "https://l0sgAi.github.io/interestBar-frontend/success?token=%s&expire=%s&email=%s",
-        token,
-        expire,
-        "user@example.com",
+        "https://qubar.site/success?code=%s",
+        code,
     )
     c.Redirect(http.StatusFound, redirectURL)
 }
 ```
 
 **前端接收：**
-[Success.vue:49-126](src/views/Success.vue#L49-L126) 会自动：
-1. 从 URL 参数提取 token、expire、email
-2. 保存到 localStorage
-3. 显示成功消息
-4. 1.5秒后自动跳转到 `/home`
-
-### 备选方式：前端自行请求
-
-如果后端返回的是 code，前端会自动：
-
-1. 检测到 URL 中的 `code` 参数
+[Success.vue:41-94](src/views/Success.vue#L41-L94) 会自动：
+1. 从 URL 参数提取 code
 2. POST 到后端 `/auth/google/callback` 交换 token
-3. 收到 JSON 响应后保存 token
-4. 跳转到主页
+3. 保存 token 到 localStorage
+4. 显示成功消息
+5. 1.5秒后自动跳转到 `/home`
+
+### 前端 code 交换 token 流程
+
+前端检测到 URL 中的 `code` 参数后，会自动：
+
+1. POST 到后端 `/auth/google/callback` 交换 token
+2. 收到 JSON 响应后保存 token
+3. 跳转到主页
 
 **前端会发送的请求：**
 
 ```javascript
-POST https://undeclared-porsha-nonformatively.ngrok-free.dev/auth/google/callback
+POST https://api.qubar.site/auth/google/callback
 Content-Type: application/json
 
 {
@@ -106,19 +104,19 @@ Content-Type: application/json
 在 Google Cloud Console 配置授权重定向 URI：
 
 ```
-https://l0sgAi.github.io/interestBar-frontend/success
+https://qubar.site/success
 ```
 
 **注意：** 由于使用了 History 模式路由，不需要 `#/`。
 
 ## 测试登录流程
 
-1. 访问：`https://l0sgAi.github.io/interestBar-frontend/`
+1. 访问：`https://qubar.site/`
 2. 点击"使用 Google 账号继续"
 3. 完成 Google 认证
-4. 自动跳转到：`https://l0sgAi.github.io/interestBar-frontend/success`
-5. 显示欢迎信息（带 token 调试信息）
-6. 1.5秒后自动跳转到：`https://l0sgAi.github.io/interestBar-frontend/home`
+4. 自动跳转到：`https://qubar.site/success`
+5. 显示欢迎信息
+6. 1.5秒后自动跳转到：`https://qubar.site/home`
 
 ## Token 使用
 
@@ -128,7 +126,7 @@ https://l0sgAi.github.io/interestBar-frontend/success
 satoken: 465f4e12-e538-40a4-98bd-6a50bb337a65
 ```
 
-详见：[src/utils/request.js:15-17](src/utils/request.js#L15-L17)
+详见：[src/utils/request.js:21-24](src/utils/request.js#L21-L24)
 
 ## 故障排查
 
@@ -136,14 +134,14 @@ satoken: 465f4e12-e538-40a4-98bd-6a50bb337a65
 
 **检查：**
 1. 浏览器控制台是否有错误
-2. URL 参数是否包含 token
+2. URL 参数是否包含 code
 3. Network 标签查看请求是否成功
 
 ### 问题：token 未保存
 
 **检查：**
 1. 打开浏览器开发者工具 > Application > Local Storage
-2. 查找 `quba_token` 和 `quba_token_expire`
+2. 查找 `qubar_token` 和 `qubar_token_expire`
 3. 如果不存在，检查回调 URL 格式
 
 ### 问题：跳转到 /home 后又被重定向回登录页
@@ -158,16 +156,17 @@ satoken: 465f4e12-e538-40a4-98bd-6a50bb337a65
 ## 开发环境 vs 生产环境
 
 ### 开发环境
-- URL: `http://localhost:5173/success?token=xxx`
+- URL: `http://localhost:5173/success?code=xxx`
 - 后端可以使用 ngrok URL 进行测试
 
 ### 生产环境
-- URL: `https://l0sgAi.github.io/interestBar-frontend/success?token=xxx`
+- URL: `https://qubar.site/success?code=xxx`
 - 需要配置正确的 GitHub Pages 域名
 
 ## 安全建议
 
 1. **HTTPS 生产环境必须使用 HTTPS**
-2. **Token 过期时间** 建议设置为 3-7 天
-3. **Token 存储** 使用 localStorage（已实现）
-4. **Token 刷新** 可考虑实现 refresh token 机制
+2. **URL 不携带敏感信息** 重定向 URL 只传一次性 code，token/email 由前端用 code 向后端交换（已实现）
+3. **Token 过期时间** 建议设置为 3-7 天
+4. **Token 存储** 使用 localStorage（已实现）
+5. **Token 刷新** 可考虑实现 refresh token 机制

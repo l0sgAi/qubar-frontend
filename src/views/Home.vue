@@ -12,30 +12,38 @@
       <div class="main-content">
         <div class="home-container">
           <div class="content-header">
-            <NTabs animated v-model:value="activeTab" @update:value="handleTabChange">
-              <NTabPane
+            <!-- 仅渲染 tab 栏（NTab 不生成内容面板）；feed 内容在外部单份渲染，
+                 切 tab 时不再 unmount/remount，避免 pane 共存闪动与组件重建 -->
+            <NTabs v-model:value="activeTab" type="line" @update:value="handleTabChange">
+              <NTab
                 v-for="tab in TABS"
                 :key="tab.name"
                 :name="tab.name"
                 :tab="t(tab.label)"
-                display-directive="if"
-              >
-                <!-- 首屏加载 -->
-                <div v-if="loading && !isAppending" class="feed-loading">
-                  <NSpin size="medium" />
-                </div>
+              />
+            </NTabs>
+
+            <!-- 内容区过渡：key 随 tab/视图变化，out-in 保证旧内容先淡出、
+                 新内容再淡入，全程单份内容在 DOM，无 pane 共存闪动 -->
+            <Transition name="feed-switch" mode="out-in">
+              <div :key="`${activeTab}-${feedView}`" class="feed-body">
+                <!-- 首屏加载：骨架屏模拟列表结构，弱网长加载时感知更流畅 -->
+                <PostListSkeleton v-if="loading && !isAppending" />
                 <!-- 空态：following 引导加圈，其余通用空文案 -->
                 <div v-else-if="posts.length === 0" class="feed-empty">
                   {{ activeTab === 'following' ? t('feed.emptyFollowing') : t('feed.empty') }}
                 </div>
                 <!-- 帖子列表 -->
                 <PostList v-else :posts="posts" />
-              </NTabPane>
-            </NTabs>
+              </div>
+            </Transition>
 
             <!-- 翻页加载中 / 没有更多（统一单实例，置于 tabs 之外） -->
             <template v-if="posts.length > 0">
-              <div v-if="isAppending" class="feed-loading-more">{{ t('common.loading') }}</div>
+              <div v-if="isAppending" class="feed-loading-more">
+                <NSpin size="small" />
+                <span>{{ t('common.loading') }}</span>
+              </div>
               <div v-else-if="!hasMore" class="feed-no-more">{{ t('common.noMore') }}</div>
             </template>
             <!-- 无限滚动哨兵 -->
@@ -52,12 +60,13 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import { NTabs, NTabPane, NSpin, useMessage } from 'naive-ui'
+import { NTabs, NTab, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
 import PostList from '@/components/PostList.vue'
+import PostListSkeleton from '@/components/PostListSkeleton.vue'
 import RightSidebar from '@/components/RightSidebar.vue'
 import { getHomeFeed } from '@/api/post'
 import { auth } from '@/utils/auth'
@@ -87,11 +96,19 @@ const PAGE_SIZE = 20
 // 访客默认 hot tab；登录用户默认 recommend（原行为）
 const activeTab = ref(auth.isAuthenticated() ? 'recommend' : 'hot')
 const posts = ref([])
-const loading = ref(false)
-const isAppending = ref(false) // true=追加翻页（底部加载条）；false=首屏/切 tab（NSpin）
+// 初始为 true：onMounted 的首次 fetchFeed 完成前即视为加载中，
+// 避免首帧渲染出空态闪一下再切骨架屏
+const loading = ref(true)
+const isAppending = ref(false) // true=追加翻页（底部加载条 + NSpin）；false=首屏/切 tab（骨架屏）
 const hasMore = ref(false)
 const poolToken = ref('')   // 仅 recommend：候选池版本 token，翻页原样回传
 const searchAfter = ref('') // 仅 hot/latest/following：游标原样透传
+
+// 内容区当前视图：作为 Transition 的 key 一部分，视图切换（含切 tab）时触发平滑过渡
+const feedView = computed(() => {
+  if (loading.value && !isAppending.value) return 'loading'
+  return posts.value.length === 0 ? 'empty' : 'list'
+})
 
 // 无限滚动
 const sentinel = ref(null)
@@ -180,8 +197,11 @@ const fetchFeed = async (append = false) => {
     console.error('获取首页信息流失败:', error)
     message.error(error.message || t('feed.loadFailed'))
   } finally {
-    // 仅当前世代才复位 loading，避免过期请求把 loading 提前置 false
-    if (gen === fetchGen) loading.value = false
+    // 仅当前世代才复位 loading/isAppending，避免过期请求把二者提前置 false
+    if (gen === fetchGen) {
+      loading.value = false
+      isAppending.value = false
+    }
   }
 }
 
@@ -287,10 +307,11 @@ const handleLogout = async () => {
 }
 
 /* 信息流：加载 / 空态 / 尾标 / 哨兵 */
-.feed-loading {
-  display: flex;
-  justify-content: center;
-  padding: 48px 0;
+.feed-body {
+  /* 与上方 tab 栏拉开间距，避免首张卡片紧贴切换条 */
+  margin-top: 16px;
+  /* 切 tab 后列表清空、等待新数据期间保持最小高度，避免页面塌陷跳动 */
+  min-height: 400px;
 }
 
 .feed-loading-more,
@@ -299,6 +320,13 @@ const handleLogout = async () => {
   color: var(--text-secondary);
   font-size: 0.875rem;
   padding: 16px 0;
+}
+
+.feed-loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .feed-empty {
@@ -313,23 +341,27 @@ const handleLogout = async () => {
   height: 1px;
 }
 
+/* 切 tab / 视图切换过渡：快速淡出 + 轻微上浮淡入，避免横向滑切的重排闪烁 */
+.feed-switch-enter-active,
+.feed-switch-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.feed-switch-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.feed-switch-leave-to {
+  opacity: 0;
+}
+
 :deep(.n-card) {
   background: transparent !important;
 }
 
 :deep(.n-divider) {
   border-color: var(--glass-border) !important;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* 响应式 */

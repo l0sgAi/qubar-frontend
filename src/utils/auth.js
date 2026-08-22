@@ -1,5 +1,17 @@
-const TOKEN_KEY = 'quba_token'
-const TOKEN_EXPIRE_KEY = 'quba_token_expire'
+const TOKEN_KEY = 'qubar_token'
+const TOKEN_EXPIRE_KEY = 'qubar_token_expire'
+
+// 旧版键名（quba_*）一次性迁移，避免已登录用户掉登录状态
+const legacyToken = localStorage.getItem('quba_token')
+if (legacyToken && !localStorage.getItem(TOKEN_KEY)) {
+  localStorage.setItem(TOKEN_KEY, legacyToken)
+  const legacyExpire = localStorage.getItem('quba_token_expire')
+  if (legacyExpire) {
+    localStorage.setItem(TOKEN_EXPIRE_KEY, legacyExpire)
+  }
+}
+localStorage.removeItem('quba_token')
+localStorage.removeItem('quba_token_expire')
 
 export const auth = {
   /**
