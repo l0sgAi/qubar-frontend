@@ -19,6 +19,7 @@
               <NInput
                 v-model:value="keyword"
                 size="small"
+                round
                 clearable
                 :placeholder="t('agent.searchPlaceholder')"
                 class="search-input"
@@ -27,7 +28,7 @@
                   <NIcon size="14"><SearchIcon /></NIcon>
                 </template>
               </NInput>
-              <NButton type="primary" size="small" @click="openCreate">
+              <NButton type="primary" size="small" class="create-btn" @click="openCreate">
                 {{ t('agent.create') }}
               </NButton>
             </div>
@@ -39,14 +40,16 @@
             <p>{{ t('agent.noPermission') }}</p>
           </div>
 
-          <!-- 机器人表格 -->
+          <!-- 机器人表格：外观走官方 theme-overrides（圆角/透明底/悬浮色），
+               不与组件默认样式打架，避免「外圆内方」双层圆角 -->
           <NDataTable
             v-else
             :columns="columns"
-            :data="filteredAgents"
+            :data="agents"
             :loading="loading || checkingRole"
             :row-key="row => row.id"
             :bordered="false"
+            :theme-overrides="tableThemeOverrides"
             size="small"
             class="agents-table"
           />
@@ -74,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, computed, h, onMounted } from 'vue'
+import { ref, computed, h, onMounted, watch } from 'vue'
 import {
   NDataTable, NButton, NInput, NIcon, NAvatar, NTag, NSwitch,
   NPagination, NPopconfirm, NText, useMessage
@@ -86,6 +89,7 @@ import SideNav from '@/components/SideNav.vue'
 import AgentFormModal from '@/components/AgentFormModal.vue'
 import { getAgentList, updateAgent, deleteAgent } from '@/api/agent'
 import { getUserInfo } from '@/api/auth'
+import { useDebounceFn } from '@/utils/throttle'
 
 const { t } = useI18n()
 const message = useMessage()
@@ -108,38 +112,45 @@ onMounted(async () => {
   if (isAdmin.value) fetchAgents()
 })
 
-// ---- 列表（服务端分页，create_time 倒序） ----
+// ---- 列表（服务端分页 + keyword 名称模糊匹配，create_time 倒序） ----
 const agents = ref([])
 const loading = ref(false)
 const page = ref(1)
 const pageSize = 20
 const total = ref(0)
 
+// 搜索关键词：ILIKE 名称匹配；空 = 全量
+const keyword = ref('')
+
+// 拉取世代：防抖后仍可能乱序返回（慢请求晚到），过期响应直接丢弃
+let fetchGen = 0
+
 const fetchAgents = async () => {
+  const gen = ++fetchGen
   loading.value = true
   try {
-    const res = await getAgentList({ page: page.value, size: pageSize })
+    const kw = keyword.value.trim()
+    const res = await getAgentList({ page: page.value, size: pageSize, ...(kw && { keyword: kw }) })
+    if (gen !== fetchGen) return
     agents.value = res.data || []
     total.value = res.total || 0
   } catch (e) {
+    if (gen !== fetchGen) return
     console.error('获取机器人列表失败:', e)
     message.error(e.message || t('common.operationFailed'))
     agents.value = []
     total.value = 0
   } finally {
-    loading.value = false
+    if (gen === fetchGen) loading.value = false
   }
 }
 
-// 接口无筛选参数，本地按名称/模型过滤当前页数据即可（数据量小）
-const keyword = ref('')
-const filteredAgents = computed(() => {
-  const kw = keyword.value.trim().toLowerCase()
-  if (!kw) return agents.value
-  return agents.value.filter(
-    a => a.name?.toLowerCase().includes(kw) || a.model?.toLowerCase().includes(kw)
-  )
-})
+// 输入防抖 300ms 后回第一页重查（clearable 清空同样触发）
+const debouncedSearch = useDebounceFn(() => {
+  page.value = 1
+  fetchAgents()
+}, 300)
+watch(keyword, debouncedSearch)
 
 // ---- 触发模式文案 ----
 const triggerModeText = mode =>
@@ -180,20 +191,36 @@ const handleDelete = async row => {
   }
 }
 
+// ---- 表格外观：官方 DataTable 主题变量（比 :deep() 硬覆盖稳，值直接进组件 CSS var）----
+const tableThemeOverrides = {
+  DataTable: {
+    borderRadius: '16px',
+    // td 透明让外层玻璃底透出，消除内部方角深色底
+    tdColor: 'transparent',
+    tdColorHover: 'rgba(102, 234, 194, 0.05)',
+    // 表头微亮底 + 三级文字色（值同 --text-tertiary）
+    thColor: 'rgba(255, 255, 255, 0.04)',
+    thTextColor: '#8b8b9e',
+    thFontWeight: '600',
+    // 行分隔线换成玻璃描边同色系
+    borderColor: 'rgba(255, 255, 255, 0.05)'
+  }
+}
+
 // ---- 表格列 ----
 const columns = computed(() => [
   {
     title: t('agent.table.name'),
     key: 'name',
-    render: row => h('div', { class: 'agent-name-cell' }, [
+    render: row => h('div', { class: 'agent-cell-name' }, [
       h(NAvatar, {
         src: row.avatar_url || undefined,
         size: 28,
         round: true,
-        style: { flexShrink: 0 }
+        style: { flexShrink: 0, background: 'rgba(102, 234, 194, 0.18)', color: '#8af0d0', fontWeight: 600 }
       }, { default: () => (row.name || '?').charAt(0) }),
-      h('div', { class: 'agent-name-text' }, [
-        h('span', { class: 'agent-name' }, row.name),
+      h('div', { class: 'agent-cell-name-text' }, [
+        h('span', { class: 'agent-cell-name-label' }, row.name),
         h(NText, { depth: 3, style: 'font-size: 12px' }, { default: () => row.model })
       ])
     ])
@@ -208,10 +235,10 @@ const columns = computed(() => [
     title: t('agent.table.trigger'),
     key: 'trigger',
     width: 200,
-    render: row => h('div', { class: 'trigger-cell' }, [
-      h('span', { class: 'trigger-mode' }, triggerModeText(row.trigger_mode)),
+    render: row => h('div', { class: 'agent-cell-trigger' }, [
+      h('span', { class: 'agent-cell-trigger-mode' }, triggerModeText(row.trigger_mode)),
       ...(row.trigger_mode === 2 && row.trigger_keywords?.length
-        ? [h('div', { class: 'keyword-tags' },
+        ? [h('div', { class: 'agent-cell-keywords' },
             row.trigger_keywords.slice(0, 3).map(kw =>
               h(NTag, { size: 'tiny', bordered: false, type: 'info', key: kw }, { default: () => kw })
             ),
@@ -226,7 +253,7 @@ const columns = computed(() => [
     title: t('agent.table.rateLimit'),
     key: 'rate',
     width: 150,
-    render: row => h('span', { class: 'rate-text' }, [
+    render: row => h('span', { class: 'agent-cell-rate' }, [
       `${row.max_replies_per_hour === 0 ? t('agent.unlimited') : row.max_replies_per_hour}/${t('agent.form.perHour')}`,
       ' · ',
       `${row.min_interval_sec === 0 ? t('agent.unlimited') : row.min_interval_sec}${t('agent.form.seconds')}`
@@ -252,7 +279,7 @@ const columns = computed(() => [
     title: t('agent.table.actions'),
     key: 'actions',
     width: 130,
-    render: row => h('div', { class: 'action-cell' }, [
+    render: row => h('div', { class: 'agent-cell-actions' }, [
       h(NButton, { size: 'tiny', quaternary: true, onClick: () => openEdit(row) }, { default: () => t('common.edit') }),
       h(NPopconfirm, {
         onPositiveClick: () => handleDelete(row)
@@ -307,9 +334,30 @@ const handleFormSuccess = vo => {
   padding: 24px;
 }
 
+/* 主容器：暗色玻璃拟态大卡片（外层圆角最大 24px，内层元素递减） */
 .agents-container {
   max-width: 1100px;
   margin: 0 auto;
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+  padding: 28px;
+  /* 进入动画：回弹缓动（离开由路由卸载，无需配对） */
+  animation: agents-page-enter 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes agents-page-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .agents-header {
@@ -321,10 +369,15 @@ const handleFormSuccess = vo => {
   flex-wrap: wrap;
 }
 
+/* 标题：主题绿渐变文字 */
 .page-title {
   font-size: 1.4rem;
   font-weight: 700;
   margin: 0;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .header-actions {
@@ -337,13 +390,45 @@ const handleFormSuccess = vo => {
   width: 220px;
 }
 
+/* 新建按钮：主题渐变实底 + 悬浮微抬升 */
+.create-btn {
+  border-radius: 12px;
+  background: var(--primary-gradient) !important;
+  border: none !important;
+  color: #06281c !important;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.create-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(102, 234, 194, 0.35);
+}
+
+.create-btn:active {
+  transform: translateY(0);
+}
+
+/* 非管理员空态：内层玻璃卡片 */
 .forbidden {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 80px 0;
-  color: rgba(255, 255, 255, 0.5);
+  padding: 72px 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  color: var(--text-secondary);
+}
+
+/* 表格外壳：仅装饰（微透底 + 玻璃描边）；圆角/行悬浮/表头全部由
+   theme-overrides 的 DataTable 变量出，单一样式来源，无双层圆角 */
+.agents-table {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .pagination-row {
@@ -352,50 +437,77 @@ const handleFormSuccess = vo => {
   margin-top: 16px;
 }
 
-/* 表格单元格 */
-.agent-name-cell {
+/* 分页：圆角页码，激活项主题绿 */
+.pagination-row :deep(.n-pagination-item) {
+  border-radius: 10px;
+}
+
+.pagination-row :deep(.n-pagination-item--active) {
+  background: rgba(102, 234, 194, 0.16);
+  color: #8af0d0;
+}
+</style>
+
+<!-- 全局块：columns render 函数渲染的单元格 DOM。
+     这些元素由 NDataTable 的渲染实例创建，不带本组件 scoped 属性，
+     scoped CSS 永远选不中（不是优先级问题），必须写非 scoped。
+     类名统一 agent-cell- 前缀避免全局冲突。 -->
+<style>
+.agent-cell-name {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.agent-name-text {
+.agent-cell-name-text {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-.agent-name {
+.agent-cell-name-text .agent-cell-name-label {
   font-weight: 600;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.trigger-cell {
+.agent-cell-trigger {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.trigger-mode {
+.agent-cell-trigger-mode {
   font-size: 12px;
+  color: var(--text-secondary);
 }
 
-.keyword-tags {
+.agent-cell-keywords {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   align-items: center;
 }
 
-.rate-text {
+.agent-cell-rate {
   font-size: 12px;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
-.action-cell {
+.agent-cell-actions {
   display: flex;
   gap: 4px;
+}
+
+/* render 函数内的 Naive UI 组件同样脱离 scoped：标签改胶囊、操作按钮改圆角 */
+.agent-cell-actions .n-button {
+  border-radius: 999px;
+}
+
+.agents-table .n-tag {
+  border-radius: 999px;
 }
 </style>

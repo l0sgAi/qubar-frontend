@@ -328,7 +328,7 @@ export default {
     title: '机器人管理',
     navEntry: '机器人管理',
     noPermission: '无权访问：仅管理员可管理机器人',
-    searchPlaceholder: '搜索名称 / 模型（当前页）',
+    searchPlaceholder: '搜索机器人名称',
     create: '新建机器人',
     edit: '编辑机器人',
     unlimited: '不限',

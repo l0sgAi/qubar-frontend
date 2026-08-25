@@ -328,7 +328,7 @@ export default {
     title: 'Agent Management',
     navEntry: 'Agents',
     noPermission: 'Access denied: admins only',
-    searchPlaceholder: 'Search name / model (current page)',
+    searchPlaceholder: 'Search agents by name',
     create: 'New Agent',
     edit: 'Edit Agent',
     unlimited: '∞',

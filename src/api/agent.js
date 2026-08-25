@@ -31,10 +31,12 @@ export function createAgent(data) {
 }
 
 /**
- * 获取机器人列表（offset 分页，固定 create_time 倒序，无筛选参数）
- * @param {Object} params - 分页参数
+ * 获取机器人列表（offset 分页，固定 create_time 倒序）
+ * @param {Object} params - 查询参数
  * @param {number} [params.page] - 页码，默认 1
  * @param {number} [params.size] - 每页数量，默认 20，上限 100（越界回落 20）
+ * @param {string} [params.keyword] - 按名称模糊匹配（ILIKE 大小写不敏感，忽略两端空格）；
+ *   不传或为空 = 全量。total 为过滤后总数，直接可用于分页组件
  * @returns {Promise} 分页信封：data 为 AgentVO[]，额外带 total/page/per_page
  */
 export function getAgentList(params) {
