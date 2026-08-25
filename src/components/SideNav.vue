@@ -43,6 +43,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import CreateCircleModal from './CreateCircleModal.vue'
 import { getMyCircles, getActiveCircles } from '@/api/post'
+import { getUserInfo } from '@/api/auth'
 import { auth } from '@/utils/auth'
 
 const router = useRouter()
@@ -90,6 +91,15 @@ const PlusIcon = createIcon([
   'M12 5v14M5 12h14'
 ])
 
+// 机器人图标（仅管理员可见的机器人管理入口）
+const BotIcon = createIcon([
+  'M9 10h.01',
+  'M15 10h.01',
+  'M12 2a4 4 0 0 1 4 4v1a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3h-8a3 3 0 0 1-3-3v-4a3 3 0 0 1 3-3V6a4 4 0 0 1 4-4z',
+  'M5 12H3a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2',
+  'M19 12h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2'
+])
+
 // 查看全部图标（更多 · 水平三点）
 const MoreDotsIcon = () => h('svg', {
   viewBox: '0 0 24 24',
@@ -134,11 +144,26 @@ onMounted(() => {
   if (!auth.isAuthenticated()) return
   fetchJoinedCircles()
   fetchActiveCircles()
+  fetchIsAdmin()
 })
 
 // 近期活跃的兴趣圈（真实数据，取前 5 个）
 const activeCircles = ref([])
 const activeCirclesLoading = ref(false)
+
+// 是否管理员（role=1）：控制「机器人管理」入口显隐
+const isAdmin = ref(false)
+
+const fetchIsAdmin = async () => {
+  try {
+    const res = await getUserInfo()
+    isAdmin.value = res.data?.role === 1
+  } catch (e) {
+    // 非 401 的意外失败按非管理员处理，入口隐藏即可
+    console.error('获取用户角色失败:', e)
+    isAdmin.value = false
+  }
+}
 
 const fetchActiveCircles = async () => {
   activeCirclesLoading.value = true
@@ -210,6 +235,7 @@ const activeItem = computed(() => {
   if (path === '/home') return 'home'
   if (path === '/hot') return 'hot'
   if (path === '/discover') return 'explore'
+  if (path === '/admin/agents') return 'admin-agents'
   if (path.startsWith('/circle/')) {
     const id = path.split('/')[2]
     // 匹配「我的圈子」或「近期活跃」中的对应条目
@@ -220,6 +246,15 @@ const activeItem = computed(() => {
   if (path === '/profile' && route.query.tab === 'groups') return 'view-all-circles'
   return null
 })
+
+// 管理员菜单项（机器人管理）：两处菜单共用
+const adminMenuItems = computed(() => isAdmin.value
+  ? [{
+      label: t('agent.navEntry'),
+      key: 'admin-agents',
+      icon: () => h(NIcon, null, { default: () => h(BotIcon) })
+    }]
+  : [])
 
 // 菜单选项
 const menuOptions = computed(() => {
@@ -241,6 +276,7 @@ const menuOptions = computed(() => {
         key: 'explore',
         icon: () => h(NIcon, null, { default: () => h(ExploreIcon) })
       },
+      ...adminMenuItems.value,
       {
         label: t('circle.createCircle'),
         key: 'create',
@@ -266,6 +302,7 @@ const menuOptions = computed(() => {
       key: 'explore',
       icon: () => h(NIcon, null, { default: () => h(ExploreIcon) })
     },
+    ...adminMenuItems.value,
     {
       label: t('circle.createCircle'),
       key: 'create',
@@ -324,6 +361,8 @@ const handleMenuSelect = (key) => {
     router.push('/hot')
   } else if (key === 'explore') {
     router.push('/discover')
+  } else if (key === 'admin-agents') {
+    router.push('/admin/agents')
   } else if (key === 'view-all-circles') {
     router.push({ path: '/profile', query: { tab: 'groups' } })
   } else if (key.startsWith('active-circle-')) {

@@ -323,6 +323,67 @@ export default {
     keyword: '关键词'
   },
 
+  // AI 回复机器人管理（/admin/agents，仅管理员 role=1 可见）
+  agent: {
+    title: '机器人管理',
+    navEntry: '机器人管理',
+    noPermission: '无权访问：仅管理员可管理机器人',
+    searchPlaceholder: '搜索名称 / 模型（当前页）',
+    create: '新建机器人',
+    edit: '编辑机器人',
+    unlimited: '不限',
+    deleteSuccess: '已删除',
+    deleteConfirm: '确定删除「{name}」吗？删除后不可恢复（软删，无恢复接口）',
+    statusUpdateFailed: '状态更新失败',
+    triggerModes: {
+      all: '全部新帖',
+      keyword: '关键词触发',
+      manual: '手动'
+    },
+    table: {
+      name: '机器人',
+      protocol: '协议',
+      trigger: '触发模式',
+      rateLimit: '限频',
+      status: '状态',
+      createTime: '创建时间',
+      actions: '操作'
+    },
+    form: {
+      name: '名称',
+      namePlaceholder: '1-50 字符，全局唯一',
+      avatarUrl: '头像 URL',
+      avatarPlaceholder: 'https://…（可空）',
+      protocol: 'API 协议',
+      baseUrl: '自定义 API 地址',
+      baseUrlPlaceholder: '使用官方默认端点可留空',
+      apiKey: 'API Key',
+      apiKeyPlaceholder: 'sk-…（ollama 协议可留空）',
+      apiKeyCurrent: '已配置：{mask}',
+      apiKeyNone: '未配置 Key',
+      apiKeyNewPlaceholder: '输入新 Key 更换；不修改请留空',
+      apiKeyClear: '清除已保存的 Key',
+      model: '模型名',
+      modelPlaceholder: '如 gpt-4o-mini / claude-sonnet-5',
+      llmParams: 'LLM 参数（提交时整体替换）',
+      systemPrompt: '系统提示词',
+      systemPromptPlaceholder: '机器人的人设与回复要求（可空）',
+      triggerMode: '触发模式',
+      keywords: '触发关键词',
+      keywordsPlaceholder: '输入关键词后回车添加',
+      keywordsRequired: '关键词触发模式下至少需要一个关键词',
+      maxReplies: '每小时回复上限',
+      minInterval: '最小回复间隔',
+      perHour: '条/时',
+      seconds: '秒',
+      noteTitle: '提示',
+      note: '触发与限频配置当前仅存储，机器人回复执行链路上线后才实际生效。',
+      atLeastOne: '至少修改一个字段',
+      createSuccess: '创建成功',
+      updateSuccess: '已保存'
+    }
+  },
+
   // 热点页（/hot）
   trending: {
     title: '热点',

@@ -323,6 +323,67 @@ export default {
     keyword: 'Keyword'
   },
 
+  // AI agent management (/admin/agents, admins only, role=1)
+  agent: {
+    title: 'Agent Management',
+    navEntry: 'Agents',
+    noPermission: 'Access denied: admins only',
+    searchPlaceholder: 'Search name / model (current page)',
+    create: 'New Agent',
+    edit: 'Edit Agent',
+    unlimited: '∞',
+    deleteSuccess: 'Deleted',
+    deleteConfirm: 'Delete "{name}"? This cannot be undone (soft delete, no restore).',
+    statusUpdateFailed: 'Failed to update status',
+    triggerModes: {
+      all: 'All new posts',
+      keyword: 'Keywords',
+      manual: 'Manual'
+    },
+    table: {
+      name: 'Agent',
+      protocol: 'Protocol',
+      trigger: 'Trigger',
+      rateLimit: 'Rate Limit',
+      status: 'Status',
+      createTime: 'Created At',
+      actions: 'Actions'
+    },
+    form: {
+      name: 'Name',
+      namePlaceholder: '1-50 chars, globally unique',
+      avatarUrl: 'Avatar URL',
+      avatarPlaceholder: 'https://... (optional)',
+      protocol: 'API Protocol',
+      baseUrl: 'Custom API Base URL',
+      baseUrlPlaceholder: 'Leave empty to use the official endpoint',
+      apiKey: 'API Key',
+      apiKeyPlaceholder: 'sk-... (optional for ollama)',
+      apiKeyCurrent: 'Configured: {mask}',
+      apiKeyNone: 'No key configured',
+      apiKeyNewPlaceholder: 'Enter a new key to replace; leave empty to keep',
+      apiKeyClear: 'Clear the saved key',
+      model: 'Model',
+      modelPlaceholder: 'e.g. gpt-4o-mini / claude-sonnet-5',
+      llmParams: 'LLM Params (replaced as a whole)',
+      systemPrompt: 'System Prompt',
+      systemPromptPlaceholder: 'Persona and reply requirements (optional)',
+      triggerMode: 'Trigger Mode',
+      keywords: 'Trigger Keywords',
+      keywordsPlaceholder: 'Type a keyword and press Enter',
+      keywordsRequired: 'At least one keyword is required in keyword mode',
+      maxReplies: 'Max replies / hour',
+      minInterval: 'Min interval',
+      perHour: '/h',
+      seconds: 's',
+      noteTitle: 'Note',
+      note: 'Trigger and rate-limit settings are stored only; they take effect once the reply pipeline ships.',
+      atLeastOne: 'Modify at least one field',
+      createSuccess: 'Created',
+      updateSuccess: 'Saved'
+    }
+  },
+
   // Trending page (/hot)
   trending: {
     title: 'Trending',

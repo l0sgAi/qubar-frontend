@@ -1,0 +1,92 @@
+import request from '@/utils/request'
+
+/**
+ * 创建 AI 回复机器人
+ * 创建成功后后端自动生成 role=2 机器人账号（linked_user_id，只读，前端不传）。
+ * 注意：创建统一返回 200/`Created successfully`（非 201）；不传 status 一律默认启用，
+ * 需要「创建即停用」须创建后立刻 PUT 改 status=0。
+ * @param {Object} data - 机器人数据
+ * @param {string} data.name - 展示名，全局唯一，1-50 字符
+ * @param {string} [data.avatar_url] - 头像 URL，可空
+ * @param {string} data.api_protocol - 协议：openai/anthropic/gemini/ollama
+ * @param {string} [data.base_url] - 自定义 API 地址，用官方默认端点时留空
+ * @param {string} [data.api_key] - 明文提交（仅 HTTPS）；ollama 本地协议可省略
+ * @param {string} data.model - 模型名，1-100 字符
+ * @param {Object} [data.llm_params] - LLM 参数，白名单键且值为数字：
+ *   temperature/top_p/max_tokens/presence_penalty/frequency_penalty
+ * @param {string} [data.system_prompt] - 系统提示词，可空
+ * @param {number} [data.trigger_mode] - 触发模式：1=全部新帖（默认） 2=关键词 3=手动；
+ *   mode=2 时 trigger_keywords 必填非空
+ * @param {string[]} [data.trigger_keywords] - 触发关键词，默认 []
+ * @param {number} [data.max_replies_per_hour] - 每小时回复上限，0=不限，默认 30
+ * @param {number} [data.min_interval_sec] - 两次回复最小间隔秒，0=不限，默认 60
+ * @returns {Promise} data 为完整 AgentVO
+ */
+export function createAgent(data) {
+  return request({
+    url: '/agent',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 获取机器人列表（offset 分页，固定 create_time 倒序，无筛选参数）
+ * @param {Object} params - 分页参数
+ * @param {number} [params.page] - 页码，默认 1
+ * @param {number} [params.size] - 每页数量，默认 20，上限 100（越界回落 20）
+ * @returns {Promise} 分页信封：data 为 AgentVO[]，额外带 total/page/per_page
+ */
+export function getAgentList(params) {
+  return request({
+    url: '/agent/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取机器人详情
+ * @param {string} id - 机器人 ID(UUIDv7)；不存在/已删除返回 404
+ * @returns {Promise} data 为完整 AgentVO
+ */
+export function getAgentDetail(id) {
+  return request({
+    url: `/agent/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 部分更新机器人（指针语义：只传要改的字段，未传字段不动）
+ * 注意：
+ * - api_key 传空串 = 清除 key；要「保持不变」就不传该字段
+ * - llm_params / trigger_keywords 是整体替换语义（传了就覆盖全量），不是合并
+ * - trigger_mode 改为 2 时需同请求带非空 trigger_keywords（或已存关键词非空）
+ * - 空请求体（无任何可更新字段）返回 400
+ * @param {string} id - 机器人 ID(UUIDv7)
+ * @param {Object} data - 只含变更字段的对象，可更新字段：
+ *   name/avatar_url/api_protocol/base_url/api_key/model/llm_params/system_prompt/
+ *   trigger_mode/trigger_keywords/max_replies_per_hour/min_interval_sec/status
+ * @returns {Promise} data 为更新后的完整 AgentVO
+ */
+export function updateAgent(id, data) {
+  return request({
+    url: `/agent/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除机器人（软删：deleted=1 且自动停用，不可恢复，无恢复接口）
+ * 其关联机器人账号与历史回复保留。
+ * @param {string} id - 机器人 ID(UUIDv7)
+ * @returns {Promise} 成功响应 data 为空
+ */
+export function deleteAgent(id) {
+  return request({
+    url: `/agent/${id}`,
+    method: 'delete'
+  })
+}

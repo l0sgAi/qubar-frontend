@@ -78,6 +78,13 @@ const router = createRouter({
       path: '/post/:id',
       name: 'post-detail',
       component: () => import('../views/PostDetail.vue')
+    },
+    {
+      // 机器人管理：需登录；管理员（role=1）校验在页面内自查（/agent/* 非管理员返回 403）
+      path: '/admin/agents',
+      name: 'admin-agents',
+      component: () => import('../views/AdminAgents.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })
