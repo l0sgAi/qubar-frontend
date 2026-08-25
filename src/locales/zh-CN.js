@@ -350,6 +350,9 @@ export default {
       actions: '操作'
     },
     form: {
+      sectionBasic: '基本信息',
+      sectionApi: '模型接入',
+      sectionTrigger: '触发与限频',
       name: '名称',
       namePlaceholder: '1-50 字符，全局唯一',
       avatarUrl: '头像 URL',

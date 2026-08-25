@@ -350,6 +350,9 @@ export default {
       actions: 'Actions'
     },
     form: {
+      sectionBasic: 'Basic Info',
+      sectionApi: 'Model Access',
+      sectionTrigger: 'Trigger & Rate Limit',
       name: 'Name',
       namePlaceholder: '1-50 chars, globally unique',
       avatarUrl: 'Avatar URL',

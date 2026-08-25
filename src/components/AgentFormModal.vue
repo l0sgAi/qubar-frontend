@@ -5,7 +5,6 @@
     preset="card"
     :style="{ width: '640px', borderRadius: '24px' }"
     :title="isEdit ? t('agent.edit') : t('agent.create')"
-    header-style="font-size: 24px;"
     :segmented="{ content: 'soft' }"
     :bordered="false"
     size="huge"
@@ -17,152 +16,172 @@
       label-placement="top"
       class="agent-form"
     >
-      <!-- 基本信息 -->
-      <NFormItem :label="t('agent.form.name')" path="name">
-        <NInput
-          v-model:value="formData.name"
-          :placeholder="t('agent.form.namePlaceholder')"
-          maxlength="50"
-          show-count
-        />
-      </NFormItem>
-
-      <NFormItem :label="t('agent.form.avatarUrl')" path="avatar_url">
-        <NInput
-          v-model:value="formData.avatar_url"
-          :placeholder="t('agent.form.avatarPlaceholder')"
-        />
-      </NFormItem>
-
-      <!-- API 接入 -->
-      <NFormItem :label="t('agent.form.protocol')" path="api_protocol">
-        <NSelect
-          v-model:value="formData.api_protocol"
-          :options="protocolOptions"
-          :placeholder="t('agent.form.protocol')"
-        />
-      </NFormItem>
-
-      <NFormItem :label="t('agent.form.baseUrl')" path="base_url">
-        <NInput
-          v-model:value="formData.base_url"
-          :placeholder="t('agent.form.baseUrlPlaceholder')"
-        />
-      </NFormItem>
-
-      <!-- api_key：创建=明文输入；编辑=掩码展示 + 独立换 key 输入框（不回填旧值） -->
-      <NFormItem v-if="!isEdit" :label="t('agent.form.apiKey')" path="api_key">
-        <NInput
-          v-model:value="formData.api_key"
-          type="password"
-          show-password-on="click"
-          :placeholder="t('agent.form.apiKeyPlaceholder')"
-        />
-      </NFormItem>
-      <NFormItem v-else :label="t('agent.form.apiKey')">
-        <div class="key-block">
-          <NText depth="3" style="font-size: 13px">
-            {{ agent.has_api_key
-              ? t('agent.form.apiKeyCurrent', { mask: agent.api_key_masked })
-              : t('agent.form.apiKeyNone') }}
-          </NText>
+      <!-- 分区一：基本信息 -->
+      <div class="form-section">
+        <div class="section-header">
+          <span class="section-dot" />
+          <span class="section-title">{{ t('agent.form.sectionBasic') }}</span>
+        </div>
+        <NFormItem :label="t('agent.form.name')" path="name">
           <NInput
-            v-model:value="formData.new_api_key"
-            type="password"
-            show-password-on="click"
-            :placeholder="t('agent.form.apiKeyNewPlaceholder')"
-            :disabled="formData.clear_api_key"
-            style="margin-top: 8px"
+            v-model:value="formData.name"
+            :placeholder="t('agent.form.namePlaceholder')"
+            maxlength="50"
+            show-count
           />
-          <NCheckbox
-            v-model:checked="formData.clear_api_key"
-            size="small"
-            style="margin-top: 8px"
-          >
-            {{ t('agent.form.apiKeyClear') }}
-          </NCheckbox>
-        </div>
-      </NFormItem>
-
-      <NFormItem :label="t('agent.form.model')" path="model">
-        <NInput
-          v-model:value="formData.model"
-          :placeholder="t('agent.form.modelPlaceholder')"
-          maxlength="100"
-        />
-      </NFormItem>
-
-      <!-- llm_params：白名单 5 键，只提交填写的；整体替换语义 -->
-      <NFormItem :label="t('agent.form.llmParams')">
-        <div class="llm-params">
-          <NInputNumber
-            v-for="key in LLM_PARAM_KEYS"
-            :key="key"
-            v-model:value="formData.llm[key]"
-            :placeholder="key"
-            :min="0"
-          >
-            <template #prefix>{{ key }}</template>
-          </NInputNumber>
-        </div>
-      </NFormItem>
-
-      <NFormItem :label="t('agent.form.systemPrompt')" path="system_prompt">
-        <NInput
-          v-model:value="formData.system_prompt"
-          type="textarea"
-          :placeholder="t('agent.form.systemPromptPlaceholder')"
-          :autosize="{ minRows: 3, maxRows: 6 }"
-          maxlength="2000"
-        />
-      </NFormItem>
-
-      <!-- 触发与限频 -->
-      <NFormItem :label="t('agent.form.triggerMode')" path="trigger_mode">
-        <NRadioGroup v-model:value="formData.trigger_mode">
-          <NRadioButton :value="1">{{ t('agent.triggerModes.all') }}</NRadioButton>
-          <NRadioButton :value="2">{{ t('agent.triggerModes.keyword') }}</NRadioButton>
-          <NRadioButton :value="3">{{ t('agent.triggerModes.manual') }}</NRadioButton>
-        </NRadioGroup>
-      </NFormItem>
-
-      <NFormItem
-        v-if="formData.trigger_mode === 2"
-        :label="t('agent.form.keywords')"
-        path="trigger_keywords"
-      >
-        <NDynamicTags
-          v-model:value="formData.trigger_keywords"
-          :placeholder="t('agent.form.keywordsPlaceholder')"
-        />
-      </NFormItem>
-
-      <div class="rate-row">
-        <NFormItem :label="t('agent.form.maxReplies')" path="max_replies_per_hour">
-          <NInputNumber
-            v-model:value="formData.max_replies_per_hour"
-            :min="0"
-            :placeholder="t('agent.form.maxReplies')"
-            style="width: 100%"
-          >
-            <template #suffix>{{ t('agent.form.perHour') }}</template>
-          </NInputNumber>
         </NFormItem>
-        <NFormItem :label="t('agent.form.minInterval')" path="min_interval_sec">
-          <NInputNumber
-            v-model:value="formData.min_interval_sec"
-            :min="0"
-            :placeholder="t('agent.form.minInterval')"
-            style="width: 100%"
-          >
-            <template #suffix>{{ t('agent.form.seconds') }}</template>
-          </NInputNumber>
+
+        <NFormItem :label="t('agent.form.avatarUrl')" path="avatar_url">
+          <NInput
+            v-model:value="formData.avatar_url"
+            :placeholder="t('agent.form.avatarPlaceholder')"
+          />
         </NFormItem>
       </div>
 
-      <NAlert :title="t('agent.form.noteTitle')" type="info" :bordered="false">
-        {{ t('agent.form.note') }}
-      </NAlert>
+      <!-- 分区二：模型接入 -->
+      <div class="form-section">
+        <div class="section-header">
+          <span class="section-dot" />
+          <span class="section-title">{{ t('agent.form.sectionApi') }}</span>
+        </div>
+        <div class="api-grid">
+          <NFormItem :label="t('agent.form.protocol')" path="api_protocol">
+            <NSelect
+              v-model:value="formData.api_protocol"
+              :options="protocolOptions"
+              :placeholder="t('agent.form.protocol')"
+            />
+          </NFormItem>
+
+          <NFormItem :label="t('agent.form.baseUrl')" path="base_url">
+            <NInput
+              v-model:value="formData.base_url"
+              :placeholder="t('agent.form.baseUrlPlaceholder')"
+            />
+          </NFormItem>
+        </div>
+
+        <!-- api_key：创建=明文输入；编辑=掩码展示 + 独立换 key 输入框（不回填旧值） -->
+        <NFormItem v-if="!isEdit" :label="t('agent.form.apiKey')" path="api_key">
+          <NInput
+            v-model:value="formData.api_key"
+            type="password"
+            show-password-on="click"
+            :placeholder="t('agent.form.apiKeyPlaceholder')"
+          />
+        </NFormItem>
+        <NFormItem v-else :label="t('agent.form.apiKey')">
+          <div class="key-block">
+            <NText depth="3" class="key-masked">
+              {{ agent.has_api_key
+                ? t('agent.form.apiKeyCurrent', { mask: agent.api_key_masked })
+                : t('agent.form.apiKeyNone') }}
+            </NText>
+            <NInput
+              v-model:value="formData.new_api_key"
+              type="password"
+              show-password-on="click"
+              :placeholder="t('agent.form.apiKeyNewPlaceholder')"
+              :disabled="formData.clear_api_key"
+              class="key-new-input"
+            />
+            <NCheckbox
+              v-model:checked="formData.clear_api_key"
+              size="small"
+              class="key-clear-check"
+            >
+              {{ t('agent.form.apiKeyClear') }}
+            </NCheckbox>
+          </div>
+        </NFormItem>
+
+        <NFormItem :label="t('agent.form.model')" path="model">
+          <NInput
+            v-model:value="formData.model"
+            :placeholder="t('agent.form.modelPlaceholder')"
+            maxlength="100"
+          />
+        </NFormItem>
+
+        <!-- llm_params：白名单 5 键，只提交填写的；整体替换语义 -->
+        <NFormItem :label="t('agent.form.llmParams')">
+          <div class="llm-params">
+            <NInputNumber
+              v-for="key in LLM_PARAM_KEYS"
+              :key="key"
+              v-model:value="formData.llm[key]"
+              :placeholder="key"
+              :min="0"
+            >
+              <template #prefix><span class="llm-key">{{ key }}:</span></template>
+            </NInputNumber>
+          </div>
+        </NFormItem>
+
+        <NFormItem :label="t('agent.form.systemPrompt')" path="system_prompt">
+          <NInput
+            v-model:value="formData.system_prompt"
+            type="textarea"
+            :placeholder="t('agent.form.systemPromptPlaceholder')"
+            :autosize="{ minRows: 3, maxRows: 6 }"
+            maxlength="2000"
+          />
+        </NFormItem>
+      </div>
+
+      <!-- 分区三：触发与限频 -->
+      <div class="form-section">
+        <div class="section-header">
+          <span class="section-dot" />
+          <span class="section-title">{{ t('agent.form.sectionTrigger') }}</span>
+        </div>
+        <NFormItem :label="t('agent.form.triggerMode')" path="trigger_mode">
+          <NRadioGroup v-model:value="formData.trigger_mode">
+            <NRadioButton :value="1">{{ t('agent.triggerModes.all') }}</NRadioButton>
+            <NRadioButton :value="2">{{ t('agent.triggerModes.keyword') }}</NRadioButton>
+            <NRadioButton :value="3">{{ t('agent.triggerModes.manual') }}</NRadioButton>
+          </NRadioGroup>
+        </NFormItem>
+
+        <NFormItem
+          v-if="formData.trigger_mode === 2"
+          :label="t('agent.form.keywords')"
+          path="trigger_keywords"
+        >
+          <NDynamicTags
+            v-model:value="formData.trigger_keywords"
+            :placeholder="t('agent.form.keywordsPlaceholder')"
+          />
+        </NFormItem>
+
+        <div class="rate-row">
+          <NFormItem :label="t('agent.form.maxReplies')" path="max_replies_per_hour">
+            <NInputNumber
+              v-model:value="formData.max_replies_per_hour"
+              :min="0"
+              :placeholder="t('agent.form.maxReplies')"
+              style="width: 100%"
+            >
+              <template #suffix>{{ t('agent.form.perHour') }}</template>
+            </NInputNumber>
+          </NFormItem>
+          <NFormItem :label="t('agent.form.minInterval')" path="min_interval_sec">
+            <NInputNumber
+              v-model:value="formData.min_interval_sec"
+              :min="0"
+              :placeholder="t('agent.form.minInterval')"
+              style="width: 100%"
+            >
+              <template #suffix>{{ t('agent.form.seconds') }}</template>
+            </NInputNumber>
+          </NFormItem>
+        </div>
+
+        <NAlert :title="t('agent.form.noteTitle')" type="info" :bordered="false">
+          {{ t('agent.form.note') }}
+        </NAlert>
+      </div>
     </NForm>
 
     <template #footer>
@@ -232,7 +251,14 @@ const emptyForm = () => ({
   new_api_key: '',
   clear_api_key: false,
   model: '',
-  llm: Object.fromEntries(LLM_PARAM_KEYS.map(k => [k, null])),
+  // 创建模式：常见 LLM 默认参数（编辑模式会逐一被 agent.llm_params 覆盖）
+  llm: {
+    temperature: 0.7,
+    top_p: 1,
+    max_tokens: 1024,
+    presence_penalty: 0,
+    frequency_penalty: 0
+  },
   system_prompt: '',
   trigger_mode: 1,
   trigger_keywords: [],
@@ -393,27 +419,176 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
+/* ===== 弹窗标题：主题绿渐变文字（沿用 CreateCircleModal 范式；
+ * NModal 虽 teleport 到 body，但 scoped data-v 属性随 DOM 一起传送，
+ * :deep 仍可命中弹窗内部元素；NSelect 菜单除外（独立容器，走全局样式） ===== */
+:deep(.n-card-header__title) {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ===== 表单滚动区 ===== */
 .agent-form {
   max-height: 65vh;
   overflow-y: auto;
   padding-right: 8px;
 }
 
+/* ===== 分区面板：玻璃内衬，圆角较弹窗外壳小一档（24 -> 16） ===== */
+.form-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px 16px 4px;
+  margin-bottom: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.form-section:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.form-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* 分区圆点：主题绿 + 柔光 */
+.section-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  box-shadow: 0 0 8px rgba(102, 234, 194, 0.6);
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+/* ===== 输入 / 选择 / 数字输入：圆润 + 聚焦绿光晕（圆角 12 < 分区 16） ===== */
+:deep(.n-input),
+:deep(.n-base-selection),
+:deep(.n-input-number) {
+  --n-border-radius: 12px !important;
+}
+
+:deep(.n-input:not(.n-input--textarea)) {
+  --n-height: 42px !important;
+}
+
+:deep(.n-input__textarea-el) {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+:deep(.n-input--focus),
+:deep(.n-base-selection:focus-within),
+:deep(.n-input-number:focus-within) {
+  --n-border-focus: 1px solid rgba(102, 234, 194, 0.65) !important;
+  --n-box-shadow-focus: 0 0 0 3px rgba(102, 234, 194, 0.15) !important;
+}
+
+/* ===== 触发模式：胶囊单选组，选中态主题绿 ===== */
+:deep(.n-radio-group) {
+  border-radius: 999px;
+}
+
+:deep(.n-radio-button:first-child) {
+  border-radius: 999px 0 0 999px;
+}
+
+:deep(.n-radio-button:last-child) {
+  border-radius: 0 999px 999px 0;
+}
+
+:deep(.n-radio-group .n-radio-button.n-radio-button--checked) {
+  background: rgba(102, 234, 194, 0.16) !important;
+  color: #8af0d0 !important;
+  text-shadow: none;
+}
+
+/* ===== 关键词标签：胶囊 ===== */
+:deep(.n-dynamic-tags .n-tag) {
+  border-radius: 999px !important;
+}
+
+/* ===== 表单项间距收紧（分区已提供外距） ===== */
+:deep(.n-form-item) {
+  margin-bottom: 14px;
+}
+
+/* ===== 提示条：绿色玻璃风 ===== */
+:deep(.n-alert) {
+  border-radius: 12px !important;
+  background: rgba(102, 234, 194, 0.06) !important;
+  border: 1px solid rgba(102, 234, 194, 0.18) !important;
+}
+
+:deep(.n-alert .n-alert-body__title) {
+  color: #8af0d0 !important;
+}
+
+/* ===== 局部布局 ===== */
+.api-grid {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px;
+}
+
 .key-block {
   width: 100%;
+}
+
+.key-masked {
+  font-size: 13px;
+}
+
+.key-new-input {
+  margin-top: 8px;
+}
+
+.key-clear-check {
+  margin-top: 8px;
 }
 
 .llm-params {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
+}
+
+/* 参数名前缀：弱化色 + 冒号，与数值视觉分离（插槽内容在本组件作用域，scoped 可命中） */
+.llm-key {
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+/* 数值：等宽系统字体栈 + 表格数字，数字对齐易读；macOS/Windows/Linux 均有回落 */
+:deep(.n-input-number .n-input__input-el) {
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 .rate-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
 }
 
 .modal-footer {
