@@ -31,11 +31,36 @@
           />
         </NFormItem>
 
-        <NFormItem :label="t('agent.form.avatarUrl')" path="avatar_url">
-          <NInput
-            v-model:value="formData.avatar_url"
-            :placeholder="t('agent.form.avatarPlaceholder')"
-          />
+        <NFormItem :label="t('agent.form.avatarUrl')">
+          <div class="avatar-row">
+            <NAvatar
+              round
+              :size="56"
+              :src="formData.avatar_url || undefined"
+              class="avatar-preview"
+            >
+              <span v-if="!formData.avatar_url" class="avatar-fallback">🤖</span>
+            </NAvatar>
+            <NUpload
+              :show-file-list="false"
+              :custom-request="handleAvatarUpload"
+              @before-upload="beforeAvatarUpload"
+              accept="image/*"
+            >
+              <NButton secondary size="small" round>
+                {{ t('agent.form.avatarUpload') }}
+              </NButton>
+            </NUpload>
+            <NButton
+              v-if="formData.avatar_url"
+              quaternary
+              size="small"
+              round
+              @click="formData.avatar_url = ''"
+            >
+              {{ t('agent.form.avatarRemove') }}
+            </NButton>
+          </div>
         </NFormItem>
       </div>
 
@@ -184,6 +209,20 @@
       </div>
     </NForm>
 
+    <!-- 头像裁剪弹窗（1:1，仅预览圆形头像；确认后直接上传回填 URL） -->
+    <ImageCropperModal
+      v-model:show="cropperVisible"
+      :image-src="cropperImageSrc"
+      :aspect-ratio="1"
+      :title="t('agent.form.cropAvatarTitle')"
+      type="avatar"
+      avatar-only
+      :avatar-url="formData.avatar_url"
+      :upload-handler="handleCropUpload"
+      @confirm="handleCropConfirm"
+      @cancel="releaseCropperSrc"
+    />
+
     <template #footer>
       <div class="modal-footer">
         <NButton quaternary @click="visible = false">{{ t('common.cancel') }}</NButton>
@@ -204,10 +243,12 @@ import { ref, computed, watch } from 'vue'
 import {
   NModal, NForm, NFormItem, NInput, NInputNumber, NSelect, NRadioGroup,
   NRadioButton, NDynamicTags, NCheckbox, NButton, NAlert, NText,
-  useMessage
+  NAvatar, NUpload, useMessage
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { createAgent, updateAgent } from '@/api/agent'
+import ImageCropperModal from '@/components/ImageCropperModal.vue'
+import { useImageUpload } from '@/composables/useImageUpload'
 
 // llm_params 后端白名单键（值为数字，其余键一律 400）
 const LLM_PARAM_KEYS = [
@@ -267,6 +308,57 @@ const emptyForm = () => ({
 })
 
 const formData = ref(emptyForm())
+
+// ===== 头像：NUpload 选图 -> ImageCropperModal 裁剪 -> 上传回填 URL =====
+const { uploadOne } = useImageUpload()
+const cropperVisible = ref(false)
+const cropperImageSrc = ref('')
+
+// 上传前校验：类型 + 大小（与 UserProfile 头像限制一致）
+const beforeAvatarUpload = ({ file }) => {
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
+  if (!allowedTypes.includes(file.type)) {
+    message.error(t('agent.form.avatarTypeError'))
+    return false
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    message.error(t('agent.form.avatarSizeError'))
+    return false
+  }
+  return true
+}
+
+// 选图后不直接上传，先打开裁剪弹窗（1:1）
+const handleAvatarUpload = ({ file }) => {
+  releaseCropperSrc()
+  cropperImageSrc.value = URL.createObjectURL(file.file)
+  cropperVisible.value = true
+}
+
+const releaseCropperSrc = () => {
+  if (cropperImageSrc.value.startsWith('blob:')) {
+    URL.revokeObjectURL(cropperImageSrc.value)
+    cropperImageSrc.value = ''
+  }
+}
+
+// 裁剪确认 -> 在裁剪弹窗内上传（由 ImageCropperModal 调用，进度条由弹窗展示）
+const handleCropUpload = async (blob, { onProgress } = {}) => {
+  const avatarFile = new File([blob], 'agent-avatar.jpg', { type: 'image/jpeg' })
+  try {
+    return await uploadOne(avatarFile, { onProgress })
+  } catch (e) {
+    console.error('机器人头像上传失败:', e)
+    message.error(t('agent.form.avatarUploadFailed'))
+    throw e // rethrow -> 裁剪弹窗保持打开，供重试
+  }
+}
+
+// 上传成功 -> 回填头像 URL（avatar_url 为空串时后端存 NULL，diff 逻辑不受影响）
+const handleCropConfirm = (payload) => {
+  if (payload?.url) formData.value.avatar_url = payload.url
+  releaseCropperSrc()
+}
 
 // 弹窗打开时以当前 agent 初始化表单（编辑）或重置为默认值（创建）
 watch(
@@ -543,6 +635,23 @@ const handleSubmit = async () => {
 }
 
 /* ===== 局部布局 ===== */
+/* 头像行：圆形预览 + 上传/移除按钮 */
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-preview {
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.avatar-fallback {
+  font-size: 26px;
+}
+
 .api-grid {
   display: grid;
   grid-template-columns: 180px 1fr;
