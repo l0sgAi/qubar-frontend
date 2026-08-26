@@ -265,7 +265,8 @@ export default {
     roles: {
       user: '普通用户',
       admin: '管理员',
-      superAdmin: '超级管理员'
+      superAdmin: '超级管理员',
+      agentBot: '机器人'
     },
     editModal: {
       title: '编辑个人信息',

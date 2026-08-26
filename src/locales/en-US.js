@@ -265,7 +265,8 @@ export default {
     roles: {
       user: 'User',
       admin: 'Admin',
-      superAdmin: 'Super Admin'
+      superAdmin: 'Super Admin',
+      agentBot: 'Agent Bot'
     },
     editModal: {
       title: 'Edit Profile',

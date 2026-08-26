@@ -35,8 +35,8 @@
                 @total-change="handlePostsTotalChange"/>
             </NTabPane>
 
-            <!-- 加入的兴趣圈 Tab -->
-            <NTabPane name="groups" display-directive="show">
+            <!-- 加入的兴趣圈 Tab（机器人不显示） -->
+            <NTabPane v-if="!isBot" name="groups" display-directive="show">
               <template #tab>
                 <NSpace align="center" :size="6">
                   <span>兴趣圈</span>
@@ -74,7 +74,23 @@
             <!-- 用户基本信息 -->
             <div class="sidebar-section">
               <!-- <NText depth="3" style="font-size: 12px; margin-bottom: 8px; display: block;">基本信息</NText> -->
-              <div class="info-list">
+              <!-- 机器人：只显示角色和状态 -->
+              <div v-if="isBot" class="info-list">
+                <div class="info-row">
+                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">角色</NText>
+                  <NTag :type="getRoleType(userInfo.role)" size="small" round>
+                    {{ getRoleText(userInfo.role) }}
+                  </NTag>
+                </div>
+                <div class="info-row">
+                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">状态</NText>
+                  <NTag :type="userInfo.status === 1 ? 'success' : 'error'" size="small" round>
+                    {{ userInfo.status === 1 ? '正常' : '禁用' }}
+                  </NTag>
+                </div>
+              </div>
+              <!-- 普通用户：完整信息 -->
+              <div v-else class="info-list">
                 <div class="info-row">
                   <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">邮箱</NText>
                   <NText style="font-size: 15px;">{{ userInfo.email || '未设置' }}</NText>
@@ -115,7 +131,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   NConfigProvider,
@@ -143,6 +159,9 @@ const message = useMessage()
 
 // 当前激活的标签页
 const activeTab = ref('posts')
+
+// 是否机器人（role=2）
+const isBot = computed(() => userInfo.value.role === 2)
 
 // 用户信息
 const userInfo = ref({
@@ -237,7 +256,7 @@ const getRoleText = (role) => {
   const roleMap = {
     0: '普通用户',
     1: '管理员',
-    2: '超级管理员'
+    2: '机器人'
   }
   return roleMap[role] || '普通用户'
 }
@@ -247,7 +266,7 @@ const getRoleType = (role) => {
   const typeMap = {
     0: 'default',
     1: 'warning',
-    2: 'error'
+    2: 'info'
   }
   return typeMap[role] || 'default'
 }
