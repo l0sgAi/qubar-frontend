@@ -376,7 +376,6 @@ export default {
       llmParams: 'LLM 参数（提交时整体替换）',
       systemPrompt: '系统提示词',
       systemPromptPlaceholder: '机器人的人设与回复要求（可空）',
-      triggerMode: '触发模式',
       keywords: '触发关键词',
       keywordsPlaceholder: '输入关键词后回车添加',
       keywordsRequired: '关键词触发模式下至少需要一个关键词',

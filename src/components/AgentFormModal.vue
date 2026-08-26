@@ -161,21 +161,8 @@
           <span class="section-dot" />
           <span class="section-title">{{ t('agent.form.sectionTrigger') }}</span>
         </div>
-        <NFormItem :label="t('agent.form.triggerMode')" path="trigger_mode">
-          <!-- line 式下划线 tab，与 Discover/首页的切换 Tab 风格一致 -->
-          <NTabs
-            v-model:value="formData.trigger_mode"
-            type="line"
-            size="small"
-            class="trigger-tabs"
-          >
-            <NTab :name="2">{{ t('agent.triggerModes.keyword') }}</NTab>
-            <NTab :name="3">{{ t('agent.triggerModes.manual') }}</NTab>
-          </NTabs>
-        </NFormItem>
-
+        <!-- 仅支持关键词触发（trigger_mode 固定 2），关键词必填 -->
         <NFormItem
-          v-if="formData.trigger_mode === 2"
           :label="t('agent.form.keywords')"
           path="trigger_keywords"
         >
@@ -246,8 +233,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import {
-  NModal, NForm, NFormItem, NInput, NInputNumber, NSelect, NTabs,
-  NTab, NDynamicTags, NCheckbox, NButton, NAlert, NText,
+  NModal, NForm, NFormItem, NInput, NInputNumber, NSelect,
+  NDynamicTags, NCheckbox, NButton, NAlert, NText,
   NAvatar, NUpload, useMessage
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -305,8 +292,8 @@ const emptyForm = () => ({
     frequency_penalty: 0
   },
   system_prompt: '',
-  // 仅支持关键词(2)/手动(3)；「所有新帖」(1) 已下线，新建默认手动触发
-  trigger_mode: 3,
+  // 仅支持关键词触发：固定 2（「所有新帖」1 与「手动」3 已下线）
+  trigger_mode: 2,
   trigger_keywords: [],
   max_replies_per_hour: 30,
   min_interval_sec: 60
@@ -384,9 +371,9 @@ watch(
         fresh.llm[k] = a.llm_params?.[k] ?? null
       }
       fresh.system_prompt = a.system_prompt || ''
-      // 遗留 mode=1（所有新帖）的机器人映射为手动触发：tab 已无该选项，
-      // 保存时 diff 会把 trigger_mode=3 一并提交，完成迁移
-      fresh.trigger_mode = [2, 3].includes(a.trigger_mode) ? a.trigger_mode : 3
+      // 遗留 mode=1（所有新帖）/3（手动）的机器人统一迁移为关键词触发(2)：
+      // 保存时 diff 会把 trigger_mode=2 一并提交，完成迁移
+      fresh.trigger_mode = 2
       fresh.trigger_keywords = [...(a.trigger_keywords || [])]
       fresh.max_replies_per_hour = a.max_replies_per_hour ?? 30
       fresh.min_interval_sec = a.min_interval_sec ?? 60
@@ -429,8 +416,8 @@ const buildCreatePayload = () => {
     base_url: f.base_url.trim(),
     model: f.model.trim(),
     system_prompt: f.system_prompt,
-    trigger_mode: f.trigger_mode,
-    trigger_keywords: f.trigger_mode === 2 ? [...f.trigger_keywords] : [],
+    trigger_mode: 2,
+    trigger_keywords: [...f.trigger_keywords],
     max_replies_per_hour: f.max_replies_per_hour ?? 0,
     min_interval_sec: f.min_interval_sec ?? 0
   }
@@ -465,8 +452,8 @@ const buildUpdatePayload = () => {
     JSON.stringify([...f.trigger_keywords].sort()) !== JSON.stringify([...(a.trigger_keywords || [])].sort())
   if (modeChanged || keywordsChanged) {
     // mode=2 必须与关键词同请求提交，故二者联动时一起发
-    payload.trigger_mode = f.trigger_mode
-    payload.trigger_keywords = f.trigger_mode === 2 ? [...f.trigger_keywords] : []
+    payload.trigger_mode = 2
+    payload.trigger_keywords = [...f.trigger_keywords]
   }
 
   if ((f.max_replies_per_hour ?? 0) !== (a.max_replies_per_hour ?? 0)) {
@@ -488,7 +475,7 @@ const handleSubmit = async () => {
 
   const f = formData.value
   // 后端 400：mode 2 requires keywords -- 前端先拦
-  if (f.trigger_mode === 2 && f.trigger_keywords.length === 0) {
+  if (!f.trigger_keywords.length) {
     message.warning(t('agent.form.keywordsRequired'))
     return
   }
@@ -601,19 +588,6 @@ const handleSubmit = async () => {
 :deep(.n-input-number:focus-within) {
   --n-border-focus: 1px solid rgba(102, 234, 194, 0.65) !important;
   --n-box-shadow-focus: 0 0 0 3px rgba(102, 234, 194, 0.15) !important;
-}
-
-/* ===== 触发模式：line 式下划线 tab（默认主题绿下划线），收紧间距贴合表单 ===== */
-.trigger-tabs {
-  width: fit-content;
-}
-
-.trigger-tabs :deep(.n-tabs-nav) {
-  line-height: 1.5;
-}
-
-.trigger-tabs :deep(.n-tabs-tab) {
-  padding: 4px 14px;
 }
 
 /* ===== 关键词标签：胶囊 ===== */
