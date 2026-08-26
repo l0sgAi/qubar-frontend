@@ -15,6 +15,8 @@ import request from '@/utils/request'
  * @param {Object} [data.llm_params] - LLM 参数，白名单键且值为数字：
  *   temperature/top_p/max_tokens/presence_penalty/frequency_penalty
  * @param {string} [data.system_prompt] - 系统提示词，可空
+ * @param {string} [data.filter_prompt] - 回复判定条件（自然语言，≤2000 字符），
+ *   仅 mode=2 关键词触发生效；空 = 不判定，命中关键词即回复
  * @param {number} [data.trigger_mode] - 触发模式：1=全部新帖（默认） 2=关键词 3=手动；
  *   mode=2 时 trigger_keywords 必填非空
  * @param {string[]} [data.trigger_keywords] - 触发关键词，默认 []
@@ -63,13 +65,14 @@ export function getAgentDetail(id) {
  * 部分更新机器人（指针语义：只传要改的字段，未传字段不动）
  * 注意：
  * - api_key 传空串 = 清除 key；要「保持不变」就不传该字段
+ * - filter_prompt 传空串 = 关闭判定（回到命中即回复）；不传 = 保持原条件
  * - llm_params / trigger_keywords 是整体替换语义（传了就覆盖全量），不是合并
  * - trigger_mode 改为 2 时需同请求带非空 trigger_keywords（或已存关键词非空）
  * - 空请求体（无任何可更新字段）返回 400
  * @param {string} id - 机器人 ID(UUIDv7)
  * @param {Object} data - 只含变更字段的对象，可更新字段：
  *   name/avatar_url/api_protocol/base_url/api_key/model/llm_params/system_prompt/
- *   trigger_mode/trigger_keywords/max_replies_per_hour/min_interval_sec/status
+ *   filter_prompt/trigger_mode/trigger_keywords/max_replies_per_hour/min_interval_sec/status
  * @returns {Promise} data 为更新后的完整 AgentVO
  */
 export function updateAgent(id, data) {
@@ -90,5 +93,25 @@ export function deleteAgent(id) {
   return request({
     url: `/agent/${id}`,
     method: 'delete'
+  })
+}
+
+/**
+ * 手动触发机器人在指定帖子下发表一条 AI 回复（顶层评论）
+ * 同步执行（含 LLM 调用，耗时可达数十秒），前端需给足超时与 loading。
+ * 前置条件（不满足返回 400/404/429，且不产生回复日志）：
+ * - 机器人存在且启用（status=1）
+ * - 机器人 trigger_mode=3（手动模式）
+ * - 帖子已发布且未锁定
+ * - 限频未超（失败也算额度）
+ * 调用失败（LLM 报错/空回复/落库失败）返回 503，message 含失败原因摘要。
+ * @param {string} id - 机器人 ID(UUIDv7)
+ * @param {string} postId - 帖子 ID(UUID)
+ * @returns {Promise} data 为生成的评论 ID(UUID)
+ */
+export function triggerAgentReply(id, postId) {
+  return request({
+    url: `/agent/${id}/reply/${postId}`,
+    method: 'post'
   })
 }

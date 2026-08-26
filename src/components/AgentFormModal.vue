@@ -172,6 +172,19 @@
           />
         </NFormItem>
 
+        <!-- filter_prompt：两阶段回复判定（高级选项），仅 mode=2 生效；
+             空 = 命中关键词即回复，非空 = LLM 先判定该不该回 -->
+        <NFormItem :label="t('agent.form.filterPrompt')" path="filter_prompt">
+          <NInput
+            v-model:value="formData.filter_prompt"
+            type="textarea"
+            :placeholder="t('agent.form.filterPromptPlaceholder')"
+            :autosize="{ minRows: 2, maxRows: 4 }"
+            maxlength="2000"
+            show-count
+          />
+        </NFormItem>
+
         <div class="rate-row">
           <NFormItem :label="t('agent.form.maxReplies')" path="max_replies_per_hour">
             <NInputNumber
@@ -195,9 +208,9 @@
           </NFormItem>
         </div>
 
-        <NAlert :title="t('agent.form.noteTitle')" type="info" :bordered="false">
+        <!-- <NAlert :title="t('agent.form.noteTitle')" type="info" :bordered="false">
           {{ t('agent.form.note') }}
-        </NAlert>
+        </NAlert> -->
       </div>
     </NForm>
 
@@ -292,6 +305,8 @@ const emptyForm = () => ({
     frequency_penalty: 0
   },
   system_prompt: '',
+  // 回复判定条件（仅 mode=2 生效）：空 = 命中关键词即回复
+  filter_prompt: '',
   // 仅支持关键词触发：固定 2（「所有新帖」1 与「手动」3 已下线）
   trigger_mode: 2,
   trigger_keywords: [],
@@ -371,6 +386,7 @@ watch(
         fresh.llm[k] = a.llm_params?.[k] ?? null
       }
       fresh.system_prompt = a.system_prompt || ''
+      fresh.filter_prompt = a.filter_prompt || ''
       // 遗留 mode=1（所有新帖）/3（手动）的机器人统一迁移为关键词触发(2)：
       // 保存时 diff 会把 trigger_mode=2 一并提交，完成迁移
       fresh.trigger_mode = 2
@@ -416,6 +432,7 @@ const buildCreatePayload = () => {
     base_url: f.base_url.trim(),
     model: f.model.trim(),
     system_prompt: f.system_prompt,
+    filter_prompt: f.filter_prompt.trim(),
     trigger_mode: 2,
     trigger_keywords: [...f.trigger_keywords],
     max_replies_per_hour: f.max_replies_per_hour ?? 0,
@@ -439,6 +456,8 @@ const buildUpdatePayload = () => {
   if (f.api_protocol !== a.api_protocol) payload.api_protocol = f.api_protocol
   if (f.model.trim() !== a.model) payload.model = f.model.trim()
   if (f.system_prompt !== (a.system_prompt || '')) payload.system_prompt = f.system_prompt
+  // filter_prompt：传空串 = 关闭判定（回到命中即回复），不传 = 保持原条件
+  if (f.filter_prompt.trim() !== (a.filter_prompt || '')) payload.filter_prompt = f.filter_prompt.trim()
 
   // api_key：空串=清除，不传=保持不变
   if (f.clear_api_key) payload.api_key = ''
