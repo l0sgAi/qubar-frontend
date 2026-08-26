@@ -207,10 +207,6 @@
             </NInputNumber>
           </NFormItem>
         </div>
-
-        <!-- <NAlert :title="t('agent.form.noteTitle')" type="info" :bordered="false">
-          {{ t('agent.form.note') }}
-        </NAlert> -->
       </div>
     </NForm>
 
