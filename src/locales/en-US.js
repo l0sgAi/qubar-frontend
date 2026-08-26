@@ -366,7 +366,7 @@ export default {
       baseUrl: 'Custom API Base URL',
       baseUrlPlaceholder: 'Leave empty to use the official endpoint',
       apiKey: 'API Key',
-      apiKeyPlaceholder: 'sk-... (optional for ollama)',
+      apiKeyPlaceholder: 'sk-...',
       apiKeyCurrent: 'Configured: {mask}',
       apiKeyNone: 'No key configured',
       apiKeyNewPlaceholder: 'Enter a new key to replace; leave empty to keep',

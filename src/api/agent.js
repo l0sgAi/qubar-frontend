@@ -8,9 +8,9 @@ import request from '@/utils/request'
  * @param {Object} data - 机器人数据
  * @param {string} data.name - 展示名，全局唯一，1-50 字符
  * @param {string} [data.avatar_url] - 头像 URL，可空
- * @param {string} data.api_protocol - 协议：openai/anthropic/gemini/ollama
+ * @param {string} data.api_protocol - 协议：openai/anthropic
  * @param {string} [data.base_url] - 自定义 API 地址，用官方默认端点时留空
- * @param {string} [data.api_key] - 明文提交（仅 HTTPS）；ollama 本地协议可省略
+ * @param {string} [data.api_key] - 明文提交（仅 HTTPS）
  * @param {string} data.model - 模型名，1-100 字符
  * @param {Object} [data.llm_params] - LLM 参数，白名单键且值为数字：
  *   temperature/top_p/max_tokens/presence_penalty/frequency_penalty

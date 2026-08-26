@@ -366,7 +366,7 @@ export default {
       baseUrl: '自定义 API 地址',
       baseUrlPlaceholder: '使用官方默认端点可留空',
       apiKey: 'API Key',
-      apiKeyPlaceholder: 'sk-…（ollama 协议可留空）',
+      apiKeyPlaceholder: 'sk-…',
       apiKeyCurrent: '已配置：{mask}',
       apiKeyNone: '未配置 Key',
       apiKeyNewPlaceholder: '输入新 Key 更换；不修改请留空',

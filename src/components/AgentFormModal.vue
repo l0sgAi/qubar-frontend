@@ -162,11 +162,16 @@
           <span class="section-title">{{ t('agent.form.sectionTrigger') }}</span>
         </div>
         <NFormItem :label="t('agent.form.triggerMode')" path="trigger_mode">
-          <NRadioGroup v-model:value="formData.trigger_mode">
-            <NRadioButton :value="1">{{ t('agent.triggerModes.all') }}</NRadioButton>
-            <NRadioButton :value="2">{{ t('agent.triggerModes.keyword') }}</NRadioButton>
-            <NRadioButton :value="3">{{ t('agent.triggerModes.manual') }}</NRadioButton>
-          </NRadioGroup>
+          <!-- line 式下划线 tab，与 Discover/首页的切换 Tab 风格一致 -->
+          <NTabs
+            v-model:value="formData.trigger_mode"
+            type="line"
+            size="small"
+            class="trigger-tabs"
+          >
+            <NTab :name="2">{{ t('agent.triggerModes.keyword') }}</NTab>
+            <NTab :name="3">{{ t('agent.triggerModes.manual') }}</NTab>
+          </NTabs>
         </NFormItem>
 
         <NFormItem
@@ -241,8 +246,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import {
-  NModal, NForm, NFormItem, NInput, NInputNumber, NSelect, NRadioGroup,
-  NRadioButton, NDynamicTags, NCheckbox, NButton, NAlert, NText,
+  NModal, NForm, NFormItem, NInput, NInputNumber, NSelect, NTabs,
+  NTab, NDynamicTags, NCheckbox, NButton, NAlert, NText,
   NAvatar, NUpload, useMessage
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -271,11 +276,10 @@ const visible = computed({
 })
 const isEdit = computed(() => !!props.agent)
 
+// 后端当前只支持 openai / anthropic 两种模型协议
 const protocolOptions = [
   { label: 'openai', value: 'openai' },
-  { label: 'anthropic', value: 'anthropic' },
-  { label: 'gemini', value: 'gemini' },
-  { label: 'ollama', value: 'ollama' }
+  { label: 'anthropic', value: 'anthropic' }
 ]
 
 const formRef = ref(null)
@@ -286,7 +290,7 @@ const emptyForm = () => ({
   avatar_url: '',
   api_protocol: 'openai',
   base_url: '',
-  // 创建模式：明文 key，可空（ollama 免 key）
+  // 创建模式：明文 key，可空
   api_key: '',
   // 编辑模式：换 key 用独立输入框，不回填旧值（后端只回掩码，明文拿不到）
   new_api_key: '',
@@ -301,7 +305,8 @@ const emptyForm = () => ({
     frequency_penalty: 0
   },
   system_prompt: '',
-  trigger_mode: 1,
+  // 仅支持关键词(2)/手动(3)；「所有新帖」(1) 已下线，新建默认手动触发
+  trigger_mode: 3,
   trigger_keywords: [],
   max_replies_per_hour: 30,
   min_interval_sec: 60
@@ -370,14 +375,18 @@ watch(
       const a = props.agent
       fresh.name = a.name || ''
       fresh.avatar_url = a.avatar_url || ''
-      fresh.api_protocol = a.api_protocol || 'openai'
+      // 遗留协议（gemini/ollama 等）映射为 openai：下拉已无这些选项，
+      // 保存时 diff 会把 api_protocol='openai' 一并提交，完成迁移
+      fresh.api_protocol = ['openai', 'anthropic'].includes(a.api_protocol) ? a.api_protocol : 'openai'
       fresh.base_url = a.base_url || ''
       fresh.model = a.model || ''
       for (const k of LLM_PARAM_KEYS) {
         fresh.llm[k] = a.llm_params?.[k] ?? null
       }
       fresh.system_prompt = a.system_prompt || ''
-      fresh.trigger_mode = a.trigger_mode || 1
+      // 遗留 mode=1（所有新帖）的机器人映射为手动触发：tab 已无该选项，
+      // 保存时 diff 会把 trigger_mode=3 一并提交，完成迁移
+      fresh.trigger_mode = [2, 3].includes(a.trigger_mode) ? a.trigger_mode : 3
       fresh.trigger_keywords = [...(a.trigger_keywords || [])]
       fresh.max_replies_per_hour = a.max_replies_per_hour ?? 30
       fresh.min_interval_sec = a.min_interval_sec ?? 60
@@ -594,23 +603,17 @@ const handleSubmit = async () => {
   --n-box-shadow-focus: 0 0 0 3px rgba(102, 234, 194, 0.15) !important;
 }
 
-/* ===== 触发模式：胶囊单选组，选中态主题绿 ===== */
-:deep(.n-radio-group) {
-  border-radius: 999px;
+/* ===== 触发模式：line 式下划线 tab（默认主题绿下划线），收紧间距贴合表单 ===== */
+.trigger-tabs {
+  width: fit-content;
 }
 
-:deep(.n-radio-button:first-child) {
-  border-radius: 999px 0 0 999px;
+.trigger-tabs :deep(.n-tabs-nav) {
+  line-height: 1.5;
 }
 
-:deep(.n-radio-button:last-child) {
-  border-radius: 0 999px 999px 0;
-}
-
-:deep(.n-radio-group .n-radio-button.n-radio-button--checked) {
-  background: rgba(102, 234, 194, 0.16) !important;
-  color: #8af0d0 !important;
-  text-shadow: none;
+.trigger-tabs :deep(.n-tabs-tab) {
+  padding: 4px 14px;
 }
 
 /* ===== 关键词标签：胶囊 ===== */

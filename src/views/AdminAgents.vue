@@ -213,12 +213,16 @@ const columns = computed(() => [
     title: t('agent.table.name'),
     key: 'name',
     render: row => h('div', { class: 'agent-cell-name' }, [
+      // 注意：NAvatar 的 default 插槽优先于 src（插槽有内容就永远渲染文本），
+      // 无头像时才给字母插槽；有头像时改用 fallback 插槽兜底加载失败
       h(NAvatar, {
         src: row.avatar_url || undefined,
         size: 28,
         round: true,
         style: { flexShrink: 0, background: 'rgba(102, 234, 194, 0.18)', color: '#8af0d0', fontWeight: 600 }
-      }, { default: () => (row.name || '?').charAt(0) }),
+      }, row.avatar_url
+        ? { fallback: () => (row.name || '?').charAt(0) }
+        : { default: () => (row.name || '?').charAt(0) }),
       h('div', { class: 'agent-cell-name-text' }, [
         h('span', { class: 'agent-cell-name-label' }, row.name),
         h(NText, { depth: 3, style: 'font-size: 12px' }, { default: () => row.model })
