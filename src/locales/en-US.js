@@ -377,6 +377,7 @@ export default {
       llmParams: 'LLM Params (replaced as a whole)',
       systemPrompt: 'System Prompt',
       systemPromptPlaceholder: 'Persona and reply requirements (optional)',
+      triggerMode: 'Trigger Mode',
       keywords: 'Trigger Keywords',
       keywordsPlaceholder: 'Type a keyword and press Enter',
       keywordsRequired: 'At least one keyword is required in keyword mode',

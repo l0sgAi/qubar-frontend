@@ -28,7 +28,13 @@
                   <NIcon size="14"><SearchIcon /></NIcon>
                 </template>
               </NInput>
-              <NButton type="primary" size="small" class="create-btn" @click="openCreate">
+              <NButton
+                v-if="isAdmin && !checkingRole"
+                type="primary"
+                size="small"
+                class="create-btn"
+                @click="openCreate"
+              >
                 {{ t('agent.create') }}
               </NButton>
             </div>
@@ -258,7 +264,7 @@ const columns = computed(() => [
     key: 'rate',
     width: 150,
     render: row => h('span', { class: 'agent-cell-rate' }, [
-      `${row.max_replies_per_hour === 0 ? t('agent.unlimited') : row.max_replies_per_hour}/${t('agent.form.perHour')}`,
+      `${row.max_replies_per_hour === 0 ? t('agent.unlimited') : row.max_replies_per_hour}${t('agent.form.perHour')}`,
       ' · ',
       `${row.min_interval_sec === 0 ? t('agent.unlimited') : row.min_interval_sec}${t('agent.form.seconds')}`
     ])

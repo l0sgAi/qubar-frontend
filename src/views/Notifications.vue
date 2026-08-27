@@ -40,9 +40,10 @@
 
           <!-- 通知列表 -->
           <div class="notice-list">
-            <div
+            <button
               v-for="item in notices"
               :key="item.id"
+              type="button"
               class="notice-item"
               :class="{ unread: !item.is_read }"
               @click="handleClickNotice(item)"
@@ -62,7 +63,7 @@
                 <div class="notice-time">{{ formatTime(item.create_time) }}</div>
               </div>
               <span v-if="!item.is_read" class="unread-dot"></span>
-            </div>
+            </button>
 
             <!-- 空态 -->
             <NEmpty v-if="!loading && !notices.length" :description="t('notice.empty')" class="notice-empty" />
@@ -134,12 +135,16 @@ const renderText = (item) => {
   return t(`notice.templates.${key}`, { actor, snippet: item.snippet || '' })
 }
 
+// 加载世代：切换过滤类型后旧请求的响应直接丢弃，不得覆盖新列表/游标
+let loadGen = 0
+
 // 加载通知列表（keyset 游标分页，只顺序向后翻）
 const loadNotices = async (isRefresh = false) => {
-  if (loading.value) return
-  if (!isRefresh && !hasMore.value) return
+  if (!isRefresh && (loading.value || !hasMore.value)) return
 
+  const gen = ++loadGen
   loading.value = true
+  let succeeded = false
   try {
     const params = { type: activeType.value, size: 20 }
     if (!isRefresh && cursor.value) {
@@ -147,21 +152,28 @@ const loadNotices = async (isRefresh = false) => {
     }
 
     const res = await getNoticeList(params)
+    if (gen !== loadGen) return // 已切换过滤类型，过期响应丢弃
     if (res.data) {
       const items = res.data.notices || []
       notices.value = isRefresh ? items : [...notices.value, ...items]
       // 空字符串游标 = 没有更多
       cursor.value = res.data.cursor || ''
       hasMore.value = cursor.value !== ''
+      succeeded = true
     }
   } catch (error) {
+    if (gen !== loadGen) return
     console.error('加载通知失败:', error)
     message.error(t('notice.loadFailed'))
   } finally {
-    loading.value = false
-    if (hasMore.value) {
-      await nextTick()
-      setupObserver()
+    // 过期请求的收尾不得动当前世代的 loading/observer
+    if (gen === loadGen) {
+      loading.value = false
+      // 仅成功后才挂观察器：失败时触发器常驻视口会造成无限自动重试
+      if (succeeded && hasMore.value) {
+        await nextTick()
+        setupObserver()
+      }
     }
   }
 }
@@ -360,25 +372,39 @@ onUnmounted(() => {
   background: var(--theme-color);
 }
 
-/* 通知条目：内层圆角比容器小一档 */
+/* 通知列表容器（内层圆角比容器小一档） */
 .notice-list {
+  margin-top: 30px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
+/* 通知条目：原生 button 重置默认外观（内层圆角比容器小一档） */
 .notice-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  width: 100%;
   padding: 12px 14px;
+  border: none;
   border-radius: 10px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
 .notice-item:hover {
   background: rgba(102, 234, 194, 0.08);
+}
+
+/* 键盘焦点可见指示：Tab 聚焦时清晰可辨，Enter/Space 触发点击 */
+.notice-item:focus-visible {
+  outline: 2px solid var(--theme-color);
+  outline-offset: -2px;
 }
 
 /* 未读高亮 */

@@ -139,6 +139,7 @@ import MentionPicker from '@/components/MentionPicker.vue'
 import { getMyCircles, createPost } from '@/api/post'
 import { getCircleDetail } from '@/api/circle'
 import { useImageUpload } from '@/composables/useImageUpload'
+import { filterMentionedIds } from '@/utils/mention'
 
 const router = useRouter()
 const route = useRoute()
@@ -349,10 +350,9 @@ const handleSubmit = async () => {
 
     // 从内容中提取实际的图片 URL，更新 media_extra
     const actualUrls = extractImageUrls(formData.value.content)
-    // 正文里被删掉的 @ 不传；后端对重复/@自己/不存在用户会静默过滤，最多生效 10 人
-    const mentionIds = mentionedUsers.value
-      .filter(u => formData.value.content.includes(`@${u.username}`))
-      .map(u => u.id)
+    // 正文里被删掉的 @ 不传；须为完整 @用户名 token（@alice 不命中 @alice2）；
+    // 后端对重复/@自己/不存在用户会静默过滤，最多生效 10 人
+    const mentionIds = filterMentionedIds(formData.value.content, mentionedUsers.value)
     const submitData = {
       ...formData.value,
       media_extra: actualUrls,

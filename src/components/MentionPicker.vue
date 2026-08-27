@@ -81,22 +81,31 @@ const keyword = ref('')
 const users = ref([])
 const loading = ref(false)
 
+// 搜索请求序号：单调递增，慢请求晚到时丢弃过期响应，防止覆盖最新结果
+let searchSeq = 0
+
 const doSearch = async (kw) => {
+  const seq = searchSeq
   loading.value = true
   try {
     const res = await searchUsers({ keyword: kw, size: 10 })
+    if (seq !== searchSeq) return
     users.value = res.data?.data || []
   } catch (error) {
+    if (seq !== searchSeq) return
     console.error('搜索用户失败:', error)
     users.value = []
   } finally {
-    loading.value = false
+    if (seq === searchSeq) loading.value = false
   }
 }
 
 const debouncedSearch = useDebounceFn(doSearch, 400)
 
 const handleSearch = (kw) => {
+  // 关键词变化即作废旧请求并清空列表，避免展示与输入不符的结果
+  searchSeq += 1
+  users.value = []
   debouncedSearch(kw)
 }
 

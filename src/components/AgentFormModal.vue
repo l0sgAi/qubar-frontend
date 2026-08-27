@@ -161,8 +161,15 @@
           <span class="section-dot" />
           <span class="section-title">{{ t('agent.form.sectionTrigger') }}</span>
         </div>
-        <!-- 仅支持关键词触发（trigger_mode 固定 2），关键词必填 -->
+        <!-- 触发模式：1=所有新帖 2=关键词 3=手动；仅 mode=2 时关键词必填 -->
+        <NFormItem :label="t('agent.form.triggerMode')" path="trigger_mode">
+          <NSelect
+            v-model:value="formData.trigger_mode"
+            :options="triggerModeOptions"
+          />
+        </NFormItem>
         <NFormItem
+          v-if="formData.trigger_mode === 2"
           :label="t('agent.form.keywords')"
           path="trigger_keywords"
         >
@@ -278,6 +285,13 @@ const protocolOptions = [
   { label: 'anthropic', value: 'anthropic' }
 ]
 
+// API 支持的三种触发模式：1=所有新帖 2=关键词 3=手动
+const triggerModeOptions = computed(() => [
+  { label: t('agent.triggerModes.all'), value: 1 },
+  { label: t('agent.triggerModes.keyword'), value: 2 },
+  { label: t('agent.triggerModes.manual'), value: 3 }
+])
+
 const formRef = ref(null)
 const submitting = ref(false)
 
@@ -303,7 +317,7 @@ const emptyForm = () => ({
   system_prompt: '',
   // 回复判定条件（仅 mode=2 生效）：空 = 命中关键词即回复
   filter_prompt: '',
-  // 仅支持关键词触发：固定 2（「所有新帖」1 与「手动」3 已下线）
+  // 触发模式：1=所有新帖 2=关键词 3=手动，默认关键词触发
   trigger_mode: 2,
   trigger_keywords: [],
   max_replies_per_hour: 30,
@@ -383,9 +397,8 @@ watch(
       }
       fresh.system_prompt = a.system_prompt || ''
       fresh.filter_prompt = a.filter_prompt || ''
-      // 遗留 mode=1（所有新帖）/3（手动）的机器人统一迁移为关键词触发(2)：
-      // 保存时 diff 会把 trigger_mode=2 一并提交，完成迁移
-      fresh.trigger_mode = 2
+      // 回填已有触发模式；异常值兜底为关键词触发(2)
+      fresh.trigger_mode = [1, 2, 3].includes(a.trigger_mode) ? a.trigger_mode : 2
       fresh.trigger_keywords = [...(a.trigger_keywords || [])]
       fresh.max_replies_per_hour = a.max_replies_per_hour ?? 30
       fresh.min_interval_sec = a.min_interval_sec ?? 60
@@ -429,7 +442,7 @@ const buildCreatePayload = () => {
     model: f.model.trim(),
     system_prompt: f.system_prompt,
     filter_prompt: f.filter_prompt.trim(),
-    trigger_mode: 2,
+    trigger_mode: f.trigger_mode,
     trigger_keywords: [...f.trigger_keywords],
     max_replies_per_hour: f.max_replies_per_hour ?? 0,
     min_interval_sec: f.min_interval_sec ?? 0
@@ -467,7 +480,7 @@ const buildUpdatePayload = () => {
     JSON.stringify([...f.trigger_keywords].sort()) !== JSON.stringify([...(a.trigger_keywords || [])].sort())
   if (modeChanged || keywordsChanged) {
     // mode=2 必须与关键词同请求提交，故二者联动时一起发
-    payload.trigger_mode = 2
+    payload.trigger_mode = f.trigger_mode
     payload.trigger_keywords = [...f.trigger_keywords]
   }
 
@@ -489,8 +502,8 @@ const handleSubmit = async () => {
   }
 
   const f = formData.value
-  // 后端 400：mode 2 requires keywords -- 前端先拦
-  if (!f.trigger_keywords.length) {
+  // 后端 400：mode 2 requires keywords -- 前端先拦（仅关键词模式必填）
+  if (f.trigger_mode === 2 && !f.trigger_keywords.length) {
     message.warning(t('agent.form.keywordsRequired'))
     return
   }

@@ -83,6 +83,7 @@ import { useImageUpload } from '@/composables/useImageUpload'
 import UploadImageWall from '@/components/UploadImageWall.vue'
 import MentionPicker from '@/components/MentionPicker.vue'
 import { auth } from '@/utils/auth'
+import { filterMentionedIds } from '@/utils/mention'
 import { requireLogin } from '@/utils/guest-action'
 
 const props = defineProps({
@@ -150,10 +151,9 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     const extraData = uploadedImages.value.length > 0 ? { images: [...uploadedImages.value] } : null
-    // 正文里被删掉的 @ 不传；后端对重复/@自己/不存在用户会静默过滤
-    const mentionIds = mentionedUsers.value
-      .filter(u => content.value.includes(`@${u.username}`))
-      .map(u => u.id)
+    // 正文里被删掉的 @ 不传；须为完整 @用户名 token（@alice 不命中 @alice2）；
+    // 后端对重复/@自己/不存在用户会静默过滤
+    const mentionIds = filterMentionedIds(content.value, mentionedUsers.value)
     const res = await createComment({
       post_id: props.postId,
       root_id: props.rootId ?? props.replyToId,
