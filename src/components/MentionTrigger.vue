@@ -10,7 +10,7 @@
     placement="bottom-start"
   >
     <div ref="panelEl" class="mention-picker mention-suggest">
-      <div class="mention-results">
+      <div class="mention-results" @scroll="onResultsScroll">
         <div v-if="search.loading.value" class="mention-tip">
           <NSpin size="tiny" />
         </div>
@@ -23,12 +23,18 @@
             @pointerdown.prevent
             @click="choose(idx)"
           >
-            <NAvatar round :size="24" :src="user.avatar_url || undefined">
+            <NAvatar round :size="28" :src="user.avatar_url || undefined">
               {{ (user.username || '?').charAt(0).toUpperCase() }}
             </NAvatar>
             <span class="mention-user-name">{{ user.username }}</span>
+            <span class="mention-role" :class="`mention-role--${roleClass(user.role)}`">
+              {{ t(`user.roles.${roleClass(user.role)}`) }}
+            </span>
           </div>
-          <div v-if="!search.users.value.length" class="mention-tip">
+          <div v-if="search.loadingMore.value" class="mention-tip">
+            <NSpin size="tiny" />
+          </div>
+          <div v-else-if="!search.users.value.length" class="mention-tip">
             {{ t('notice.mention.empty') }}
           </div>
         </template>
@@ -68,6 +74,16 @@ const pos = reactive({ x: 0, y: 0 })
 const activeIdx = ref(0)
 const panelEl = ref(null)
 const search = useUserSearch({ size: 10, delay: 300 })
+
+// 角色语义映射：0=普通用户 1=管理员 2=机器人（与 UserProfile roleMap 一致），
+// 类名与 i18n key（user.roles.*）共用同一段
+const roleClass = (role) => ({ 0: 'user', 1: 'admin', 2: 'agentBot' }[role] || 'user')
+
+// 列表触底自动加载下一页（search_after 游标分页）
+const onResultsScroll = (e) => {
+  const el = e.target
+  if (el.scrollHeight - el.scrollTop - el.clientHeight < 24) search.loadMore()
+}
 
 // 弹窗定位参数：估高兜底（nextTick 后测量真实高度再翻转）+ 与光标的间距
 const PANEL_H = 200

@@ -27,7 +27,7 @@
         :placeholder="t('notice.mention.searchPlaceholder')"
         @update:value="handleSearch"
       />
-      <div class="mention-results">
+      <div class="mention-results" @scroll="onResultsScroll">
         <div v-if="loading" class="mention-tip">
           <NSpin size="tiny" />
         </div>
@@ -39,12 +39,18 @@
             :class="{ selected: selectedIds.includes(user.id) }"
             @click="handleSelect(user)"
           >
-            <NAvatar round :size="24" :src="user.avatar_url || undefined">
+            <NAvatar round :size="28" :src="user.avatar_url || undefined">
               {{ (user.username || '?').charAt(0).toUpperCase() }}
             </NAvatar>
             <span class="mention-user-name">{{ user.username }}</span>
+            <span class="mention-role" :class="`mention-role--${roleClass(user.role)}`">
+              {{ t(`user.roles.${roleClass(user.role)}`) }}
+            </span>
           </div>
-          <div v-if="!users.length" class="mention-tip">{{ t('notice.mention.empty') }}</div>
+          <div v-if="loadingMore" class="mention-tip">
+            <NSpin size="tiny" />
+          </div>
+          <div v-else-if="!users.length" class="mention-tip">{{ t('notice.mention.empty') }}</div>
         </template>
       </div>
       <div class="mention-limit">{{ t('notice.mention.limitTip') }}</div>
@@ -75,7 +81,17 @@ const emit = defineEmits(['select'])
 const { t } = useI18n()
 
 const show = ref(false)
-const { keyword, users, loading, search: runSearch, invalidate } = useUserSearch({ size: 10, delay: 300 })
+const { keyword, users, loading, loadingMore, search: runSearch, loadMore, invalidate } =
+  useUserSearch({ size: 10, delay: 300 })
+
+// 角色语义映射：0=普通用户 1=管理员 2=机器人（与 MentionTrigger 一致）
+const roleClass = (role) => ({ 0: 'user', 1: 'admin', 2: 'agentBot' }[role] || 'user')
+
+// 列表触底自动加载下一页（search_after 游标分页）
+const onResultsScroll = (e) => {
+  const el = e.target
+  if (el.scrollHeight - el.scrollTop - el.clientHeight < 24) loadMore()
+}
 
 const handleSearch = (kw) => {
   runSearch(kw)

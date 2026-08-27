@@ -96,6 +96,7 @@ import UploadImageWall from '@/components/UploadImageWall.vue'
 import MentionPicker from '@/components/MentionPicker.vue'
 import MentionTrigger from '@/components/MentionTrigger.vue'
 import { useMentions } from '@/composables/useMentions'
+import { ensureMentionHighlight } from '@/utils/mentionHighlight'
 import { auth } from '@/utils/auth'
 import { filterMentionedIds } from '@/utils/mention'
 import { requireLogin } from '@/utils/guest-action'
@@ -130,7 +131,11 @@ const fileInputRef = ref(null)
 // @提及：按钮选人与正文内输入 @ 触发选人，共用同一份已选列表与 10 人上限；
 // 提交时 filterMentionedIds 过滤出正文中仍存在的 token 对应 uuid 传后端
 const commentEditorRef = ref(null)
-const getCommentEditorView = () => commentEditorRef.value?.getEditorView?.()
+const getCommentEditorView = () => {
+  const view = commentEditorRef.value?.getEditorView?.()
+  if (view) ensureMentionHighlight(view)
+  return view
+}
 const { mentionedUsers, selectedIds, recordSelection, appendAtEnd, clearMentioned } = useMentions({
   getText: () => content.value,
   setText: v => { content.value = v }

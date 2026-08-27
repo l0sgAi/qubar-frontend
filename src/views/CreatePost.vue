@@ -147,6 +147,7 @@ import { getCircleDetail } from '@/api/circle'
 import { useImageUpload } from '@/composables/useImageUpload'
 import MentionTrigger from '@/components/MentionTrigger.vue'
 import { useMentions } from '@/composables/useMentions'
+import { ensureMentionHighlight } from '@/utils/mentionHighlight'
 import { filterMentionedIds } from '@/utils/mention'
 
 const router = useRouter()
@@ -173,7 +174,11 @@ const selectedCircleData = ref(null)
 // @提及：按钮选人与正文内输入 @ 触发选人，共用同一份已选列表与 10 人上限；
 // 提交时 filterMentionedIds 过滤出正文中仍存在的 token 对应 uuid 传后端
 const postEditorRef = ref(null)
-const getPostEditorView = () => postEditorRef.value?.getEditorView?.()
+const getPostEditorView = () => {
+  const view = postEditorRef.value?.getEditorView?.()
+  if (view) ensureMentionHighlight(view)
+  return view
+}
 const { mentionedUsers, selectedIds, recordSelection, appendAtEnd } = useMentions({
   getText: () => formData.value.content,
   setText: v => { formData.value.content = v }
