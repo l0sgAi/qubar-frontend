@@ -27,11 +27,9 @@
             :parent-width="800"
           />
           <div class="comment-content">
-            <MdPreview
-              :model-value="comment.content"
+            <MentionPreview
+              :content="comment.content"
               :language="language"
-              theme="dark"
-              preview-theme="default"
             />
           </div>
           <div class="comment-actions">
@@ -122,11 +120,9 @@
                   :parent-width="670"
                 />
                 <div class="comment-content">
-                  <MdPreview
-                    :model-value="reply.content"
+                  <MentionPreview
+                    :content="reply.content"
                     :language="language"
-                    theme="dark"
-                    preview-theme="default"
                   />
                 </div>
                 <div class="comment-actions">
@@ -244,8 +240,7 @@ import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { NCard, NAvatar, NButton, NDivider, NIcon, NEmpty, NSpin } from 'naive-ui'
 import ImageCarousel from './ImageCarousel.vue'
 import { useI18n } from 'vue-i18n'
-import { MdPreview } from 'md-editor-v3'
-import 'md-editor-v3/lib/preview.css'
+import MentionPreview from '@/components/MentionPreview.vue'
 import { getCommentList, getCommentReplies } from '@/api/comment'
 import { toggleLike } from '@/api/like'
 import CommentReplyEditor from './CommentReplyEditor.vue'

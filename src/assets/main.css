@@ -587,3 +587,43 @@ body {
   color: var(--text-tertiary);
   text-align: right;
 }
+
+/* 编辑器内联 @ 弹窗（MentionTrigger）：比按钮版稍宽防中文名截断；键盘高亮类 */
+.mention-suggest {
+  width: 260px;
+}
+
+.mention-user.active {
+  background: rgba(102, 234, 194, 0.14);
+}
+
+/* =========================================================
+ * 正文中的 @提及 链接（MentionPreview 链接化产物）
+ * 主题绿高亮 + 虚线下划线；hover 提亮；压过 md-editor 预览的 a 样式
+ * ========================================================= */
+.post-mention {
+  color: #63e2b7;
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(99, 226, 183, 0.45);
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              border-bottom-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.post-mention:hover {
+  color: #8af0d0;
+  border-bottom-color: rgba(138, 240, 208, 0.9);
+}
+
+.md-editor-previewWrapper a.post-mention,
+.md-editor-preview a.post-mention {
+  color: #63e2b7;
+  text-decoration: none;
+}
+
+.md-editor-previewWrapper a.post-mention:hover,
+.md-editor-preview a.post-mention:hover {
+  color: #8af0d0;
+  border-bottom-color: rgba(138, 240, 208, 0.9);
+}

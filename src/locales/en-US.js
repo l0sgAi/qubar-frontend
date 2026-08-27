@@ -623,7 +623,8 @@ export default {
       button: 'Mention',
       searchPlaceholder: 'Search users...',
       empty: 'No users found',
-      limitTip: 'Mention up to 10 users'
+      limitTip: 'Mention up to 10 users',
+      suggestHint: 'Type @ to mention someone'
     }
   },
 

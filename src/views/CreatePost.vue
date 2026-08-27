@@ -68,6 +68,7 @@
               <!-- 正文（Markdown编辑器） -->
               <NFormItem :label="t('post.content')" path="content">
                 <MdEditor
+                  ref="postEditorRef"
                   v-model="formData.content"
                   :language="language"
                   :preview="true"
@@ -80,8 +81,13 @@
                 />
               </NFormItem>
               <div class="footer-actions">
-                <!-- @提及：选人传 uuid，正文 @用户名 仅为展示文本 -->
-                <MentionPicker :selected-ids="mentionedUsers.map(u => u.id)" @select="handleMentionSelect" />
+                <!-- @提及：按钮选人 + 编辑器内输入 @ 触发选人，共用同一份已选列表 -->
+                <MentionPicker :selected-ids="selectedIds" @select="appendAtEnd" />
+                <MentionTrigger
+                  :get-editor-view="getPostEditorView"
+                  :selected-ids="selectedIds"
+                  @select="recordSelection"
+                />
                 <div class="footer-buttons">
                   <NButton size="large" @click="handleCancel">{{ t('common.cancel') }}</NButton>
                   <NButton
@@ -139,6 +145,8 @@ import MentionPicker from '@/components/MentionPicker.vue'
 import { getMyCircles, createPost } from '@/api/post'
 import { getCircleDetail } from '@/api/circle'
 import { useImageUpload } from '@/composables/useImageUpload'
+import MentionTrigger from '@/components/MentionTrigger.vue'
+import { useMentions } from '@/composables/useMentions'
 import { filterMentionedIds } from '@/utils/mention'
 
 const router = useRouter()
@@ -162,13 +170,14 @@ let searchTimer = null
 // 选中的圈子数据
 const selectedCircleData = ref(null)
 
-// @提及：已选用户（提交时过滤正文中仍存在的 @用户名，取 uuid 传后端）
-const mentionedUsers = ref([])
-
-const handleMentionSelect = (user) => {
-  mentionedUsers.value.push(user)
-  formData.value.content = `${formData.value.content}@${user.username} `
-}
+// @提及：按钮选人与正文内输入 @ 触发选人，共用同一份已选列表与 10 人上限；
+// 提交时 filterMentionedIds 过滤出正文中仍存在的 token 对应 uuid 传后端
+const postEditorRef = ref(null)
+const getPostEditorView = () => postEditorRef.value?.getEditorView?.()
+const { mentionedUsers, selectedIds, recordSelection, appendAtEnd } = useMentions({
+  getText: () => formData.value.content,
+  setText: v => { formData.value.content = v }
+})
 
 // 表单数据
 const formData = ref({

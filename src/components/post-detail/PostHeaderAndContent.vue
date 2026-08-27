@@ -78,13 +78,11 @@
       </div>
     </div>
 
-    <!-- 帖子正文（Markdown渲染） -->
+    <!-- 帖子正文（Markdown渲染 + @提及链接化） -->
     <div class="post-content">
-      <MdPreview
-        :model-value="post.content"
+      <MentionPreview
+        :content="post.content"
         :language="language"
-        theme="dark"
-        preview-theme="default"
       />
     </div>
 
@@ -150,8 +148,7 @@
 import { NCard, NTag, NAvatar, NButton, NIcon } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { MdPreview } from 'md-editor-v3'
-import 'md-editor-v3/lib/preview.css'
+import MentionPreview from '@/components/MentionPreview.vue'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 
 defineProps({

@@ -54,10 +54,9 @@
 
 <script setup>
 import { ref } from 'vue'
-import { NPopover, NButton, NIcon, NInput, NAvatar, NSpin, useMessage } from 'naive-ui'
+import { NPopover, NButton, NIcon, NInput, NAvatar, NSpin } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import { searchUsers } from '@/api/user'
-import { useDebounceFn } from '@/utils/throttle'
+import { useUserSearch } from '@/composables/useUserSearch'
 
 // 已选用户 id 列表由父组件维护；选人上限 10 人也在父组件拦截（后端实际生效 10 人）
 const props = defineProps({
@@ -74,58 +73,26 @@ const props = defineProps({
 const emit = defineEmits(['select'])
 
 const { t } = useI18n()
-const message = useMessage()
 
 const show = ref(false)
-const keyword = ref('')
-const users = ref([])
-const loading = ref(false)
-
-// 搜索请求序号：单调递增，慢请求晚到时丢弃过期响应，防止覆盖最新结果
-let searchSeq = 0
-
-const doSearch = async (kw) => {
-  const seq = searchSeq
-  loading.value = true
-  try {
-    const res = await searchUsers({ keyword: kw, size: 10 })
-    if (seq !== searchSeq) return
-    users.value = res.data?.data || []
-  } catch (error) {
-    if (seq !== searchSeq) return
-    console.error('搜索用户失败:', error)
-    users.value = []
-  } finally {
-    if (seq === searchSeq) loading.value = false
-  }
-}
-
-const debouncedSearch = useDebounceFn(doSearch, 400)
+const { keyword, users, loading, search: runSearch, invalidate } = useUserSearch({ size: 10, delay: 300 })
 
 const handleSearch = (kw) => {
-  // 关键词变化即作废旧请求并清空列表，避免展示与输入不符的结果
-  searchSeq += 1
-  users.value = []
-  debouncedSearch(kw)
+  runSearch(kw)
 }
 
 const handleSelect = (user) => {
-  // 重复选同一人无意义，直接忽略
+  // 重复选同一人无意义，直接忽略；超限由父组件 useMentions 统一拦截
   if (props.selectedIds.includes(user.id)) return
-  if (props.selectedIds.length >= 10) {
-    message.warning(t('notice.mention.limitTip'))
-    return
-  }
   emit('select', user)
   show.value = false
-  keyword.value = ''
-  users.value = []
+  invalidate()
 }
 
 // 打开弹层时带一次初始列表（空关键词）
 const handleShowChange = (val) => {
   if (val && !users.value.length && !keyword.value) {
-    doSearch('')
+    runSearch('')
   }
 }
 </script>

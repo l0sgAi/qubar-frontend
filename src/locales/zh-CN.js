@@ -622,7 +622,8 @@ export default {
       button: '提及',
       searchPlaceholder: '搜索用户...',
       empty: '未找到相关用户',
-      limitTip: '最多可提及 10 人'
+      limitTip: '最多可提及 10 人',
+      suggestHint: '键入 @ 可快速提及用户'
     }
   },
 

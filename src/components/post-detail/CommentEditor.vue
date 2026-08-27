@@ -11,6 +11,7 @@
     <!-- 登录态：原编辑器 -->
     <div v-else class="comment-editor-wrapper">
       <MdEditor
+        ref="commentEditorRef"
         v-model="content"
         :language="language"
         :preview="false"
@@ -59,8 +60,13 @@
               </NIcon>
             </template>
           </NButton>
-          <!-- @提及：选人传 uuid，正文 @用户名 仅为展示文本 -->
-          <MentionPicker :selected-ids="mentionedUsers.map(u => u.id)" @select="handleMentionSelect" />
+          <!-- @提及：按钮选人 + 编辑器内输入 @ 触发选人，共用同一份已选列表 -->
+          <MentionPicker :selected-ids="selectedIds" @select="appendAtEnd" />
+          <MentionTrigger
+            :get-editor-view="getCommentEditorView"
+            :selected-ids="selectedIds"
+            @select="recordSelection"
+          />
         </div>
         <NButton
           type="primary"
@@ -88,6 +94,8 @@ import { getUserInfo } from '@/api/auth'
 import { useImageUpload } from '@/composables/useImageUpload'
 import UploadImageWall from '@/components/UploadImageWall.vue'
 import MentionPicker from '@/components/MentionPicker.vue'
+import MentionTrigger from '@/components/MentionTrigger.vue'
+import { useMentions } from '@/composables/useMentions'
 import { auth } from '@/utils/auth'
 import { filterMentionedIds } from '@/utils/mention'
 import { requireLogin } from '@/utils/guest-action'
@@ -119,13 +127,14 @@ const { uploading, uploadingCount, progress, uploadMany } = useImageUpload({ wit
 const uploadedImages = ref([])
 const fileInputRef = ref(null)
 
-// @提及：已选用户（提交时过滤正文中仍存在的 @用户名，取 uuid 传后端）
-const mentionedUsers = ref([])
-
-const handleMentionSelect = (user) => {
-  mentionedUsers.value.push(user)
-  content.value = `${content.value}@${user.username} `
-}
+// @提及：按钮选人与正文内输入 @ 触发选人，共用同一份已选列表与 10 人上限；
+// 提交时 filterMentionedIds 过滤出正文中仍存在的 token 对应 uuid 传后端
+const commentEditorRef = ref(null)
+const getCommentEditorView = () => commentEditorRef.value?.getEditorView?.()
+const { mentionedUsers, selectedIds, recordSelection, appendAtEnd, clearMentioned } = useMentions({
+  getText: () => content.value,
+  setText: v => { content.value = v }
+})
 
 const MAX_COMMENT_IMAGES = 5
 
@@ -201,7 +210,7 @@ const handleSubmit = async () => {
     emit('submit', newComment)
     content.value = ''
     uploadedImages.value = []
-    mentionedUsers.value = []
+    clearMentioned()
   } catch (err) {
     message.error(err.message || t('comment.editor.failed'))
   } finally {
