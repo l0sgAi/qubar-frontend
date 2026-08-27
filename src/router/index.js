@@ -80,6 +80,13 @@ const router = createRouter({
       component: () => import('../views/PostDetail.vue')
     },
     {
+      // 消息中心（站内通知）：需登录
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('../views/Notifications.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       // 机器人管理：需登录；管理员（role=1）校验在页面内自查（/agent/* 非管理员返回 403）
       path: '/admin/agents',
       name: 'admin-agents',

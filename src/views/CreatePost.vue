@@ -80,15 +80,19 @@
                 />
               </NFormItem>
               <div class="footer-actions">
-                <NButton size="large" @click="handleCancel">{{ t('common.cancel') }}</NButton>
-                <NButton
-                  size="large"
-                  type="primary"
-                  :loading="submitting"
-                  @click="handleSubmit"
-                >
-                  {{ t('common.submit') }}
-                </NButton>
+                <!-- @提及：选人传 uuid，正文 @用户名 仅为展示文本 -->
+                <MentionPicker :selected-ids="mentionedUsers.map(u => u.id)" @select="handleMentionSelect" />
+                <div class="footer-buttons">
+                  <NButton size="large" @click="handleCancel">{{ t('common.cancel') }}</NButton>
+                  <NButton
+                    size="large"
+                    type="primary"
+                    :loading="submitting"
+                    @click="handleSubmit"
+                  >
+                    {{ t('common.submit') }}
+                  </NButton>
+                </div>
               </div>
             </NForm>
             <!-- 图片上传浮标（居中、醒目） -->
@@ -131,6 +135,7 @@ import 'md-editor-v3/lib/style.css'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
 import CircleRuleCard from '@/components/post-create/CircleRuleCard.vue'
+import MentionPicker from '@/components/MentionPicker.vue'
 import { getMyCircles, createPost } from '@/api/post'
 import { getCircleDetail } from '@/api/circle'
 import { useImageUpload } from '@/composables/useImageUpload'
@@ -155,6 +160,14 @@ let searchTimer = null
 
 // 选中的圈子数据
 const selectedCircleData = ref(null)
+
+// @提及：已选用户（提交时过滤正文中仍存在的 @用户名，取 uuid 传后端）
+const mentionedUsers = ref([])
+
+const handleMentionSelect = (user) => {
+  mentionedUsers.value.push(user)
+  formData.value.content = `${formData.value.content}@${user.username} `
+}
 
 // 表单数据
 const formData = ref({
@@ -336,9 +349,14 @@ const handleSubmit = async () => {
 
     // 从内容中提取实际的图片 URL，更新 media_extra
     const actualUrls = extractImageUrls(formData.value.content)
+    // 正文里被删掉的 @ 不传；后端对重复/@自己/不存在用户会静默过滤，最多生效 10 人
+    const mentionIds = mentionedUsers.value
+      .filter(u => formData.value.content.includes(`@${u.username}`))
+      .map(u => u.id)
     const submitData = {
       ...formData.value,
-      media_extra: actualUrls
+      media_extra: actualUrls,
+      mention_user_ids: mentionIds.length ? mentionIds : undefined
     }
 
     const res = await createPost(submitData)
@@ -608,14 +626,20 @@ onMounted(async () => {
   height: 7% !important;
 }
 
-/* 底部按钮 */
+/* 底部按钮：左 @提及，右 取消/提交 */
 .footer-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 16px;
 }
 
-.footer-actions .n-button {
+.footer-buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.footer-buttons .n-button {
   min-width: 120px;
   border-radius: 10px;
   font-weight: 500;

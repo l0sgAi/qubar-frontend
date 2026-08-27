@@ -51,6 +51,8 @@
             </NIcon>
           </template>
         </NButton>
+        <!-- @提及：选人传 uuid -->
+        <MentionPicker :selected-ids="mentionedUsers.map(u => u.id)" :icon-size="16" @select="handleMentionSelect" />
       </div>
       <div class="footer-right">
         <NButton size="small" quaternary @click="$emit('cancel')">{{ t('common.cancel') }}</NButton>
@@ -79,6 +81,7 @@ import { createComment } from '@/api/comment'
 import { getUserInfo } from '@/api/auth'
 import { useImageUpload } from '@/composables/useImageUpload'
 import UploadImageWall from '@/components/UploadImageWall.vue'
+import MentionPicker from '@/components/MentionPicker.vue'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
 
@@ -115,6 +118,14 @@ const { uploading, uploadingCount, progress, uploadMany } = useImageUpload({ wit
 const uploadedImages = ref([])
 const fileInputRef = ref(null)
 
+// @提及：已选用户（提交时过滤正文中仍存在的 @用户名，取 uuid 传后端）
+const mentionedUsers = ref([])
+
+const handleMentionSelect = (user) => {
+  mentionedUsers.value.push(user)
+  content.value = `${content.value}@${user.username} `
+}
+
 const MAX_COMMENT_IMAGES = 5
 
 const toolbars = [
@@ -139,12 +150,17 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     const extraData = uploadedImages.value.length > 0 ? { images: [...uploadedImages.value] } : null
+    // 正文里被删掉的 @ 不传；后端对重复/@自己/不存在用户会静默过滤
+    const mentionIds = mentionedUsers.value
+      .filter(u => content.value.includes(`@${u.username}`))
+      .map(u => u.id)
     const res = await createComment({
       post_id: props.postId,
       root_id: props.rootId ?? props.replyToId,
       reply_to_id: props.replyToId,
       content: content.value,
-      extra_data: extraData
+      extra_data: extraData,
+      mention_user_ids: mentionIds.length ? mentionIds : undefined
     })
     message.success(t('comment.reply.success'))
 
@@ -175,6 +191,7 @@ const handleSubmit = async () => {
 
     content.value = ''
     uploadedImages.value = []
+    mentionedUsers.value = []
     emit('submit', newReply)
   } catch (err) {
     message.error(err.message || t('comment.reply.failed'))

@@ -590,6 +590,42 @@ export default {
     }
   },
 
+  // 站内通知（消息中心）
+  notice: {
+    title: '消息中心',
+    tabs: {
+      all: '全部',
+      like: '点赞',
+      collect: '收藏',
+      comment: '评论',
+      reply: '回复',
+      mention: '提及'
+    },
+    readAll: '全部已读',
+    empty: '暂无通知',
+    noMore: '没有更多通知了',
+    loadFailed: '加载通知失败',
+    readAllSuccess: '已全部标记为已读',
+    readAllFailed: '操作失败，请重试',
+    targetDeleted: '内容已被删除',
+    someone: '有人',
+    // 文案模板：{actor}=触发人，{snippet}=摘要快照
+    templates: {
+      likePost: '{actor} 赞了你的帖子《{snippet}》',
+      likeComment: '{actor} 赞了你的评论「{snippet}」',
+      collectPost: '{actor} 收藏了你的帖子《{snippet}》',
+      commentPost: '{actor} 评论了你的帖子：{snippet}',
+      replyComment: '{actor} 回复了你的评论：{snippet}',
+      mention: '{actor} 在帖子/评论中提到了你：{snippet}'
+    },
+    mention: {
+      button: '提及',
+      searchPlaceholder: '搜索用户...',
+      empty: '未找到相关用户',
+      limitTip: '最多可提及 10 人'
+    }
+  },
+
   // 图片上传
   upload: {
     uploading: '上传中',

@@ -590,6 +590,42 @@ export default {
     }
   },
 
+  // In-app notifications (message center)
+  notice: {
+    title: 'Notifications',
+    tabs: {
+      all: 'All',
+      like: 'Likes',
+      collect: 'Favorites',
+      comment: 'Comments',
+      reply: 'Replies',
+      mention: 'Mentions'
+    },
+    readAll: 'Mark all as read',
+    empty: 'No notifications',
+    noMore: 'No more notifications',
+    loadFailed: 'Failed to load notifications',
+    readAllSuccess: 'All marked as read',
+    readAllFailed: 'Operation failed, please retry',
+    targetDeleted: 'Content has been deleted',
+    someone: 'Someone',
+    // Text templates: {actor}=trigger user, {snippet}=content snippet
+    templates: {
+      likePost: '{actor} liked your post "{{snippet}}"',
+      likeComment: '{actor} liked your comment "{snippet}"',
+      collectPost: '{actor} favorited your post "{{snippet}}"',
+      commentPost: '{actor} commented on your post: {snippet}',
+      replyComment: '{actor} replied to your comment: {snippet}',
+      mention: '{actor} mentioned you: {snippet}'
+    },
+    mention: {
+      button: 'Mention',
+      searchPlaceholder: 'Search users...',
+      empty: 'No users found',
+      limitTip: 'Mention up to 10 users'
+    }
+  },
+
   // 图片上传
   upload: {
     uploading: 'Uploading',

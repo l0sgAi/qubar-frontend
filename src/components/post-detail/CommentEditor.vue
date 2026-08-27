@@ -59,6 +59,8 @@
               </NIcon>
             </template>
           </NButton>
+          <!-- @提及：选人传 uuid，正文 @用户名 仅为展示文本 -->
+          <MentionPicker :selected-ids="mentionedUsers.map(u => u.id)" @select="handleMentionSelect" />
         </div>
         <NButton
           type="primary"
@@ -85,6 +87,7 @@ import { createComment } from '@/api/comment'
 import { getUserInfo } from '@/api/auth'
 import { useImageUpload } from '@/composables/useImageUpload'
 import UploadImageWall from '@/components/UploadImageWall.vue'
+import MentionPicker from '@/components/MentionPicker.vue'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
 import { MessageCircle as CommentIcon } from '@vicons/tabler'
@@ -114,6 +117,14 @@ const submitting = ref(false)
 const { uploading, uploadingCount, progress, uploadMany } = useImageUpload({ withProgress: true })
 const uploadedImages = ref([])
 const fileInputRef = ref(null)
+
+// @提及：已选用户（提交时过滤正文中仍存在的 @用户名，取 uuid 传后端）
+const mentionedUsers = ref([])
+
+const handleMentionSelect = (user) => {
+  mentionedUsers.value.push(user)
+  content.value = `${content.value}@${user.username} `
+}
 
 const MAX_COMMENT_IMAGES = 5
 
@@ -150,10 +161,15 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     const extraData = uploadedImages.value.length > 0 ? { images: [...uploadedImages.value] } : null
+    // 正文里被删掉的 @ 不传；后端对重复/@自己/不存在用户会静默过滤
+    const mentionIds = mentionedUsers.value
+      .filter(u => content.value.includes(`@${u.username}`))
+      .map(u => u.id)
     const res = await createComment({
       post_id: props.postId,
       content: content.value,
-      extra_data: extraData
+      extra_data: extraData,
+      mention_user_ids: mentionIds.length ? mentionIds : undefined
     })
     message.success(t('comment.editor.success'))
 
@@ -185,6 +201,7 @@ const handleSubmit = async () => {
     emit('submit', newComment)
     content.value = ''
     uploadedImages.value = []
+    mentionedUsers.value = []
   } catch (err) {
     message.error(err.message || t('comment.editor.failed'))
   } finally {

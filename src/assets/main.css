@@ -531,3 +531,59 @@ body {
   opacity: 0;
   transform: scale(0.92);
 }
+
+/* @提及 选人面板（MentionPicker 的 NPopover 面板传送到 body，样式必须全局） */
+.mention-picker {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mention-results {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mention-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.mention-user:hover {
+  background: rgba(102, 234, 194, 0.14);
+}
+
+.mention-user.selected {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mention-user-name {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.88);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mention-tip {
+  padding: 12px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.mention-limit {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-align: right;
+}
