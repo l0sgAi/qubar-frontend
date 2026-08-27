@@ -25,7 +25,7 @@
             </NButton>
           </div>
 
-          <!-- 类型过滤 Tab -->
+          <!-- 类型过滤：顶栏 Tab -->
           <div class="notice-tabs">
             <button
               v-for="tab in tabs"
@@ -283,7 +283,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .page-title {
@@ -303,34 +303,59 @@ onUnmounted(() => {
   background: rgba(102, 234, 194, 0.14);
 }
 
-/* 类型过滤 Tab：药丸式，激活态主题绿 */
+/* 类型过滤：顶栏 Tab，全宽下划线式，滚动吸顶 */
 .notice-tabs {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 10;
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+  gap: 28px;
+  margin: 0 -24px 8px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.notice-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .notice-tab {
-  padding: 6px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  position: relative;
+  flex-shrink: 0;
+  padding: 12px 2px;
+  border: none;
+  background: none;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .notice-tab:hover {
-  background: rgba(102, 234, 194, 0.08);
   color: var(--text-primary);
 }
 
 .notice-tab.active {
-  background: rgba(102, 234, 194, 0.14);
-  border-color: rgba(102, 234, 194, 0.4);
   color: #8af0d0;
+  font-weight: 600;
+}
+
+/* 激活指示条 */
+.notice-tab.active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--theme-color);
 }
 
 /* 通知条目：内层圆角比容器小一档 */
