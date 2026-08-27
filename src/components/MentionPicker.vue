@@ -40,7 +40,7 @@
             @click="handleSelect(user)"
           >
             <NAvatar round :size="28" :src="user.avatar_url || undefined">
-              {{ (user.username || '?').charAt(0).toUpperCase() }}
+              <span v-if="!user.avatar_url">{{ (user.username || '?').charAt(0).toUpperCase() }}</span>
             </NAvatar>
             <span class="mention-user-name">{{ user.username }}</span>
             <span class="mention-role" :class="`mention-role--${roleClass(user.role)}`">
