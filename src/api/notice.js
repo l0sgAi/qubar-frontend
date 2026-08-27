@@ -3,7 +3,7 @@ import request from '@/utils/request'
 /**
  * 获取通知列表（keyset 游标分页，最新在前）
  * @param {Object} params
- * @param {number} [params.type] - 0=全部（默认），1-6 按类型过滤
+ * @param {number|string} [params.type] - 空/0=全部（默认）；单值 1-6 或逗号分隔多值（如 '1,2'=赞）按类型集合过滤
  * @param {number} [params.size] - 每页条数，默认20，>100 回落20
  * @param {string} [params.cursor] - 上一页返回的游标，首页不传；响应 cursor 为空字符串=没有更多
  * @returns {Promise} data: { notices, size, cursor }

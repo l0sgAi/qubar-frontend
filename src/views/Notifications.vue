@@ -53,7 +53,9 @@
                 :src="item.actor?.avatar_url || undefined"
                 class="notice-avatar"
               >
-                {{ (item.actor?.username || t('notice.someone')).charAt(0).toUpperCase() }}
+                <!-- NAvatar 的 default slot 优先级高于 src：兜底字母必须 v-if，
+                     否则图片永远不会渲染（对齐 CommentList 写法） -->
+                <div v-if="!item.actor?.avatar_url">{{ (item.actor?.username || t('notice.someone')).charAt(0).toUpperCase() }}</div>
               </NAvatar>
               <div class="notice-body">
                 <div class="notice-text">{{ renderText(item) }}</div>
@@ -97,11 +99,11 @@ const { formatTime } = useFormatTime()
 
 const offset = ref(260)
 
-// 类型过滤 Tab：type 对应后端 notice_type，0=全部
-// 注：帖子被赞(1)与评论被赞(2)同属「点赞」，接口仅支持单值过滤，故「点赞」tab 传 1，2 在「全部」中可见
+// 类型过滤 Tab：type 对应后端 notice_type，空/0=全部
+// 接口支持逗号分隔多值过滤（notice_type IN (...)），帖子被赞(1)与评论被赞(2)同属「点赞」tab
 const tabs = computed(() => [
   { type: 0, label: t('notice.tabs.all') },
-  { type: 1, label: t('notice.tabs.like') },
+  { type: '1,2', label: t('notice.tabs.like') },
   { type: 3, label: t('notice.tabs.collect') },
   { type: 4, label: t('notice.tabs.comment') },
   { type: 5, label: t('notice.tabs.reply') },
