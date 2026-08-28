@@ -4,7 +4,7 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMessage } from 'naive-ui'
-import { MAX_MENTIONS, seedUsers, peekUserId } from '@/utils/mentionResolve'
+import { MAX_MENTIONS, seedUsers, peekUserId, knownUsernames } from '@/utils/mentionResolve'
 import { hasMentionToken, extractMentionTokens } from '@/utils/mention'
 
 export function useMentions({ getText, setText }) {
@@ -45,7 +45,7 @@ export function useMentions({ getText, setText }) {
       return
     }
     const kept = mentionedUsers.value.filter(u => hasMentionToken(text, u.username))
-    for (const name of extractMentionTokens(text)) {
+    for (const name of extractMentionTokens(text, knownUsernames())) {
       if (kept.some(u => u.username === name)) continue
       const id = peekUserId(name)
       if (id) kept.push({ id, username: name })

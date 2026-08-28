@@ -259,6 +259,9 @@ const choose = (idx) => {
   const ctx = lastCtx
   if (!ctx) return
   const ins = `@${user.username} `
+  // 先记录选中（recordSelection → seedUsers 回灌已知名集合），再改文档触发 deco 重建：
+  // 反序时重建拿不到已知名 alternation，带空格用户名只高亮 @ 后第一个词
+  emit('select', user)
   // 替换半截 token（含 @）为完整提及；不传 userEvent → 撤销栈中为独立一步
   try {
     ctx.view.dispatch({
@@ -270,7 +273,6 @@ const choose = (idx) => {
     return
   }
   ctx.view.focus()
-  emit('select', user)
   close()
 }
 

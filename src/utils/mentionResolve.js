@@ -10,13 +10,22 @@ const store = new Map()   // lower(用户名) -> uuid | null(null=已确认查�
 const pending = new Map() // lower(用户名) -> Promise 合并，避免同名并发重复请求
 const retryAt = new Map() // lower(用户名) -> 时间戳：查询失败后的重试冷却，防失败循环轮询
 const RETRY_COOLDOWN = 15_000
+// 原样大小写的已知用户名（含空格等非常规字符）：供 getMentionFullRe 构建
+// 已知名优先匹配。seedUsers / lookup 命中时回灌。
+const knownNames = new Set()
 
 // 选人成功即回灌缓存（编辑器内联弹窗 / MentionPicker 共用）
 export const seedUsers = (users = []) => {
   users.forEach((u) => {
-    if (u?.id && u.username) store.set(String(u.username).toLowerCase(), u.id)
+    if (u?.id && u.username) {
+      store.set(String(u.username).toLowerCase(), u.id)
+      knownNames.add(String(u.username))
+    }
   })
 }
+
+// 已知用户名快照（原样大小写），供已知名优先匹配
+export const knownUsernames = () => [...knownNames]
 
 // 立即取已知映射：uuid / null(确认不存在) / undefined(未知待解析)
 export const peekUserId = username => store.get(String(username || '').toLowerCase())
@@ -29,6 +38,7 @@ function lookup(name) {
         u => String(u.username || '').toLowerCase() === String(name).toLowerCase()
       )
       const id = hit?.id || null
+      if (hit?.username) knownNames.add(String(hit.username))
       store.set(name.toLowerCase(), id)
       retryAt.delete(name.toLowerCase())
       return id

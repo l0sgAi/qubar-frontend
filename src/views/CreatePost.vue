@@ -179,18 +179,18 @@ const getPostEditorView = () => {
   if (view) ensureMentionHighlight(view)
   return view
 }
-const { mentionedUsers, selectedIds, recordSelection, appendAtEnd } = useMentions({
-  getText: () => formData.value.content,
-  setText: v => { formData.value.content = v }
-})
-
-// 表单数据
+// 表单数据（须先于 useMentions：其内部 watch 创建时会同步调一次 getText）
 const formData = ref({
   circle_id: null,
   title: '',
   summary: '',
   content: '',
   media_extra: []
+})
+
+const { mentionedUsers, selectedIds, recordSelection, appendAtEnd } = useMentions({
+  getText: () => formData.value.content,
+  setText: v => { formData.value.content = v }
 })
 
 // 圈子选项

@@ -4,20 +4,22 @@
 // md-editor-v3 以外部依赖方式引用 @codemirror/*，此处 import 与其共享同一模块实例。
 import { ViewPlugin, Decoration } from '@codemirror/view'
 import { StateEffect } from '@codemirror/state'
-import { MENTION_FULL_RE } from './mention'
+import { getMentionFullRe } from './mention'
+import { knownUsernames } from './mentionResolve'
 
-// 每行扫描用独立 lastIndex；MENTION_FULL_RE 带前导边界捕获组，标记只覆盖 @name
-const lineRe = new RegExp(MENTION_FULL_RE.source, 'g')
+// 每行扫描重置 lastIndex；regex 带前导边界捕获组，标记只覆盖 @name。
+// 已知完整用户名（含空格）优先匹配，保证整名高亮
 const mentionMark = Decoration.mark({ class: 'cm-mention-token' })
 
 const buildDeco = (view) => {
   const out = []
+  const re = getMentionFullRe(knownUsernames())
   for (const { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to; ) {
       const line = view.state.doc.lineAt(pos)
-      lineRe.lastIndex = 0
+      re.lastIndex = 0
       let m
-      while ((m = lineRe.exec(line.text))) {
+      while ((m = re.exec(line.text))) {
         const lead = m[1] || ''
         const start = line.from + m.index + lead.length
         out.push(mentionMark.range(start, start + 1 + m[2].length))
