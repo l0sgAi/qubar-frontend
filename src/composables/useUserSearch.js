@@ -30,6 +30,10 @@ export function useUserSearch({ size = 10, delay = 300 } = {}) {
   const doSearch = async (kw) => {
     const seq = searchSeq
     loading.value = true
+    // 新搜索开始即清掉翻页加载态：在途 loadMore 的响应稍后会被 apply 按序号丢弃，
+    // 不在此重置会让 loadingMore 永远卡在 true（底部转圈不消失、后续无法翻页）；
+    // loading 期间 loadMore 不会再启动，故这里同时覆盖了下方 catch 的错误路径
+    loadingMore.value = false
     try {
       const res = await searchUsers({ keyword: kw, size })
       apply(res, seq, 'replace')

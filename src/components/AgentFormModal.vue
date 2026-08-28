@@ -397,8 +397,10 @@ watch(
       }
       fresh.system_prompt = a.system_prompt || ''
       fresh.filter_prompt = a.filter_prompt || ''
-      // 回填已有触发模式；异常值兜底为关键词触发(2)
-      fresh.trigger_mode = [1, 2, 3].includes(a.trigger_mode) ? a.trigger_mode : 2
+      // 回填已有触发模式；缺失/遗留的异常值原样保留（不强行迁移到关键词模式，
+      // 避免保存时误提交迁移、或被关键词必填校验卡住），用户显式选择支持的模式
+      // 后才按所选模式校验
+      fresh.trigger_mode = a.trigger_mode
       fresh.trigger_keywords = [...(a.trigger_keywords || [])]
       fresh.max_replies_per_hour = a.max_replies_per_hour ?? 30
       fresh.min_interval_sec = a.min_interval_sec ?? 60

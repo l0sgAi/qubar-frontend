@@ -76,6 +76,7 @@ import { getCircleDetail } from '@/api/circle'
 import { useThrottleFn, useDebounceFn } from '@/utils/throttle'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
+import { seedContentMentions } from '@/utils/mentionResolve'
 import {ArticleRound} from '@vicons/material'
 
 const route = useRoute()
@@ -97,6 +98,8 @@ const loadPostDetail = async () => {
     const res = await getPostDetail(postId)
 
     if (res.data) {
+      // 先回灌后端回传的提及用户，再进响应式渲染 → 链接化零搜索精确建链
+      seedContentMentions([res.data])
       post.value = res.data
       // 设置评论数
       commentCount.value = res.data.comment_count || 0
