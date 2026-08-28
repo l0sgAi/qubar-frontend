@@ -13,7 +13,7 @@
   --accent-color: #040505;
   --accent-secondary: #764ba2;
 
-  --glass-bg: rgba(19, 24, 41, 0.85);
+  --glass-bg: rgba(28, 28, 28, 0.689);
   --glass-border: rgba(255, 255, 255, 0.08);
 
   /* 布局尺寸 */
@@ -530,4 +530,136 @@ body {
 .n-popover.popover-transition-enter-from {
   opacity: 0;
   transform: scale(0.92);
+}
+
+/* @提及 选人面板（MentionPicker 的 NPopover 面板传送到 body，样式必须全局） */
+.mention-picker {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mention-results {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mention-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.mention-user:hover {
+  background: rgba(102, 234, 194, 0.14);
+}
+
+.mention-user.selected {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mention-user-name {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.88);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mention-tip {
+  padding: 12px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.mention-limit {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+
+/* 编辑器内联 @ 弹窗（MentionTrigger）：比按钮版稍宽防中文名截断；键盘高亮类 */
+.mention-suggest {
+  width: 260px;
+}
+
+.mention-user.active {
+  background: rgba(102, 234, 194, 0.14);
+}
+
+/* =========================================================
+ * 正文中的 @提及 链接（MentionPreview 链接化产物）
+ * 主题绿高亮 + 虚线下划线；hover 提亮；压过 md-editor 预览的 a 样式
+ * ========================================================= */
+.post-mention {
+  color: #63e2b7;
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(99, 226, 183, 0.45);
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              border-bottom-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.post-mention:hover {
+  color: #8af0d0;
+  border-bottom-color: rgba(138, 240, 208, 0.9);
+}
+
+.md-editor-previewWrapper a.post-mention,
+.md-editor-preview a.post-mention {
+  color: #63e2b7;
+  text-decoration: none;
+}
+
+.md-editor-previewWrapper a.post-mention:hover,
+.md-editor-preview a.post-mention:hover {
+  color: #8af0d0;
+  border-bottom-color: rgba(138, 240, 208, 0.9);
+}
+
+/* 编辑器内 @提及 token 高亮（CM6 Decoration.mark，注入见 utils/mentionHighlight.js） */
+.cm-editor .cm-mention-token {
+  color: #63e2b7;
+  font-weight: 500;
+}
+
+/* @提及 弹窗行尾角色标签：普通=灰、管理员=琥珀、机器人=主题绿描边。
+ * 面板 teleport 到 <body>，样式必须写全局（项目规则）。 */
+.mention-role {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 10px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 999px;
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mention-role--user {
+  color: var(--text-tertiary);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mention-role--admin {
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.mention-role--agentBot {
+  color: #63e2b7;
+  border: 1px solid rgba(102, 234, 194, 0.4);
+  background: rgba(102, 234, 194, 0.12);
 }

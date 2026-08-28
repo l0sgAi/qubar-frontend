@@ -14,7 +14,7 @@
           <!-- 顶部：标题 + 时间窗切换 + 更新时间 -->
           <div class="hot-header">
             <div class="header-left">
-              <h1 class="page-title">🔥 {{ t('trending.title') }}</h1>
+              <h1 class="page-title">{{ t('trending.title') }}</h1>
               <span class="refreshed-label">{{ refreshedLabel }}</span>
             </div>
             <NRadioGroup v-model:value="window" size="small" @update:value="handleWindowChange">
@@ -184,6 +184,7 @@ onBeforeUnmount(() => {
 }
 
 .hot-container {
+  margin-top: 70px;
   display: flex;
   flex-direction: column;
   gap: 24px;

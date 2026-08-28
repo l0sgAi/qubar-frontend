@@ -265,7 +265,8 @@ export default {
     roles: {
       user: '普通用户',
       admin: '管理员',
-      superAdmin: '超级管理员'
+      superAdmin: '超级管理员',
+      agentBot: '机器人'
     },
     editModal: {
       title: '编辑个人信息',
@@ -321,6 +322,76 @@ export default {
     profile: '个人中心',
     searchResults: '搜索结果',
     keyword: '关键词'
+  },
+
+  // AI 回复机器人管理（/admin/agents，仅管理员 role=1 可见）
+  agent: {
+    title: '机器人管理',
+    navEntry: '机器人管理',
+    noPermission: '无权访问：仅管理员可管理机器人',
+    searchPlaceholder: '搜索机器人名称',
+    create: '新建机器人',
+    edit: '编辑机器人',
+    unlimited: '不限',
+    deleteSuccess: '已删除',
+    deleteConfirm: '确定删除「{name}」吗？删除后不可恢复（软删，无恢复接口）',
+    statusUpdateFailed: '状态更新失败',
+    triggerModes: {
+      all: '全部新帖',
+      keyword: '关键词触发',
+      manual: '手动'
+    },
+    table: {
+      name: '机器人',
+      protocol: '协议',
+      trigger: '触发模式',
+      rateLimit: '限频',
+      status: '状态',
+      createTime: '创建时间',
+      actions: '操作'
+    },
+    form: {
+      sectionBasic: '基本信息',
+      sectionApi: '模型接入',
+      sectionTrigger: '触发与限频',
+      name: '名称',
+      namePlaceholder: '1-50 字符，全局唯一',
+      avatarUrl: '头像',
+      avatarUpload: '上传头像',
+      avatarRemove: '移除',
+      cropAvatarTitle: '裁剪机器人头像',
+      avatarTypeError: '仅支持 JPEG / PNG / GIF / WebP / SVG 格式',
+      avatarSizeError: '图片大小不能超过 10MB',
+      avatarUploadFailed: '头像上传失败，请重试',
+      protocol: 'API 协议',
+      baseUrl: '自定义 API 地址',
+      baseUrlPlaceholder: '使用官方默认端点可留空',
+      apiKey: 'API Key',
+      apiKeyPlaceholder: 'sk-…',
+      apiKeyCurrent: '已配置：{mask}',
+      apiKeyNone: '未配置 Key',
+      apiKeyNewPlaceholder: '输入新 Key 更换；不修改请留空',
+      apiKeyClear: '清除已保存的 Key',
+      model: '模型名',
+      modelPlaceholder: '如 gpt-4o-mini / claude-sonnet-5',
+      llmParams: 'LLM 参数（提交时整体替换）',
+      systemPrompt: '系统提示词',
+      systemPromptPlaceholder: '机器人的人设与回复要求（可空）',
+      triggerMode: '触发模式',
+      keywords: '触发关键词',      keywordsPlaceholder: '输入关键词后回车添加',
+      keywordsRequired: '关键词触发模式下至少需要一个关键词',
+      filterPrompt: '回复判定条件（可选）',
+      filterPromptPlaceholder: '如：只回复编程相关问题。留空则命中关键词即回复',
+      maxReplies: '每小时回复上限',
+      minInterval: '最小回复间隔',
+      perHour: '条/时',
+      seconds: '秒',
+      noteTitle: '提示',
+      note: '评论内容命中任一关键词即触发机器人回复；配置判定条件后，机器人会先由 LLM 判断该不该回（判定不通过不占限频配额）。',
+      atLeastOne: '至少修改一个字段',
+      createSuccess: '创建成功',
+      updateSuccess: '已保存'
+    }
   },
 
   // 热点页（/hot）
@@ -516,6 +587,43 @@ export default {
       placeholder: '{name}',
       success: '回复成功',
       failed: '回复失败'
+    }
+  },
+
+  // 站内通知（消息中心）
+  notice: {
+    title: '消息中心',
+    tabs: {
+      all: '全部',
+      like: '点赞',
+      collect: '收藏',
+      comment: '评论',
+      reply: '回复',
+      mention: '提及'
+    },
+    readAll: '全部已读',
+    empty: '暂无通知',
+    noMore: '没有更多通知了',
+    loadFailed: '加载通知失败',
+    readAllSuccess: '已全部标记为已读',
+    readAllFailed: '操作失败，请重试',
+    targetDeleted: '内容已被删除',
+    someone: '有人',
+    // 文案模板：{actor}=触发人，{snippet}=摘要快照
+    templates: {
+      likePost: '{actor} 赞了你的帖子《{snippet}》',
+      likeComment: '{actor} 赞了你的评论「{snippet}」',
+      collectPost: '{actor} 收藏了你的帖子《{snippet}》',
+      commentPost: '{actor} 评论了你的帖子：{snippet}',
+      replyComment: '{actor} 回复了你的评论：{snippet}',
+      mention: '{actor} 在帖子/评论中提到了你：{snippet}'
+    },
+    mention: {
+      button: '提及',
+      searchPlaceholder: '搜索用户...',
+      empty: '未找到相关用户',
+      limitTip: '最多可提及 10 人',
+      suggestHint: '键入 @ 可快速提及用户'
     }
   },
 

@@ -265,7 +265,8 @@ export default {
     roles: {
       user: 'User',
       admin: 'Admin',
-      superAdmin: 'Super Admin'
+      superAdmin: 'Super Admin',
+      agentBot: 'Agent Bot'
     },
     editModal: {
       title: 'Edit Profile',
@@ -321,6 +322,77 @@ export default {
     profile: 'Profile',
     searchResults: 'Search Results',
     keyword: 'Keyword'
+  },
+
+  // AI agent management (/admin/agents, admins only, role=1)
+  agent: {
+    title: 'Agent Management',
+    navEntry: 'Agents',
+    noPermission: 'Access denied: admins only',
+    searchPlaceholder: 'Search agents by name',
+    create: 'New Agent',
+    edit: 'Edit Agent',
+    unlimited: '∞',
+    deleteSuccess: 'Deleted',
+    deleteConfirm: 'Delete "{name}"? This cannot be undone (soft delete, no restore).',
+    statusUpdateFailed: 'Failed to update status',
+    triggerModes: {
+      all: 'All new posts',
+      keyword: 'Keywords',
+      manual: 'Manual'
+    },
+    table: {
+      name: 'Agent',
+      protocol: 'Protocol',
+      trigger: 'Trigger',
+      rateLimit: 'Rate Limit',
+      status: 'Status',
+      createTime: 'Created At',
+      actions: 'Actions'
+    },
+    form: {
+      sectionBasic: 'Basic Info',
+      sectionApi: 'Model Access',
+      sectionTrigger: 'Trigger & Rate Limit',
+      name: 'Name',
+      namePlaceholder: '1-50 chars, globally unique',
+      avatarUrl: 'Avatar',
+      avatarUpload: 'Upload Avatar',
+      avatarRemove: 'Remove',
+      cropAvatarTitle: 'Crop Bot Avatar',
+      avatarTypeError: 'Only JPEG / PNG / GIF / WebP / SVG are supported',
+      avatarSizeError: 'Image must be under 10MB',
+      avatarUploadFailed: 'Avatar upload failed, please retry',
+      protocol: 'API Protocol',
+      baseUrl: 'Custom API Base URL',
+      baseUrlPlaceholder: 'Leave empty to use the official endpoint',
+      apiKey: 'API Key',
+      apiKeyPlaceholder: 'sk-...',
+      apiKeyCurrent: 'Configured: {mask}',
+      apiKeyNone: 'No key configured',
+      apiKeyNewPlaceholder: 'Enter a new key to replace; leave empty to keep',
+      apiKeyClear: 'Clear the saved key',
+      model: 'Model',
+      modelPlaceholder: 'e.g. gpt-4o-mini / claude-sonnet-5',
+      llmParams: 'LLM Params (replaced as a whole)',
+      systemPrompt: 'System Prompt',
+      systemPromptPlaceholder: 'Persona and reply requirements (optional)',
+      triggerMode: 'Trigger Mode',
+      keywords: 'Trigger Keywords',
+      keywordsPlaceholder: 'Type a keyword and press Enter',
+      keywordsRequired: 'At least one keyword is required in keyword mode',
+      filterPrompt: 'Reply Filter (optional)',
+      filterPromptPlaceholder: 'e.g. Only reply to programming questions. Leave empty to reply on any keyword hit',
+      maxReplies: 'Max replies / hour',
+      minInterval: 'Min interval',
+      perHour: '/h',
+      seconds: 's',
+      noteTitle: 'Note',
+      note: 'A comment containing any keyword triggers a reply. With a reply filter set, the LLM first decides whether to reply (rejected judgments don\'t consume rate-limit quota).',
+      atLeastOne: 'Modify at least one field',
+      createSuccess: 'Created',
+      updateSuccess: 'Saved'
+    }
   },
 
   // Trending page (/hot)
@@ -516,6 +588,43 @@ export default {
       placeholder: '{name}',
       success: 'Reply posted',
       failed: 'Reply failed'
+    }
+  },
+
+  // In-app notifications (message center)
+  notice: {
+    title: 'Notifications',
+    tabs: {
+      all: 'All',
+      like: 'Likes',
+      collect: 'Favorites',
+      comment: 'Comments',
+      reply: 'Replies',
+      mention: 'Mentions'
+    },
+    readAll: 'Mark all as read',
+    empty: 'No notifications',
+    noMore: 'No more notifications',
+    loadFailed: 'Failed to load notifications',
+    readAllSuccess: 'All marked as read',
+    readAllFailed: 'Operation failed, please retry',
+    targetDeleted: 'Content has been deleted',
+    someone: 'Someone',
+    // Text templates: {actor}=trigger user, {snippet}=content snippet
+    templates: {
+      likePost: '{actor} liked your post "{{snippet}}"',
+      likeComment: '{actor} liked your comment "{snippet}"',
+      collectPost: '{actor} favorited your post "{{snippet}}"',
+      commentPost: '{actor} commented on your post: {snippet}',
+      replyComment: '{actor} replied to your comment: {snippet}',
+      mention: '{actor} mentioned you: {snippet}'
+    },
+    mention: {
+      button: 'Mention',
+      searchPlaceholder: 'Search users...',
+      empty: 'No users found',
+      limitTip: 'Mention up to 10 users',
+      suggestHint: 'Type @ to mention someone'
     }
   },
 

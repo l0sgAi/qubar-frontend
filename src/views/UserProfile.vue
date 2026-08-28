@@ -799,7 +799,7 @@ const getRoleText = (role) => {
   const roleMap = {
     0: t('user.roles.user'),
     1: t('user.roles.admin'),
-    2: t('user.roles.superAdmin')
+    2: t('user.roles.agentBot')
   }
   return roleMap[role] || t('user.roles.user')
 }
@@ -809,7 +809,7 @@ const getRoleType = (role) => {
   const typeMap = {
     0: 'default',
     1: 'warning',
-    2: 'error'
+    2: 'info'
   }
   return typeMap[role] || 'default'
 }

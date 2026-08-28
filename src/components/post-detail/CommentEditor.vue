@@ -11,6 +11,7 @@
     <!-- 登录态：原编辑器 -->
     <div v-else class="comment-editor-wrapper">
       <MdEditor
+        ref="commentEditorRef"
         v-model="content"
         :language="language"
         :preview="false"
@@ -59,6 +60,13 @@
               </NIcon>
             </template>
           </NButton>
+          <!-- @提及：按钮选人 + 编辑器内输入 @ 触发选人，共用同一份已选列表 -->
+          <MentionPicker :selected-ids="selectedIds" @select="appendAtEnd" />
+          <MentionTrigger
+            :get-editor-view="getCommentEditorView"
+            :selected-ids="selectedIds"
+            @select="recordSelection"
+          />
         </div>
         <NButton
           type="primary"
@@ -85,7 +93,12 @@ import { createComment } from '@/api/comment'
 import { getUserInfo } from '@/api/auth'
 import { useImageUpload } from '@/composables/useImageUpload'
 import UploadImageWall from '@/components/UploadImageWall.vue'
+import MentionPicker from '@/components/MentionPicker.vue'
+import MentionTrigger from '@/components/MentionTrigger.vue'
+import { useMentions } from '@/composables/useMentions'
+import { ensureMentionHighlight } from '@/utils/mentionHighlight'
 import { auth } from '@/utils/auth'
+import { filterMentionedIds } from '@/utils/mention'
 import { requireLogin } from '@/utils/guest-action'
 import { MessageCircle as CommentIcon } from '@vicons/tabler'
 
@@ -114,6 +127,19 @@ const submitting = ref(false)
 const { uploading, uploadingCount, progress, uploadMany } = useImageUpload({ withProgress: true })
 const uploadedImages = ref([])
 const fileInputRef = ref(null)
+
+// @提及：按钮选人与正文内输入 @ 触发选人，共用同一份已选列表与 10 人上限；
+// 提交时 filterMentionedIds 过滤出正文中仍存在的 token 对应 uuid 传后端
+const commentEditorRef = ref(null)
+const getCommentEditorView = () => {
+  const view = commentEditorRef.value?.getEditorView?.()
+  if (view) ensureMentionHighlight(view)
+  return view
+}
+const { mentionedUsers, selectedIds, recordSelection, appendAtEnd, clearMentioned } = useMentions({
+  getText: () => content.value,
+  setText: v => { content.value = v }
+})
 
 const MAX_COMMENT_IMAGES = 5
 
@@ -150,10 +176,14 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     const extraData = uploadedImages.value.length > 0 ? { images: [...uploadedImages.value] } : null
+    // 正文里被删掉的 @ 不传；须为完整 @用户名 token（@alice 不命中 @alice2）；
+    // 后端对重复/@自己/不存在用户会静默过滤
+    const mentionIds = filterMentionedIds(content.value, mentionedUsers.value)
     const res = await createComment({
       post_id: props.postId,
       content: content.value,
-      extra_data: extraData
+      extra_data: extraData,
+      mention_user_ids: mentionIds.length ? mentionIds : undefined
     })
     message.success(t('comment.editor.success'))
 
@@ -185,6 +215,7 @@ const handleSubmit = async () => {
     emit('submit', newComment)
     content.value = ''
     uploadedImages.value = []
+    clearMentioned()
   } catch (err) {
     message.error(err.message || t('comment.editor.failed'))
   } finally {

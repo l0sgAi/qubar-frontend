@@ -141,6 +141,7 @@ import { AddCircleOutlineFilled as AddIcon } from '@vicons/material'
 import { Bell } from '@vicons/tabler'
 import request from '@/utils/request'
 import LanguageSwitcher from './LanguageSwitcher.vue'
+import { getUnreadCount } from '@/api/notice'
 
 const router = useRouter()
 const route = useRoute()
@@ -197,7 +198,12 @@ onMounted(() => {
 
   if (auth.isAuthenticated()) {
     fetchUserInfo()
+    fetchUnreadCount()
+    // 轮询间隔 ≥30s（对接文档建议）
+    unreadTimer = setInterval(fetchUnreadCount, 30000)
   }
+  window.addEventListener('notice-read', handleNoticeReadEvent)
+  window.addEventListener('notice-read-all', handleNoticeReadAllEvent)
   // 同步搜索框内容与当前路由
   if (route.name === 'search' && route.query.q) {
     searchKeyword.value = route.query.q
@@ -206,6 +212,12 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('notice-read', handleNoticeReadEvent)
+  window.removeEventListener('notice-read-all', handleNoticeReadAllEvent)
+  if (unreadTimer) {
+    clearInterval(unreadTimer)
+    unreadTimer = null
+  }
 })
 
 // 监听路由变化，同步搜索框内容
@@ -302,8 +314,30 @@ const handleCreatePost = () => {
 
 // 消息中心
 const handleNotification = () => {
-  message.info(t('common.featureInDevelopment'))
-  // TODO: 打开消息中心
+  router.push('/notifications')
+}
+
+// 未读数：进入拉一次 + 30s 轮询（通知落库有约 5s 延迟，软实时即可）
+const fetchUnreadCount = async () => {
+  if (!auth.isAuthenticated()) return
+  try {
+    const res = await getUnreadCount()
+    if (res.data) {
+      notificationCount.value = res.data.unread_count || 0
+    }
+  } catch (error) {
+    console.error('获取未读通知数失败:', error)
+  }
+}
+
+let unreadTimer = null
+
+// 通知页已读操作后的本地校正（read 按条数减、read-all 清零）
+const handleNoticeReadEvent = (e) => {
+  notificationCount.value = Math.max(0, notificationCount.value - (e.detail?.count || 0))
+}
+const handleNoticeReadAllEvent = () => {
+  notificationCount.value = 0
 }
 
 // 返回主页（匿名态回到发现页，避免被 /home 的登录守卫弹走）

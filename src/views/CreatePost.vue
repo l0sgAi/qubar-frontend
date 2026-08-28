@@ -68,6 +68,7 @@
               <!-- 正文（Markdown编辑器） -->
               <NFormItem :label="t('post.content')" path="content">
                 <MdEditor
+                  ref="postEditorRef"
                   v-model="formData.content"
                   :language="language"
                   :preview="true"
@@ -80,15 +81,24 @@
                 />
               </NFormItem>
               <div class="footer-actions">
-                <NButton size="large" @click="handleCancel">{{ t('common.cancel') }}</NButton>
-                <NButton
-                  size="large"
-                  type="primary"
-                  :loading="submitting"
-                  @click="handleSubmit"
-                >
-                  {{ t('common.submit') }}
-                </NButton>
+                <!-- @提及：按钮选人 + 编辑器内输入 @ 触发选人，共用同一份已选列表 -->
+                <MentionPicker :selected-ids="selectedIds" @select="appendAtEnd" />
+                <MentionTrigger
+                  :get-editor-view="getPostEditorView"
+                  :selected-ids="selectedIds"
+                  @select="recordSelection"
+                />
+                <div class="footer-buttons">
+                  <NButton size="large" @click="handleCancel">{{ t('common.cancel') }}</NButton>
+                  <NButton
+                    size="large"
+                    type="primary"
+                    :loading="submitting"
+                    @click="handleSubmit"
+                  >
+                    {{ t('common.submit') }}
+                  </NButton>
+                </div>
               </div>
             </NForm>
             <!-- 图片上传浮标（居中、醒目） -->
@@ -131,9 +141,14 @@ import 'md-editor-v3/lib/style.css'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
 import CircleRuleCard from '@/components/post-create/CircleRuleCard.vue'
+import MentionPicker from '@/components/MentionPicker.vue'
 import { getMyCircles, createPost } from '@/api/post'
 import { getCircleDetail } from '@/api/circle'
 import { useImageUpload } from '@/composables/useImageUpload'
+import MentionTrigger from '@/components/MentionTrigger.vue'
+import { useMentions } from '@/composables/useMentions'
+import { ensureMentionHighlight } from '@/utils/mentionHighlight'
+import { filterMentionedIds } from '@/utils/mention'
 
 const router = useRouter()
 const route = useRoute()
@@ -156,13 +171,26 @@ let searchTimer = null
 // 选中的圈子数据
 const selectedCircleData = ref(null)
 
-// 表单数据
+// @提及：按钮选人与正文内输入 @ 触发选人，共用同一份已选列表与 10 人上限；
+// 提交时 filterMentionedIds 过滤出正文中仍存在的 token 对应 uuid 传后端
+const postEditorRef = ref(null)
+const getPostEditorView = () => {
+  const view = postEditorRef.value?.getEditorView?.()
+  if (view) ensureMentionHighlight(view)
+  return view
+}
+// 表单数据（须先于 useMentions：其内部 watch 创建时会同步调一次 getText）
 const formData = ref({
   circle_id: null,
   title: '',
   summary: '',
   content: '',
   media_extra: []
+})
+
+const { mentionedUsers, selectedIds, recordSelection, appendAtEnd } = useMentions({
+  getText: () => formData.value.content,
+  setText: v => { formData.value.content = v }
 })
 
 // 圈子选项
@@ -336,9 +364,13 @@ const handleSubmit = async () => {
 
     // 从内容中提取实际的图片 URL，更新 media_extra
     const actualUrls = extractImageUrls(formData.value.content)
+    // 正文里被删掉的 @ 不传；须为完整 @用户名 token（@alice 不命中 @alice2）；
+    // 后端对重复/@自己/不存在用户会静默过滤，最多生效 10 人
+    const mentionIds = filterMentionedIds(formData.value.content, mentionedUsers.value)
     const submitData = {
       ...formData.value,
-      media_extra: actualUrls
+      media_extra: actualUrls,
+      mention_user_ids: mentionIds.length ? mentionIds : undefined
     }
 
     const res = await createPost(submitData)
@@ -608,14 +640,20 @@ onMounted(async () => {
   height: 7% !important;
 }
 
-/* 底部按钮 */
+/* 底部按钮：左 @提及，右 取消/提交 */
 .footer-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 16px;
 }
 
-.footer-actions .n-button {
+.footer-buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.footer-buttons .n-button {
   min-width: 120px;
   border-radius: 10px;
   font-weight: 500;
