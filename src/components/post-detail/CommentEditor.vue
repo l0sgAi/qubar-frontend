@@ -90,6 +90,7 @@ import { useI18n } from 'vue-i18n'
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import { createComment } from '@/api/comment'
+import { seedContentMentions } from '@/utils/mentionResolve'
 import { getUserInfo } from '@/api/auth'
 import { useImageUpload } from '@/composables/useImageUpload'
 import UploadImageWall from '@/components/UploadImageWall.vue'
@@ -211,6 +212,9 @@ const handleSubmit = async () => {
     if (extraData) {
       newComment.extra_data = extraData
     }
+
+    // 后端若回传 mentions（需求见 docs/mention-backend-requirements.md），乐观渲染前回灌
+    seedContentMentions([newComment])
 
     emit('submit', newComment)
     content.value = ''

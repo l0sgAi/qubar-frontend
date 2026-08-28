@@ -27,6 +27,16 @@ export const seedUsers = (users = []) => {
 // 已知用户名快照（原样大小写），供已知名优先匹配
 export const knownUsernames = () => [...knownNames]
 
+// 从内容载体批量回灌提及用户（后端在帖子/评论详情回传 mentions: [{id, username}]）。
+// 渲染链接化前调用 → store 精确命中，零搜索请求建链；旧内容无 mentions 时静默跳过，
+// 前端回退到搜索反查（mentionDom 渐进回查逻辑不变）。
+export const seedContentMentions = (items = []) => {
+  const arr = Array.isArray(items) ? items : []
+  arr.forEach((it) => {
+    if (Array.isArray(it?.mentions) && it.mentions.length) seedUsers(it.mentions)
+  })
+}
+
 // 立即取已知映射：uuid / null(确认不存在) / undefined(未知待解析)
 export const peekUserId = username => store.get(String(username || '').toLowerCase())
 

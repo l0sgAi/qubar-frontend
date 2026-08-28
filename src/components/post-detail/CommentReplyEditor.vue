@@ -94,6 +94,7 @@ import { ensureMentionHighlight } from '@/utils/mentionHighlight'
 import { auth } from '@/utils/auth'
 import { filterMentionedIds } from '@/utils/mention'
 import { requireLogin } from '@/utils/guest-action'
+import { seedContentMentions } from '@/utils/mentionResolve'
 
 const props = defineProps({
   postId: {
@@ -202,6 +203,9 @@ const handleSubmit = async () => {
     if (extraData) {
       newReply.extra_data = extraData
     }
+
+    // 后端若回传 mentions，乐观渲染前回灌
+    seedContentMentions([newReply])
 
     content.value = ''
     uploadedImages.value = []

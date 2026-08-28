@@ -242,6 +242,7 @@ import ImageCarousel from './ImageCarousel.vue'
 import { useI18n } from 'vue-i18n'
 import MentionPreview from '@/components/MentionPreview.vue'
 import { getCommentList, getCommentReplies } from '@/api/comment'
+import { seedContentMentions } from '@/utils/mentionResolve'
 import { toggleLike } from '@/api/like'
 import CommentReplyEditor from './CommentReplyEditor.vue'
 import {CommentRound} from '@vicons/material'
@@ -545,6 +546,8 @@ const toggleRepliesSort = async (commentId) => {
       const res = await getCommentReplies(params)
       if (res.data) {
         const items = res.data.items || []
+        // 回灌提及用户（后端 mentions 字段）后再进响应式数据
+        seedContentMentions(items)
 
         // 加载成功后，替换数据为第一页
         data.pages = [items]
@@ -577,6 +580,8 @@ const loadComments = async (isRefresh = false) => {
 
     const res = await getCommentList(params)
     if (res.data) {
+      // 回灌本页评论的提及用户（后端 mentions 字段），渲染前就位
+      seedContentMentions(res.data.items || [])
       if (isRefresh) {
         comments.value = res.data.items || []
       } else {
@@ -623,6 +628,8 @@ const loadReplies = async (comment) => {
     const res = await getCommentReplies(params)
     if (res.data) {
       const items = res.data.items || []
+      // 回灌提及用户（后端 mentions 字段）后再进响应式数据
+      seedContentMentions(items)
 
       // 保存当前页数据
       data.pages[data.currentPage] = items
@@ -679,6 +686,8 @@ const nextPage = async (commentId) => {
       const res = await getCommentReplies(params)
       if (res.data) {
         const items = res.data.items || []
+        // 回灌提及用户（后端 mentions 字段）后再进响应式数据
+        seedContentMentions(items)
 
         // 保存到下一页
         const nextPageIndex = data.currentPage + 1
