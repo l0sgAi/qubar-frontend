@@ -1,15 +1,13 @@
 <template>
   <div class="recent-post-card" @click="handleClick">
-    <!-- 缩略图（无图帖子不渲染该区域，正文占满整行宽度） -->
-    <div v-if="thumbnail" class="post-thumbnail">
-      <img :src="thumbnail" :alt="title" class="thumbnail-image" />
-    </div>
-
     <!-- 帖子信息 -->
     <div class="post-info">
-      <!-- 兴趣圈标签 -->
-      <div class="circle-tag" :style="{ color: circleColor }">
-        <span class="circle-icon">●</span>
+      <!-- 兴趣圈标签（头像 + 圈名） -->
+      <div class="circle-tag">
+        <div class="circle-avatar">
+          <img v-if="circleAvatar" :src="circleAvatar" :alt="circleName" class="circle-avatar-img" />
+          <div v-else class="circle-avatar-fallback">{{ circleName.charAt(0) }}</div>
+        </div>
         <span class="circle-name">{{ circleName }}</span>
       </div>
 
@@ -44,6 +42,11 @@
         </div>
       </div>
     </div>
+
+    <!-- 缩略图（无图帖子不渲染该区域，正文占满整行宽度；显示在列表项右侧） -->
+    <div v-if="thumbnail" class="post-thumbnail">
+      <img :src="thumbnail" :alt="title" class="thumbnail-image" />
+    </div>
   </div>
 </template>
 
@@ -61,9 +64,9 @@ const props = defineProps({
     type: String,
     required: true
   },
-  circleColor: {
+  circleAvatar: {
     type: String,
-    default: 'var(--theme-color)'
+    default: ''
   },
   title: {
     type: String,
@@ -161,14 +164,38 @@ const handleClick = () => {
 .circle-tag {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-size: 0.75rem;
   font-weight: 600;
+  color: var(--theme-color);
   opacity: 0.9;
 }
 
-.circle-icon {
-  font-size: 0.5rem;
+.circle-avatar {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(102, 234, 194, 0.14);
+}
+
+.circle-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.circle-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #8af0d0;
+  line-height: 1;
 }
 
 .circle-name {
