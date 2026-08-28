@@ -98,9 +98,9 @@ const thumbnail = computed(() => {
   return props.images && props.images.length > 0 ? props.images[0] : null
 })
 
-// 生成摘要（截取前60个字符）
+// 生成摘要（截取前160个字符）
 const summary = computed(() => {
-  return props.content.length > 60 ? props.content.substring(0, 60) + '...' : props.content
+  return props.content.length > 160 ? props.content.substring(0, 160) + '...' : props.content
 })
 
 const handleClick = () => {
