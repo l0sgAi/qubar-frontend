@@ -4,8 +4,9 @@
 import { MENTION_LEAD, NAME_CHARS } from './mention'
 import { peekUserId, resolveUsernames } from './mentionResolve'
 
-// 这些容器内的 @ 不做链接化：代码块/行内码/链接（含 linkify 出的 mailto/URL）
-const SKIP_TAGS = new Set(['A', 'PRE', 'CODE', 'KBD', 'SCRIPT', 'STYLE', 'TEXTAREA', 'BUTTON', 'SVG'])
+// 这些容器内的 @ 不做链接化：代码块/行内码/链接（含 linkify 出的 mailto/URL）等；
+// closest 整棵向上查，隔层包裹（如 <pre><strong>、<button><span>）也一并跳过
+const SKIP_SELECTOR = 'a, pre, code, kbd, script, style, textarea, button, svg'
 // 单轮最多回查多少个未知用户名：防止长评论列表首刷的请求风暴
 const MAX_UNKNOWN_PER_PASS = 12
 // 空格感知候选扫描：@ 后 1~3 个空格分隔词（覆盖「John Doe」「王 小明」类名字）。
@@ -19,8 +20,8 @@ const MENTION_SCAN_RE = new RegExp(
 const acceptText = (node) => {
   const parent = node.parentElement
   if (!parent || !node.nodeValue || node.nodeValue.indexOf('@') === -1) return NodeFilter.FILTER_REJECT
-  // closest('a') 兼顾祖先：链接文本一律跳过
-  if (SKIP_TAGS.has(parent.tagName) || parent.closest('a')) return NodeFilter.FILTER_REJECT
+  // 一次 closest 覆盖所有跳过容器的任意层级祖先：链接/代码块内文本一律跳过
+  if (parent.closest(SKIP_SELECTOR)) return NodeFilter.FILTER_REJECT
   return NodeFilter.FILTER_ACCEPT
 }
 
@@ -43,9 +44,10 @@ export const applyMentionLinks = (rootEl, onChange) => {
     let last = 0
     let m
     while ((m = re.exec(text)) !== null) {
-      // 词数从多到少渐进回查：最长已命中前缀即提及跨度。
-      // 遇到未查过的候选先排队解析（整名优先），本轮该跨度保持纯文本，
-      // 解析落地后 onUpdate 重跑本 pass 再建链——防整名确认前短词误链
+      // 词数从多到少逐个回查缓存：最长命中即提及跨度（整名优先，防短词误链）。
+      // 未查过的候选不提前中断——更短候选可能已有缓存命中（如「John Doe」未知
+      // 而「John」已缓存）；同时记下最长的未解析候选排队解析，落地后
+      // onUpdate 重跑本 pass 再建链
       const words = m[2].split(' ')
       let hit = null
       let pendingName = null
@@ -57,8 +59,7 @@ export const applyMentionLinks = (rootEl, onChange) => {
           break
         }
         if (id === null) continue // 已确认查无此人 → 缩短一词再试
-        pendingName = name
-        break
+        if (!pendingName) pendingName = name // 最长的未解析候选（先到先记）
       }
       if (hit) {
         if (!frag) frag = document.createDocumentFragment()

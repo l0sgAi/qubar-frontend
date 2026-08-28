@@ -5,7 +5,10 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMessage } from 'naive-ui'
 import { MAX_MENTIONS, seedUsers, peekUserId, knownUsernames } from '@/utils/mentionResolve'
-import { hasMentionToken, extractMentionTokens } from '@/utils/mention'
+import { MENTION_LEAD, hasMentionToken, extractMentionTokens } from '@/utils/mention'
+
+// 正文结尾是否已是合法 @ 前导（MENTION_LEAD 的尾部形态；空串 = 行首，亦合法）
+const LEAD_END_RE = new RegExp(`${MENTION_LEAD}$`)
 
 export function useMentions({ getText, setText }) {
   const { t } = useI18n()
@@ -33,7 +36,11 @@ export function useMentions({ getText, setText }) {
   // 按钮版选人：追加到正文末尾（原有交互，保持不变）
   const appendAtEnd = (user) => {
     if (!recordSelection(user)) return
-    setText(`${getText()}@${user.username} `)
+    // @ 前导须满足 MENTION_LEAD 才能被识别为 token；结尾已是合法前导（行首/空白/
+    // 左括号引号）则保留原间距，否则补一个空格，避免 @用户名 不被识别而被提交侧过滤
+    const text = getText() || ''
+    const lead = LEAD_END_RE.test(text) ? '' : ' '
+    setText(`${text}${lead}@${user.username} `)
   }
 
   // 正文是唯一事实源：token 被删掉 → 同步移出已选（释放计数、弹窗恢复可选）；
