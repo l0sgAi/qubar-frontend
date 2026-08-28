@@ -400,7 +400,7 @@ const goToUser = () => {
   word-break: break-word;
   /* 按高度截断：≈ 6 行（line-height 1.6 → 9.6em），超出裁掉。
      不用 -webkit-line-clamp，它强制 white-space:normal 会丢失换行。 */
-  max-height: 9.6em;
+  max-height: 28.8em;
   overflow: hidden;
 }
 

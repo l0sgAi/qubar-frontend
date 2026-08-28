@@ -21,6 +21,7 @@
             :key="post.postId"
             :post-id="post.postId"
             :circle-name="post.circleName"
+            :circle-avatar="post.circleAvatar"
             :title="post.title"
             :content="post.content"
             :images="post.images"
@@ -33,13 +34,16 @@
         <!-- 加载骨架（首屏） -->
         <div v-if="loading" class="skel-list">
           <div v-for="i in 4" :key="i" class="skel-card">
-            <div class="skel-thumb"></div>
             <div class="skel-info">
-              <div class="skel-line skel-circle"></div>
+              <div class="skel-circle-row">
+                <div class="skel-avatar"></div>
+                <div class="skel-line skel-circle"></div>
+              </div>
               <div class="skel-line skel-title"></div>
               <div class="skel-line skel-title2"></div>
               <div class="skel-line skel-meta"></div>
             </div>
+            <div class="skel-thumb"></div>
           </div>
         </div>
 
@@ -83,9 +87,9 @@ const { t } = useI18n()
 // NaiveUI 深色主题覆盖
 const themeOverrides = {
   common: {
-    primaryColor: '#ec4899',
-    primaryColorHover: '#f472b6',
-    primaryColorPressed: '#db2777',
+    primaryColor: '#66eac2',
+    primaryColorHover: '#8af0d0',
+    primaryColorPressed: '#4fd8ae',
     textColor1: 'rgba(255, 255, 255, 0.95)',
     textColor2: 'rgba(255, 255, 255, 0.8)',
     textColor3: 'rgba(255, 255, 255, 0.6)',
@@ -116,6 +120,7 @@ const transformPost = (p) => {
   return {
     postId: p.id,
     circleName: p.circle_name || '',
+    circleAvatar: p.circle_avatar || '',
     title: p.title || '',
     content: p.summary || p.content || '',
     images: p.images || [],
@@ -261,12 +266,26 @@ onMounted(() => {
   border-radius: 6px;
 }
 
+.skel-circle-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skel-avatar {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+
 .skel-circle { width: 60px; height: 12px; }
 .skel-title  { width: 90%; height: 14px; }
 .skel-title2 { width: 65%; height: 14px; }
 .skel-meta   { width: 80px; height: 12px; margin-top: 4px; }
 
 .skel-thumb,
+.skel-avatar,
 .skel-line {
   background: linear-gradient(
     90deg,
