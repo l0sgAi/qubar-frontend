@@ -28,6 +28,7 @@
           v-if="!circleDetail.is_joined"
           type="primary"
           size="medium"
+          round
           @click="handleJoinCircle"
           :loading="joinLoading"
           class="join-button"
@@ -37,6 +38,7 @@
         <NButton
           v-else
           size="medium"
+          round
           @click="handleLeaveCircle"
           ghost
           :loading="joinLoading"
@@ -110,13 +112,13 @@
         <h4 class="section-title">{{ t('circle.memberInfo') }}</h4>
         <div class="info-row">
           <span class="label">{{ t('user.role') }}</span>
-          <NTag :type="getRoleInfo(circleDetail.member_role).type" size="small">
+          <NTag :type="getRoleInfo(circleDetail.member_role).type" size="small" round>
             {{ getRoleInfo(circleDetail.member_role).text }}
           </NTag>
         </div>
         <div class="info-row">
           <span class="label">{{ t('user.status') }}</span>
-          <NTag :type="getMemberStatusInfo(circleDetail.member_status).type" size="small">
+          <NTag :type="getMemberStatusInfo(circleDetail.member_status).type" size="small" round>
             {{ getMemberStatusInfo(circleDetail.member_status).text }}
           </NTag>
         </div>
@@ -222,15 +224,13 @@ const formatNumber = (num) => {
   return num.toString()
 }
 
-// 格式化日期
+// 格式化日期为国际通用格式：YYYY/MM/DD
 const formatDate = (dateStr) => {
   if (!dateStr) return '未知'
   const date = new Date(dateStr)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+  if (Number.isNaN(date.getTime())) return '未知'
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`
 }
 
 // 获取加入方式文本
@@ -350,15 +350,16 @@ defineExpose({
 
 .circle-card {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 /* 圈子头部信息 */
 .circle-header-section {
   padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--glass-border);
   background: rgba(255, 255, 255, 0.02);
   display: flex;
   align-items: center;
@@ -394,7 +395,7 @@ defineExpose({
 
 .circle-avatar:hover {
   transform: scale(1.05);
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: rgba(102, 234, 194, 0.6);
 }
 
 .circle-avatar-placeholder {
@@ -402,7 +403,7 @@ defineExpose({
   height: 48px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.2);
-  /* background: linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #3b82f6 100%); */
+  background: var(--primary-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -457,7 +458,7 @@ defineExpose({
   display: flex;
   padding: 3dvh;
   padding-left: 4dvw;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .stat-item {
@@ -493,24 +494,24 @@ defineExpose({
 .description-section,
 .rules-section {
   padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .show-more-btn {
   margin-top: 8px;
   font-size: 0.8rem;
-  color: rgb(155, 255, 182);
+  color: #66eac2;
   cursor: pointer;
   transition: color 0.2s ease;
   user-select: none;
 }
 
 .show-more-btn:hover {
-  color: rgba(255, 255, 255, 0.9);
+  color: #8af0d0;
 }
 
 .rules-section {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--glass-border);
 }
 
 .section-title {
@@ -543,7 +544,7 @@ defineExpose({
 }
 
 .member-info {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--glass-border);
 }
 
 .info-row {

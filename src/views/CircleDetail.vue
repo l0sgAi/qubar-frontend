@@ -250,13 +250,13 @@
                 <h4 class="section-title">{{ t('circle.yourMemberInfo') }}</h4>
                 <div class="info-row">
                   <span class="label">{{ t('user.role') }}</span>
-                  <NTag :type="getRoleInfo(circleDetail.member_role).type" size="large">
+                  <NTag :type="getRoleInfo(circleDetail.member_role).type" size="large" round>
                     {{ getRoleInfo(circleDetail.member_role).text }}
                   </NTag>
                 </div>
                 <div class="info-row">
                   <span class="label">{{ t('user.status') }}</span>
-                  <NTag :type="getMemberStatusInfo(circleDetail.member_status).type" size="large">
+                  <NTag :type="getMemberStatusInfo(circleDetail.member_status).type" size="large" round>
                     {{ getMemberStatusInfo(circleDetail.member_status).text }}
                   </NTag>
                 </div>

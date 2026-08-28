@@ -108,8 +108,7 @@
                       </template>
                     </NButton>
                     <!-- @提及：按钮选人 + 编辑器内输入 @ 触发选人，共用同一份已选列表 -->
-                    <MentionPicker :selected-ids="selectedIds" @select="appendAtEnd" />
-                    <MentionTrigger
+                        <MentionTrigger
                       :get-editor-view="getPostEditorView"
                       :selected-ids="selectedIds"
                       @select="recordSelection"

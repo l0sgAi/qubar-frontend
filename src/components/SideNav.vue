@@ -45,7 +45,6 @@ import { RobotOutlined } from '@vicons/antd'
 import { useI18n } from 'vue-i18n'
 import CreateCircleModal from './CreateCircleModal.vue'
 import { getMyCircles, getActiveCircles } from '@/api/post'
-import { getUserInfo } from '@/api/auth'
 import { auth } from '@/utils/auth'
 
 const router = useRouter()
@@ -132,26 +131,18 @@ onMounted(() => {
   if (!auth.isAuthenticated()) return
   fetchJoinedCircles()
   fetchActiveCircles()
-  fetchIsAdmin()
 })
 
 // 近期活跃的兴趣圈（真实数据，取前 5 个）
 const activeCircles = ref([])
 const activeCirclesLoading = ref(false)
 
-// 是否管理员（role=1）：控制「机器人管理」入口显隐
-const isAdmin = ref(false)
-
-const fetchIsAdmin = async () => {
-  try {
-    const res = await getUserInfo()
-    isAdmin.value = res.data?.role === 1
-  } catch (e) {
-    // 非 401 的意外失败按非管理员处理，入口隐藏即可
-    console.error('获取用户角色失败:', e)
-    isAdmin.value = false
-  }
-}
+// 机器人管理菜单项：对所有用户开放，后端做权限控制（避免异步角色判断导致菜单项跳动）
+const agentMenuItem = computed(() => ({
+  label: t('agent.navEntry'),
+  key: 'admin-agents',
+  icon: () => h(NIcon, null, { default: () => h(RobotOutlined) })
+}))
 
 const fetchActiveCircles = async () => {
   activeCirclesLoading.value = true
@@ -235,15 +226,6 @@ const activeItem = computed(() => {
   return null
 })
 
-// 管理员菜单项（机器人管理）：两处菜单共用
-const adminMenuItems = computed(() => isAdmin.value
-  ? [{
-      label: t('agent.navEntry'),
-      key: 'admin-agents',
-      icon: () => h(NIcon, null, { default: () => h(RobotOutlined) })
-    }]
-  : [])
-
 // 菜单选项
 const menuOptions = computed(() => {
   // 折叠时只显示主要菜单项
@@ -264,7 +246,7 @@ const menuOptions = computed(() => {
         key: 'explore',
         icon: () => h(NIcon, null, { default: () => h(Explore) })
       },
-      ...adminMenuItems.value,
+      agentMenuItem.value,
       {
         label: t('circle.createCircle'),
         key: 'create',
@@ -290,7 +272,7 @@ const menuOptions = computed(() => {
       key: 'explore',
       icon: () => h(NIcon, null, { default: () => h(Explore) })
     },
-    ...adminMenuItems.value,
+    agentMenuItem.value,
     {
       label: t('circle.createCircle'),
       key: 'create',

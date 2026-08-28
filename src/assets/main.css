@@ -1,8 +1,8 @@
 :root {
   /* 深色模式配色方案 */
   --bg-primary: #0a0e27;
-  --bg-secondary: #131829;
-  --bg-tertiary: #1a1f3a;
+  --bg-secondary: #161927;
+  --bg-tertiary: #13121f;
 
   --text-primary: #ffffff;
   --text-secondary: #b4b4c4;
@@ -13,7 +13,7 @@
   --accent-color: #040505;
   --accent-secondary: #764ba2;
 
-  --glass-bg: rgba(28, 28, 28, 0.689);
+  --glass-bg: rgba(18, 20, 28, 0.689);
   --glass-border: rgba(255, 255, 255, 0.08);
 
   /* 布局尺寸 */
