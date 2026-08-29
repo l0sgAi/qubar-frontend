@@ -123,6 +123,7 @@
                     size="large"
                     type="primary"
                     :loading="submitting"
+                    :disabled="uploading"
                     @click="handleSubmit"
                   >
                     {{ t('common.submit') }}
@@ -377,8 +378,15 @@ const uploadFiles = async (files) => {
   }
   try {
     const urls = await uploadMany(filesToUpload)
+    // 上传期间用户可能已删/增图，插入前按实时剩余名额截断
+    const remainingNow = MAX_POST_IMAGES - contentImageCount.value
+    const urlsToInsert = urls.slice(0, Math.max(0, remainingNow))
+    if (!urlsToInsert.length) {
+      message.warning(t('upload.maxImages', { max: MAX_POST_IMAGES }))
+      return
+    }
     // 逐张插入 ![](url)，插入后光标落在末尾
-    const mdText = urls.map(url => `![image](${url})`).join('\n') + '\n'
+    const mdText = urlsToInsert.map(url => `![image](${url})`).join('\n') + '\n'
     postEditorRef.value?.insert(() => ({
       targetValue: mdText,
       select: false,
@@ -396,13 +404,19 @@ const uploadFiles = async (files) => {
 
 // 提交表单
 const handleSubmit = async () => {
+  // 图片上传未完成时禁止提交，避免正文里出现未上传的占位
+  if (uploading.value) return
   try {
     await formRef.value?.validate()
 
-    submitting.value = true
-
-    // 从内容中提取实际的图片 URL，更新 media_extra
+    // 从内容中提取实际的图片 URL，更新 media_extra；发布前再校验一次图片上限
     const actualUrls = extractImageUrls(formData.value.content)
+    if (actualUrls.length > MAX_POST_IMAGES) {
+      message.warning(t('upload.maxImages', { max: MAX_POST_IMAGES }))
+      return
+    }
+
+    submitting.value = true
     // 正文里被删掉的 @ 不传；须为完整 @用户名 token（@alice 不命中 @alice2）；
     // 后端对重复/@自己/不存在用户会静默过滤，最多生效 10 人
     const mentionIds = filterMentionedIds(formData.value.content, mentionedUsers.value)

@@ -158,6 +158,8 @@ const fetchTrending = async () => {
     posts.value = []
     circles.value = []
     users.value = []
+    // 列表已清空，live 指示器同步熄灭，避免误显示旧刷新时间
+    refreshedAt.value = 0
   } finally {
     if (gen === fetchGen) loading.value = false
   }
