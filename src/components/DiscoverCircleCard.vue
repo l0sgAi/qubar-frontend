@@ -2,10 +2,10 @@
   <!-- 发现圈子卡：两种形态
        mini  —— 横向紧凑行，插在「探索流」帖子之间
        card  —— 纵向卡片，用于「分区」网格与「灵感墙」方块 -->
-  <div
+  <SmartLink
     class="discover-circle-card"
     :class="`variant-${variant}`"
-    @click="handleClick"
+    :to="circle.id ? `/circle/${circle.id}` : null"
   >
     <!-- mini 形态：头像 + 文案 + 统计 + 箭头 -->
     <template v-if="variant === 'mini'">
@@ -47,15 +47,15 @@
         {{ joinType === 1 ? t('discover.joinReview') : t('discover.joinDirect') }}
       </div>
     </template>
-  </div>
+  </SmartLink>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { NAvatar } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useFormatNumber } from '@/utils/i18n'
+import SmartLink from '@/components/SmartLink.vue'
 
 const props = defineProps({
   // 原始 API 条目（snake_case DiscoverCircleItem）
@@ -70,7 +70,6 @@ const props = defineProps({
   }
 })
 
-const router = useRouter()
 const { t } = useI18n()
 const { formatNumber } = useFormatNumber()
 
@@ -84,11 +83,6 @@ const joinType = computed(() => props.circle.join_type || 0)
 // 无头像时的渐变背景：沿用项目主题色（薄荷绿 #60F8BB），区别于热点的粉紫
 const avatarBg = 'var(--primary-gradient)'
 const fallbackChar = computed(() => (name.value || '?').charAt(0))
-
-const handleClick = () => {
-  const id = props.circle.id
-  if (id) router.push(`/circle/${id}`)
-}
 </script>
 
 <style scoped>

@@ -1,5 +1,5 @@
 <template>
-  <div class="recent-post-card" @click="handleClick">
+  <SmartLink class="recent-post-card" :to="postId ? `/post/${postId}` : null">
     <!-- 帖子信息 -->
     <div class="post-info">
       <!-- 兴趣圈标签（头像 + 圈名） -->
@@ -47,13 +47,13 @@
     <div v-if="thumbnail" class="post-thumbnail">
       <img :src="thumbnail" :alt="title" class="thumbnail-image" />
     </div>
-  </div>
+  </SmartLink>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { NTime } from 'naive-ui'
+import SmartLink from '@/components/SmartLink.vue'
 
 const props = defineProps({
   postId: {
@@ -94,8 +94,6 @@ const props = defineProps({
   }
 })
 
-const router = useRouter()
-
 // 获取第一张图片作为缩略图
 const thumbnail = computed(() => {
   return props.images && props.images.length > 0 ? props.images[0] : null
@@ -105,10 +103,6 @@ const thumbnail = computed(() => {
 const summary = computed(() => {
   return props.content.length > 160 ? props.content.substring(0, 160) + '...' : props.content
 })
-
-const handleClick = () => {
-  if (props.postId) router.push(`/post/${props.postId}`)
-}
 </script>
 
 <style scoped>

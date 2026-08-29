@@ -1,5 +1,5 @@
 <template>
-  <div class="trending-card" :class="`type-${type}`" @click="handleClick">
+  <SmartLink class="trending-card" :class="`type-${type}`" :to="targetUrl">
     <!-- 排名徽章：Top 1/2/3 特殊配色，其余灰底 -->
     <div class="rank-badge" :class="{ 'rank-top': rank <= 3 }" :style="rankStyle">
       {{ rank }}
@@ -23,14 +23,14 @@
       <span class="fire">🔥</span>
       <span>{{ formatNumber(item.hot_score) }}</span>
     </div>
-  </div>
+  </SmartLink>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { NAvatar } from 'naive-ui'
 import { useFormatNumber } from '@/utils/i18n'
+import SmartLink from '@/components/SmartLink.vue'
 
 const props = defineProps({
   // 条目类型：post | circle | user
@@ -51,8 +51,18 @@ const props = defineProps({
   }
 })
 
-const router = useRouter()
 const { formatNumber } = useFormatNumber()
+
+// 跳转目标：按类型归一到真实 URL，交给 SmartLink 渲染 <a href>
+const targetUrl = computed(() => {
+  const id = props.item.id
+  if (!id) return null
+  return {
+    post: `/post/${id}`,
+    circle: `/circle/${id}`,
+    user: `/user/${id}`
+  }[props.type]
+})
 
 // 头像 URL：post 取作者头像，circle/user 取 avatar_url
 const avatarUrl = computed(() => {
@@ -102,17 +112,6 @@ const rankStyle = computed(() => {
   }
   return colors[props.rank] || null
 })
-
-const handleClick = () => {
-  const id = props.item.id
-  if (!id) return
-  const path = {
-    post: `/post/${id}`,
-    circle: `/circle/${id}`,
-    user: `/user/${id}`
-  }[props.type]
-  router.push(path)
-}
 </script>
 
 <style scoped>

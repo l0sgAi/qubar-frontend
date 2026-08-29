@@ -46,8 +46,7 @@
               <MyGroups
                 :user-id="String(route.params.id || '')"
                 :active="activeTab === 'groups'"
-                @total-change="handleGroupsTotalChange"
-                @click="handleGroupClick"/>
+                @total-change="handleGroupsTotalChange"/>
             </NTabPane>
           </NTabs>
         </NCard>
@@ -217,10 +216,7 @@ const fetchUserInfo = async () => {
   }
 }
 
-// 兴趣圈操作
-const handleGroupClick = (group) => {
-  router.push(`/circle/${group.id}`)
-}
+// 兴趣圈卡片跳转已由 MyGroups 内部的封面链接承担，无需监听 click
 
 // 格式化日期
 const formatDate = (dateStr) => {

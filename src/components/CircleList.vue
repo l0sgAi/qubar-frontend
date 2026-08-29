@@ -9,13 +9,13 @@
       <p class="empty-hint">{{ t('common.search') }}</p>
     </div>
 
-    <!-- 兴趣圈列表 -->
+    <!-- 兴趣圈列表：整行为真实链接，右键/中键可新标签页打开 -->
     <div v-else class="circles">
-      <div
+      <SmartLink
         v-for="circle in circles"
         :key="circle.id"
         class="circle-item"
-        @click="handleCircleClick(circle)"
+        :to="circle.id ? `/circle/${circle.id}` : null"
       >
         <div class="circle-avatar">
           <NAvatar
@@ -50,7 +50,7 @@
             </span>
           </div>
         </div>
-      </div>
+      </SmartLink>
     </div>
 
     <!-- 加载更多 -->
@@ -71,10 +71,10 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { NAvatar, NButton, NIcon, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { Search as SearchIcon, User as UserIcon, FileText as FileTextIcon, Flame as FireIcon } from '@vicons/tabler'
+import SmartLink from '@/components/SmartLink.vue'
 
 const { t } = useI18n()
 
@@ -95,7 +95,6 @@ const props = defineProps({
 
 const emit = defineEmits(['load-more'])
 
-const router = useRouter()
 const message = useMessage()
 
 const listContainer = ref(null)
@@ -115,9 +114,7 @@ const formatNumber = (num) => {
 }
 
 // 点击兴趣圈
-const handleCircleClick = (circle) => {
-  router.push(`/circle/${circle.id}`)
-}
+// 圈子跳转已由行级 SmartLink 承担：真实 <a href>，支持 hover URL / 右键新标签页
 
 // 加入兴趣圈
 const handleJoin = (circle) => {
@@ -222,6 +219,7 @@ watch([() => props.circles, () => props.hasMore, () => props.loading, loadMoreTr
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   cursor: pointer;
+  text-decoration: none;
   transition: all 0.3s ease;
 }
 

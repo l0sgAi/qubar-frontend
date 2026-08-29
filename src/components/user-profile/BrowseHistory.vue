@@ -50,8 +50,10 @@
             :key="post.id"
             class="post-card"
             :bordered="false"
-            hoverable
-            @click="handleCardClick(post)">
+            hoverable>
+            <!-- 整卡封面链接（stretched-link）：铺满卡片承担帖子跳转，
+                 右键/中键可新标签页打开；轮播抬 z-index 各自响应 -->
+            <SmartLink class="post-cover-link" :to="`/post/${post.id}`" :aria-label="post.title" />
             <div class="post-header">
               <div class="post-author">
                 <NAvatar
@@ -142,12 +144,12 @@
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
 import { NCard, NAvatar, NIcon, NTag, NInput, NButton, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { getHistoryPosts } from '@/api/history'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 import ImageCarousel from '@/components/post-detail/ImageCarousel.vue'
+import SmartLink from '@/components/SmartLink.vue'
 
 const props = defineProps({
   // 当前 tab 是否激活；切回 history tab 时重置并重新拉取首页
@@ -160,7 +162,6 @@ const props = defineProps({
 
 const emit = defineEmits(['total-change'])
 
-const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
@@ -316,10 +317,6 @@ watch(() => props.active, (v) => {
   if (v) resetAndFetch()
 })
 
-const handleCardClick = (post) => {
-  router.push(`/post/${post.id}`)
-}
-
 onMounted(() => {
   fetchPosts(false)
 })
@@ -367,6 +364,7 @@ onBeforeUnmount(() => {
 }
 
 .post-card {
+  position: relative;
   background: rgba(255, 255, 255, 0.02) !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
   border-radius: 16px !important;
@@ -379,6 +377,13 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
   transform: translateY(-2px);
+}
+
+/* 整卡封面链接（stretched-link）：铺满卡片让浏览器在任意位置识别出帖子链接 */
+.post-cover-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 .post-header {
@@ -457,8 +462,10 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-/* 图片轮播：与帖子列表卡片保持一致 */
+/* 图片轮播：与帖子列表卡片保持一致；抬层盖住封面链接 */
 .post-carousel {
+  position: relative;
+  z-index: 2;
   margin-bottom: 12px;
 }
 

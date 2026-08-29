@@ -18,7 +18,7 @@
         </div>
         <div class="comment-body">
           <div class="comment-author-row">
-            <span class="comment-author" :class="{ clickable: getUserId(comment) }" @click="getUserId(comment) && goToUserDetail(getUserId(comment))">{{ comment.author_name }}</span>
+            <SmartLink class="comment-author" :class="{ clickable: getUserId(comment) }" :to="userUrl(getUserId(comment))">{{ comment.author_name }}</SmartLink>
             <span class="comment-time">{{ formatTime(comment.create_time) }}</span>
           </div>
           <ImageCarousel
@@ -107,10 +107,10 @@
               </div>
               <div class="comment-body">
                 <div class="comment-author-row">
-                  <span class="comment-author" :class="{ clickable: getUserId(reply) }" @click="getUserId(reply) && goToUserDetail(getUserId(reply))">{{ reply.author_name }}</span>
+                  <SmartLink class="comment-author" :class="{ clickable: getUserId(reply) }" :to="userUrl(getUserId(reply))">{{ reply.author_name }}</SmartLink>
                   <template v-if="getReplyToName(reply, getCurrentReplies(comment.id))">
                     <span class="reply-arrow">{{ t('comment.actions.reply') }}</span>
-                    <span class="comment-author reply-to-name" :class="{ clickable: getReplyToUserId(reply, getCurrentReplies(comment.id)) }" @click="getReplyToUserId(reply, getCurrentReplies(comment.id)) && goToUserDetail(getReplyToUserId(reply, getCurrentReplies(comment.id)))">@{{ getReplyToName(reply, getCurrentReplies(comment.id)) }}</span>
+                    <SmartLink class="comment-author reply-to-name" :class="{ clickable: getReplyToUserId(reply, getCurrentReplies(comment.id)) }" :to="userUrl(getReplyToUserId(reply, getCurrentReplies(comment.id)))">@{{ getReplyToName(reply, getCurrentReplies(comment.id)) }}</SmartLink>
                   </template>
                   <span class="comment-time">{{ formatTime(reply.create_time) }}</span>
                 </div>
@@ -236,11 +236,11 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-	import { useRouter } from 'vue-router'
-import { NCard, NAvatar, NButton, NDivider, NIcon, NEmpty, NSpin } from 'naive-ui'
+	import { NCard, NAvatar, NButton, NDivider, NIcon, NEmpty, NSpin } from 'naive-ui'
 import ImageCarousel from './ImageCarousel.vue'
 import { useI18n } from 'vue-i18n'
 import MentionPreview from '@/components/MentionPreview.vue'
+import SmartLink from '@/components/SmartLink.vue'
 import { getCommentList, getCommentReplies } from '@/api/comment'
 import { seedContentMentions } from '@/utils/mentionResolve'
 import { toggleLike } from '@/api/like'
@@ -275,19 +275,14 @@ const emit = defineEmits(['update:sort', 'update:commentCount'])
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
 const { formatNumber } = useFormatNumber()
-	const router = useRouter()
 
-// 跳转到用户详情页
 // 获取用户ID（兼容多种字段名）
 const getUserId = (item) => {
   return item.author_id || item.user_id || item.userId || item.authorId || item.id
 }
 
-const goToUserDetail = (userId) => {
-  if (userId) {
-    router.push(`/user/${userId}`)
-  }
-}
+// 作者名统一用 SmartLink 渲染为真实链接；无 id 时降级为纯文本块
+const userUrl = (userId) => (userId ? `/user/${userId}` : null)
 
 const getCommentImages = (item) => {
   if (!item.extra_data) return []
@@ -866,6 +861,7 @@ defineExpose({ refreshComments, addComment })
   font-size: 15px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
 }
 
 .comment-author.clickable {

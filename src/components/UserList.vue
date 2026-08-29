@@ -9,13 +9,13 @@
       <p class="empty-hint">{{ t('common.search') }}</p>
     </div>
 
-    <!-- 用户列表 -->
+    <!-- 用户列表：整行为真实链接，右键/中键可新标签页打开 -->
     <div v-else class="users">
-      <div
+      <SmartLink
         v-for="user in users"
         :key="user.id"
         class="user-item"
-        @click="handleUserClick(user)"
+        :to="user.id ? `/user/${user.id}` : null"
       >
         <div class="user-avatar">
           <NAvatar
@@ -44,7 +44,7 @@
             </span>
           </div>
         </div>
-      </div>
+      </SmartLink>
     </div>
 
     <!-- 加载更多 -->
@@ -65,10 +65,10 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { NAvatar, NIcon, NSpin } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { Search as SearchIcon, Calendar as CalendarIcon, Shield as ShieldIcon } from '@vicons/tabler'
+import SmartLink from '@/components/SmartLink.vue'
 
 const { t } = useI18n()
 
@@ -88,8 +88,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['load-more'])
-
-const router = useRouter()
 
 const loadMoreTrigger = ref(null)
 const observer = ref(null)
@@ -122,9 +120,7 @@ const formatDate = (dateString) => {
 }
 
 // 点击用户
-const handleUserClick = (user) => {
-  router.push(`/user/${user.id}`)
-}
+// 用户跳转已由行级 SmartLink 承担：真实 <a href>，支持 hover URL / 右键新标签页
 
 // 设置 Intersection Observer 实现无限滚动
 const setupObserver = () => {
@@ -224,6 +220,7 @@ watch([() => props.users, () => props.hasMore, () => props.loading, loadMoreTrig
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   cursor: pointer;
+  text-decoration: none;
   transition: all 0.3s ease;
 }
 

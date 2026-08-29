@@ -1,10 +1,10 @@
 <template>
   <div class="app-header">
     <div class="header-left">
-      <div class="logo" @click="goHome">
+      <SmartLink class="logo" :to="homeTarget">
         <img src="/favicon.svg" alt="logo" class="logo-icon" />
         <span class="logo-text">{{ t('common.appName') }}</span>
-      </div>
+      </SmartLink>
     </div>
 
     <div class="header-center">
@@ -47,7 +47,13 @@
             v-if="showSuggestions && searchKeyword.trim()"
             class="search-suggestions"
           >
-            <div class="suggestion-item" @mousedown.prevent="handleSuggestionSearch('post')">
+            <!-- 搜索建议：真实链接可右键新标签页；mousedown.prevent 保持输入框焦点 -->
+            <SmartLink
+              class="suggestion-item"
+              :to="{ path: '/search', query: suggestionQuery('post') }"
+              @mousedown.prevent
+              @click="showSuggestions = false"
+            >
               <svg class="suggestion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
@@ -55,21 +61,31 @@
                 <line x1="16" y1="17" x2="8" y2="17"></line>
               </svg>
               <span class="suggestion-text">{{ t('common.searchPosts') }}：{{ searchKeyword.trim() }}</span>
-            </div>
-            <div class="suggestion-item" @mousedown.prevent="handleSuggestionSearch('circle')">
+            </SmartLink>
+            <SmartLink
+              class="suggestion-item"
+              :to="{ path: '/search', query: suggestionQuery('circle') }"
+              @mousedown.prevent
+              @click="showSuggestions = false"
+            >
               <svg class="suggestion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
               <span class="suggestion-text">{{ t('common.searchCircles') }}：{{ searchKeyword.trim() }}</span>
-            </div>
-            <div class="suggestion-item" @mousedown.prevent="handleSuggestionSearch('user')">
+            </SmartLink>
+            <SmartLink
+              class="suggestion-item"
+              :to="{ path: '/search', query: suggestionQuery('user') }"
+              @mousedown.prevent
+              @click="showSuggestions = false"
+            >
               <svg class="suggestion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
               <span class="suggestion-text">{{ t('common.searchUsers') }}：{{ searchKeyword.trim() }}</span>
-            </div>
+            </SmartLink>
           </div>
         </Transition>
       </div>
@@ -141,6 +157,7 @@ import { AddCircleOutlineFilled as AddIcon } from '@vicons/material'
 import { Bell } from '@vicons/tabler'
 import request from '@/utils/request'
 import LanguageSwitcher from './LanguageSwitcher.vue'
+import SmartLink from '@/components/SmartLink.vue'
 import { getUnreadCount } from '@/api/notice'
 
 const router = useRouter()
@@ -340,10 +357,9 @@ const handleNoticeReadAllEvent = () => {
   notificationCount.value = 0
 }
 
-// 返回主页（匿名态回到发现页，避免被 /home 的登录守卫弹走）
-const goHome = () => {
-  router.push(auth.isAuthenticated() ? '/home' : '/discover')
-}
+// 返回主页（匿名态回到发现页，避免被 /home 的登录守卫弹走）。
+// AppHeader 随视图挂载，登录跳转后重新求值，普通常量即可拿到最新登录态
+const homeTarget = auth.isAuthenticated() ? '/home' : '/discover'
 
 // 匿名态点击「登录」
 const goLogin = () => {
@@ -378,27 +394,13 @@ const handleSearch = () => {
   }
 }
 
-// 搜索建议点击
-const handleSuggestionSearch = (tab) => {
-  const keyword = searchKeyword.value.trim()
-  if (keyword) {
-    showSuggestions.value = false
-    const query = { q: keyword, tab }
-    if (circleSearch.value.id) {
-      query.circle_id = circleSearch.value.id
-    }
-    if (route.name === 'search' && route.query.q === keyword && route.query.tab === tab) {
-      router.replace({
-        path: '/search',
-        query: { ...query, t: Date.now() }
-      })
-    } else {
-      router.push({
-        path: '/search',
-        query
-      })
-    }
+// 搜索建议跳转参数（q + tab，命中圈子搜索态时附带 circle_id）
+const suggestionQuery = (tab) => {
+  const query = { q: searchKeyword.value.trim(), tab }
+  if (circleSearch.value.id) {
+    query.circle_id = circleSearch.value.id
   }
+  return query
 }
 
 // 清除圈子搜索
@@ -456,6 +458,7 @@ const handleClearCircleSearch = () => {
   gap: 8px;
   cursor: pointer;
   user-select: none;
+  text-decoration: none;
 }
 
 .logo-icon {
@@ -626,6 +629,7 @@ const handleClearCircleSearch = () => {
   padding: 10px 14px;
   border-radius: 8px;
   cursor: pointer;
+  text-decoration: none;
   transition: background 0.15s ease;
 }
 
