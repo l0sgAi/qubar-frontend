@@ -41,3 +41,11 @@ const handleClick = (e) => {
   Promise.resolve(router[props.replace ? 'replace' : 'push'](props.to)).catch(() => {})
 }
 </script>
+
+<style scoped>
+/* SmartLink 是卡片式整块跳转而非文本链接：重置 UA 默认的 a 下划线，
+   避免每个使用处重复补 text-decoration:none；确需下划线的场景在使用处自行覆盖 */
+a {
+  text-decoration: none;
+}
+</style>
