@@ -534,7 +534,7 @@ body {
 
 /* @提及 选人面板（MentionPicker 的 NPopover 面板传送到 body，样式必须全局） */
 .mention-picker {
-  width: 240px;
+  width: 280px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -569,7 +569,26 @@ body {
 
 .mention-user-name {
   font-size: 13px;
+  line-height: 1.3;
   color: rgba(255, 255, 255, 0.88);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 用户名 + 邮箱两行容器：min-width:0 让内部 ellipsis 在 flex 行内生效 */
+.mention-user-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.mention-user-email {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -588,9 +607,9 @@ body {
   text-align: right;
 }
 
-/* 编辑器内联 @ 弹窗（MentionTrigger）：比按钮版稍宽防中文名截断；键盘高亮类 */
+/* 编辑器内联 @ 弹窗（MentionTrigger）：比按钮版稍宽防中文名/邮箱截断；键盘高亮类 */
 .mention-suggest {
-  width: 260px;
+  width: 300px;
 }
 
 .mention-user.active {
