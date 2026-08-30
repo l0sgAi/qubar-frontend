@@ -150,11 +150,13 @@ import SideNav from '@/components/SideNav.vue'
 import MyPosts from '@/components/user-profile/MyPosts.vue'
 import MyGroups from '@/components/user-profile/MyGroups.vue'
 import { getUserDetail } from '@/api/user'
+import { usePageTitle } from '@/composables/usePageTitle'
 
 const router = useRouter()
 const offset = ref(260)
 const route = useRoute()
 const message = useMessage()
+const { setTitleData } = usePageTitle()
 
 // 当前激活的标签页
 const activeTab = ref('posts')
@@ -205,6 +207,10 @@ const fetchUserInfo = async () => {
     const response = await getUserDetail(userId)
     if (response.data) {
       userInfo.value = response.data
+      // 数据加载成功后用用户名覆盖标签页标题
+      if (userInfo.value.username) {
+        setTitleData('title.userDetailName', { name: userInfo.value.username })
+      }
     } else {
       message.error('获取用户信息失败')
       router.push('/home')

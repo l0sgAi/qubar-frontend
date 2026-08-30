@@ -286,6 +286,7 @@ import {
 import { useFormatTime } from '@/utils/i18n'
 import { useDebounceFn } from '@/utils/throttle'
 import { useCircleMeta } from '@/composables/useCircleMeta'
+import { usePageTitle } from '@/composables/usePageTitle'
 import {
   CIRCLE_ROLE, MEMBER_STATUS, MEMBER_PAGE_SIZE,
   MUTE_DURATION_MIN, MUTE_DURATION_MAX,
@@ -299,6 +300,7 @@ const dialog = useDialog()
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
 const { getRoleInfo } = useCircleMeta()
+const { setTitleData } = usePageTitle()
 
 const offset = ref(260)
 const circleId = computed(() => route.params.id)
@@ -705,6 +707,10 @@ const initPage = async () => {
       message.error(t('circle.manage.noPermissionVisit'))
       router.replace(`/circle/${circleId.value}`)
       return
+    }
+    // 通过角色校验后用圈子名覆盖标签页标题
+    if (circle.value.name) {
+      setTitleData('title.circleMembersName', { name: circle.value.name })
     }
     activeTab.value = 'normal'
     // 先渲染列表面板（哨兵元素就位），再发首页请求，成功后才能挂上观察器

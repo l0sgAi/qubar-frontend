@@ -54,7 +54,14 @@ export default {
     circleEdit: '编辑圈子资料',
     postDetail: '帖子详情',
     notifications: '消息中心',
-    adminAgents: '机器人管理'
+    adminAgents: '机器人管理',
+    // 动态标题模板：详情页数据加载成功后展示具体内容（见 utils/pageTitle.js）
+    postDetailName: '{name}',
+    circleDetailName: '{name}',
+    userDetailName: '{name}',
+    circleMembersName: '成员管理：{name}',
+    circleEditName: '编辑圈子资料：{name}',
+    profileName: '个人中心：{name}'
   },
 
   // 时间相关

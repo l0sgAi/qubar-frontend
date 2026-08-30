@@ -222,12 +222,14 @@ import ImageCropperModal from '@/components/ImageCropperModal.vue'
 import CircleAdminHeader from '@/components/CircleAdminHeader.vue'
 import { getCircleDetail, getCategories, updateCircle } from '@/api/circle'
 import { useImageUpload } from '@/composables/useImageUpload'
+import { usePageTitle } from '@/composables/usePageTitle'
 import { EMPTY_CATEGORY_ID, isManager, isOwner } from '@/constants/circle'
 
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
+const { setTitleData } = usePageTitle()
 
 const offset = ref(260)
 const circleId = computed(() => route.params.id)
@@ -463,6 +465,10 @@ const initPage = async () => {
     }
     fillForm()
     loadCategories()
+    // 通过角色校验后用圈子名覆盖标签页标题
+    if (circle.value.name) {
+      setTitleData('title.circleEditName', { name: circle.value.name })
+    }
   } catch (error) {
     if (gen !== initPageGen) return
     console.error('加载圈子信息失败:', error)
@@ -505,6 +511,10 @@ const handleSave = async () => {
     const res = await getCircleDetail(circleId.value)
     if (res.data) circle.value = res.data
     fillForm()
+    // 圈子名可能已修改，同步刷新标签页标题
+    if (circle.value.name) {
+      setTitleData('title.circleEditName', { name: circle.value.name })
+    }
   } catch (error) {
     handleSaveError(error)
   } finally {

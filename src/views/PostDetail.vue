@@ -70,6 +70,7 @@ import PostHeaderAndContent from '@/components/post-detail/PostHeaderAndContent.
 import CommentEditor from '@/components/post-detail/CommentEditor.vue'
 import CommentList from '@/components/post-detail/CommentList.vue'
 import { getPostDetail } from '@/api/post'
+import { usePageTitle } from '@/composables/usePageTitle'
 import { toggleLike } from '@/api/like'
 import { toggleCollect } from '@/api/collect'
 import { getCircleDetail } from '@/api/circle'
@@ -82,6 +83,7 @@ import {ArticleRound} from '@vicons/material'
 const route = useRoute()
 const message = useMessage()
 const { t } = useI18n()
+const { setTitleData } = usePageTitle()
 
 // 注入圈子搜索状态设置方法
 const setCircleSearch = inject('setCircleSearch', () => {})
@@ -103,6 +105,11 @@ const loadPostDetail = async () => {
       post.value = res.data
       // 设置评论数
       commentCount.value = res.data.comment_count || 0
+
+      // 数据加载成功后用帖子标题覆盖标签页标题
+      if (post.value.title) {
+        setTitleData('title.postDetailName', { name: post.value.title })
+      }
 
       // 设置圈子搜索状态
       if (post.value.circle_id) {

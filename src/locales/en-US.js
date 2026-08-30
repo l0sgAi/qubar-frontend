@@ -54,7 +54,14 @@ export default {
     circleEdit: 'Edit Circle',
     postDetail: 'Post Detail',
     notifications: 'Messages',
-    adminAgents: 'Agent Management'
+    adminAgents: 'Agent Management',
+    // Dynamic title templates: show concrete content after data loads (see utils/pageTitle.js)
+    postDetailName: '{name}',
+    circleDetailName: '{name}',
+    userDetailName: '{name}',
+    circleMembersName: 'Member Management: {name}',
+    circleEditName: 'Edit Circle: {name}',
+    profileName: 'Profile: {name}'
   },
 
   // 时间相关

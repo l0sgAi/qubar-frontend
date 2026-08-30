@@ -326,6 +326,7 @@ import BrowseHistory from '@/components/user-profile/BrowseHistory.vue'
 import ImageCropperModal from '@/components/ImageCropperModal.vue'
 import { auth } from '@/utils/auth'
 import request from '@/utils/request'
+import { usePageTitle } from '@/composables/usePageTitle'
 import { updateUserInfo, resetPassword } from '@/api/user'
 import { useImageUpload } from '@/composables/useImageUpload'
 import { useI18n } from 'vue-i18n'
@@ -334,6 +335,7 @@ const router = useRouter()
 const route = useRoute()
 const message = useMessage()
 const { t } = useI18n()
+const { setTitleData } = usePageTitle()
 const offset = ref(260)
 
 // 当前激活的标签页（支持 /profile?tab=groups 等定位）
@@ -462,6 +464,10 @@ const fetchUserInfo = async () => {
     const response = await request.get('/user/get')
     if (response.data) {
       userInfo.value = response.data
+      // 数据加载成功后用用户名覆盖标签页标题
+      if (userInfo.value.username) {
+        setTitleData('title.profileName', { name: userInfo.value.username })
+      }
     }
   } catch (error) {
     console.error(t('user.editModal.fetchFailed') + ':', error)

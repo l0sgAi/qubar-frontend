@@ -315,6 +315,7 @@ import { getCircleDetail, joinCircle, leaveCircle, getCirclePosts, getCircleMemb
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
 import { useCircleMeta } from '@/composables/useCircleMeta'
+import { usePageTitle } from '@/composables/usePageTitle'
 import { isManager, MEMBER_PAGE_SIZE } from '@/constants/circle'
 import { Bell as BellIcon, BellOff as BellOffIcon, Edit as EditIcon, DotsVertical as MoreIcon } from '@vicons/tabler'
 import { User as UserIcon, FileText as FileTextIcon, Flame as FlameIcon } from '@vicons/tabler'
@@ -324,6 +325,7 @@ const route = useRoute()
 const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
+const { setTitleData } = usePageTitle()
 const offset = ref(260)
 
 // 注入圈子搜索状态设置方法
@@ -534,6 +536,11 @@ const fetchCircleDetail = async () => {
       // 如果成员状态为4（已退出），则修正 is_joined 为 false
       if (circleDetail.value.member_status === 4) {
         circleDetail.value.is_joined = false
+      }
+
+      // 数据加载成功后用圈子名覆盖标签页标题
+      if (circleDetail.value.name) {
+        setTitleData('title.circleDetailName', { name: circleDetail.value.name })
       }
 
       // 设置圈子搜索状态
