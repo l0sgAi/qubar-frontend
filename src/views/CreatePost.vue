@@ -65,34 +65,65 @@
                 />
               </NFormItem> -->
 
-              <!-- 正文（Markdown编辑器） -->
+              <!-- 正文（Markdown编辑器）：编辑器 + 图片墙 + 底栏包在同一容器内，与评论框一致 -->
               <NFormItem :label="t('post.content')" path="content">
-                <MdEditor
-                  ref="postEditorRef"
-                  v-model="formData.content"
-                  :language="language"
-                  :preview="true"
-                  :toolbars="toolbars"
-                  theme="dark"
-                  :placeholder="t('post.contentPlaceholder')"
-                  :max-length="50000"
-                  :rows="25"
-                  @onUploadImg="handleUploadImg"
-                />
+                <div class="editor-wrapper">
+                  <MdEditor
+                    ref="postEditorRef"
+                    v-model="formData.content"
+                    :language="language"
+                    :preview="false"
+                    :toolbars="toolbars"
+                    theme="dark"
+                    :placeholder="t('post.contentPlaceholder')"
+                    :max-length="50000"
+                    :rows="25"
+                    :footers="[]"
+                  />
+                  <!-- 底栏：自定义图片上传 + @提及 -->
+                  <div class="editor-footer">
+                    <input
+                      ref="fileInputRef"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      style="display: none"
+                      :aria-label="t('comment.editor.uploadImage')"
+                      @change="handleFileSelect"
+                    />
+                    <NButton
+                      quaternary
+                      :title="t('comment.editor.uploadImage')"
+                      :disabled="contentImageCount >= MAX_POST_IMAGES || uploading"
+                      @click="fileInputRef.click()"
+                    >
+                      <template #icon>
+                        <NIcon size="20">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                          </svg>
+                        </NIcon>
+                      </template>
+                    </NButton>
+                    <!-- @提及：按钮选人 + 编辑器内输入 @ 触发选人，共用同一份已选列表 -->
+                        <MentionTrigger
+                      :get-editor-view="getPostEditorView"
+                      :selected-ids="selectedIds"
+                      @select="recordSelection"
+                    />
+                  </div>
+                </div>
               </NFormItem>
               <div class="footer-actions">
-                <!-- @提及：按钮选人 + 编辑器内输入 @ 触发选人，共用同一份已选列表 -->
-                <MentionTrigger
-                  :get-editor-view="getPostEditorView"
-                  :selected-ids="selectedIds"
-                  @select="recordSelection"
-                />
                 <div class="footer-buttons">
                   <NButton size="large" @click="handleCancel">{{ t('common.cancel') }}</NButton>
                   <NButton
                     size="large"
                     type="primary"
                     :loading="submitting"
+                    :disabled="uploading"
                     @click="handleSubmit"
                   >
                     {{ t('common.submit') }}
@@ -100,15 +131,6 @@
                 </div>
               </div>
             </NForm>
-            <!-- 图片上传浮标（居中、醒目） -->
-            <Transition name="upload-overlay">
-              <div v-if="uploading" class="upload-overlay">
-                <div class="upload-floater">
-                  <NProgress type="circle" :percentage="overallProgress" :radius="64" :stroke-width="7" />
-                  <span class="upload-floater__label">{{ t('upload.uploading') }}</span>
-                </div>
-              </div>
-            </Transition>
           </NCard>
 
           <!-- 右侧规则卡片 -->
@@ -129,9 +151,9 @@ import {
   NInput,
   NSelect,
   NButton,
+  NIcon,
   NAvatar,
   NText,
-  NProgress,
   useMessage
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -140,7 +162,6 @@ import 'md-editor-v3/lib/style.css'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
 import CircleRuleCard from '@/components/post-create/CircleRuleCard.vue'
-import MentionPicker from '@/components/MentionPicker.vue'
 import { getMyCircles, createPost } from '@/api/post'
 import { getCircleDetail } from '@/api/circle'
 import { useImageUpload } from '@/composables/useImageUpload'
@@ -153,13 +174,12 @@ const router = useRouter()
 const route = useRoute()
 const message = useMessage()
 const { t } = useI18n()
-const { uploading, progress, uploadMany } = useImageUpload({ withProgress: true })
-// md-editor 内部不便自定义 loading，故用浮标展示整批上传整体进度
-const overallProgress = computed(() => {
-  const arr = progress.value
-  if (!arr.length) return 0
-  return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length)
-})
+const { uploading, uploadMany } = useImageUpload({ withProgress: true })
+// 图片上传走自定义 file input，成功后以 md 语法插入光标处并自动开预览
+const fileInputRef = ref(null)
+const MAX_POST_IMAGES = 9
+// 图片数从正文实时统计（删了正文里的图即释放名额）
+const contentImageCount = computed(() => extractImageUrls(formData.value.content).length)
 const offset = ref(260)
 const formRef = ref(null)
 const submitting = ref(false)
@@ -203,8 +223,8 @@ const toolbars = [
   '-',
   'title',
   'strikeThrough',
-  'sub',
-  'sup',
+  // 'sub',
+  // 'sup',
   'quote',
   'unorderedList',
   'orderedList',
@@ -213,10 +233,9 @@ const toolbars = [
   'codeRow',
   'code',
   'link',
-  'image',
   'table',
-  'katex',
-  'mermaid',
+  // 'katex',
+  // 'mermaid',
   '-',
   'revoke',
   'next',
@@ -225,7 +244,6 @@ const toolbars = [
   'pageFullscreen',
   'fullscreen',
   'preview',
-  'previewOnly',
   'catalog'
 ]
 
@@ -329,20 +347,6 @@ const handleCircleChange = async (circleId) => {
   }
 }
 
-// 上传图片（md-editor onUploadImg 回调）
-const handleUploadImg = async (files, callback) => {
-  try {
-    const urls = await uploadMany(files)
-    // 回填到 media_extra 字段（提交时会被 extractImageUrls 覆盖，此处仅保留即时状态）
-    formData.value.media_extra = [...formData.value.media_extra, ...urls]
-    callback(urls)
-    message.success(t('upload.success'))
-  } catch (error) {
-    console.error('图片上传失败:', error)
-    message.error(t('upload.failed'))
-  }
-}
-
 // 从 Markdown 内容中提取所有图片 URL
 const extractImageUrls = (content) => {
   const imageRegex = /!\[.*?\]\((.*?)\)/g
@@ -354,15 +358,65 @@ const extractImageUrls = (content) => {
   return urls
 }
 
+// 自定义图片上传：成功后以 md 语法插入光标处，并打开预览供检查
+const handleFileSelect = (e) => {
+  const files = Array.from(e.target.files || [])
+  if (!files.length) return
+  uploadFiles(files)
+  e.target.value = ''
+}
+
+const uploadFiles = async (files) => {
+  if (contentImageCount.value >= MAX_POST_IMAGES) {
+    message.warning(t('upload.maxImages', { max: MAX_POST_IMAGES }))
+    return
+  }
+  const remaining = MAX_POST_IMAGES - contentImageCount.value
+  const filesToUpload = files.slice(0, remaining)
+  if (filesToUpload.length < files.length) {
+    message.warning(t('upload.exceedLimit', { remaining }))
+  }
+  try {
+    const urls = await uploadMany(filesToUpload)
+    // 上传期间用户可能已删/增图，插入前按实时剩余名额截断
+    const remainingNow = MAX_POST_IMAGES - contentImageCount.value
+    const urlsToInsert = urls.slice(0, Math.max(0, remainingNow))
+    if (!urlsToInsert.length) {
+      message.warning(t('upload.maxImages', { max: MAX_POST_IMAGES }))
+      return
+    }
+    // 逐张插入 ![](url)，插入后光标落在末尾
+    const mdText = urlsToInsert.map(url => `![image](${url})`).join('\n') + '\n'
+    postEditorRef.value?.insert(() => ({
+      targetValue: mdText,
+      select: false,
+      deviationStart: 0,
+      deviationEnd: 0
+    }))
+    // 打开预览供检查（重复调用幂等：status 显式传 true）
+    postEditorRef.value?.togglePreview(true)
+    message.success(t('upload.success'))
+  } catch (error) {
+    console.error('图片上传失败:', error)
+    message.error(t('upload.failed'))
+  }
+}
+
 // 提交表单
 const handleSubmit = async () => {
+  // 图片上传未完成时禁止提交，避免正文里出现未上传的占位
+  if (uploading.value) return
   try {
     await formRef.value?.validate()
 
-    submitting.value = true
-
-    // 从内容中提取实际的图片 URL，更新 media_extra
+    // 从内容中提取实际的图片 URL，更新 media_extra；发布前再校验一次图片上限
     const actualUrls = extractImageUrls(formData.value.content)
+    if (actualUrls.length > MAX_POST_IMAGES) {
+      message.warning(t('upload.maxImages', { max: MAX_POST_IMAGES }))
+      return
+    }
+
+    submitting.value = true
     // 正文里被删掉的 @ 不传；须为完整 @用户名 token（@alice 不命中 @alice2）；
     // 后端对重复/@自己/不存在用户会静默过滤，最多生效 10 人
     const mentionIds = filterMentionedIds(formData.value.content, mentionedUsers.value)
@@ -423,48 +477,35 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.upload-overlay {
-  position: fixed;
-  inset: 0;
-  /* md-editor-v3 的 Modal/dropdown zIndex 基准 20000（config.mjs），
-     原值 1000 会被其图片上传浮层盖住，导致编辑器内上传看不到进度。
-     提到 99999 确保进度浮标始终可见；pointer-events:none 不影响下层操作。 */
-  z-index: 99999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.22);
-  pointer-events: none;
-}
-
-.upload-floater {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  padding: 28px 40px;
-  background: rgba(24, 24, 28, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+/* 编辑器容器：编辑器 + 图片墙 + 底栏共享一个边框（与评论框一致） */
+.editor-wrapper {
+  width: 100%;
   border-radius: 18px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(10px);
-  pointer-events: none;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.upload-floater__label {
-  font-size: 15px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+.editor-wrapper :deep(.md-editor) {
+  border: none !important;
+  border-radius: 0 !important;
 }
 
-.upload-overlay-enter-active,
-.upload-overlay-leave-active {
-  transition: opacity 0.2s ease;
+.editor-wrapper :deep(.md-editor-toolbar-wrapper) {
+  border-radius: 0;
 }
 
-.upload-overlay-enter-from,
-.upload-overlay-leave-to {
-  opacity: 0;
+/* 编辑区 / 预览区分界：左边框 + 预览区微亮底色，分区一眼可辨 */
+.editor-wrapper :deep(.md-editor-preview-wrapper) {
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.editor-footer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  background: rgb(24, 24, 28);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .create-post-page {
@@ -639,12 +680,10 @@ onMounted(async () => {
   height: 7% !important;
 }
 
-/* 底部按钮：左 @提及，右 取消/提交 */
+/* 底部按钮：右对齐 取消/提交 */
 .footer-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+  justify-content: flex-end;
 }
 
 .footer-buttons {
@@ -665,7 +704,8 @@ onMounted(async () => {
 }
 
 :deep(.md-editor-dark .md-editor-preview) {
-  --md-theme-bg-color: rgb(24, 24, 28);
+  /* 预览区比编辑区(rgb(24,24,28))微亮，配合 preview-wrapper 左边框形成明确分区 */
+  --md-theme-bg-color: rgb(30, 30, 37);
   /* --md-theme-bg-color-inset: #141419;
   --md-theme-color-hover: #141419;
   --md-theme-border-color: rgba(255, 255, 255, 0.1);

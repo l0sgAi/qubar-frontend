@@ -15,12 +15,18 @@
           <div class="hot-header">
             <div class="header-left">
               <h1 class="page-title">{{ t('trending.title') }}</h1>
-              <span class="refreshed-label">{{ refreshedLabel }}</span>
+              <span class="refreshed-label" :class="{ 'is-live': refreshedAt > 0 }">
+                <i class="live-dot"></i>{{ refreshedLabel }}
+              </span> 
             </div>
-            <NRadioGroup v-model:value="window" size="small" @update:value="handleWindowChange">
-              <NRadioButton value="24h">{{ t('trending.window24h') }}</NRadioButton>
-              <NRadioButton value="7d">{{ t('trending.window7d') }}</NRadioButton>
-            </NRadioGroup>
+            <NButtonGroup size="small" class="window-switch">
+              <NButton round :class="{ 'is-active': window === '24h' }" @click="switchWindow('24h')">
+                {{ t('trending.window24h') }}
+              </NButton>
+              <NButton round :class="{ 'is-active': window === '7d' }" @click="switchWindow('7d')">
+                {{ t('trending.window7d') }}
+              </NButton>
+            </NButtonGroup>
           </div>
 
           <!-- 全空态 -->
@@ -31,7 +37,13 @@
           <!-- 三段榜单 -->
           <template v-else>
             <section v-for="sec in sections" :key="sec.type" class="trending-section">
-              <div class="section-title">{{ t(sec.labelKey) }}</div>
+              <div class="section-title">
+                <span class="section-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path fill="currentColor" :d="sec.icon" /></svg>
+                </span>
+                <span class="section-label">{{ t(sec.labelKey) }}</span>
+                <span class="section-line"></span>
+              </div>
 
               <!-- 骨架 -->
               <div v-if="loading" class="section-list">
@@ -70,7 +82,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { NRadioGroup, NRadioButton, useMessage } from 'naive-ui'
+import { NButtonGroup, NButton, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
@@ -87,6 +99,13 @@ const offset = ref(260)
 const SECTION_SIZE = 10
 const window = ref('24h')
 
+// 三段榜单的段标题图标（Material 风格填充路径）
+const SECTION_ICONS = {
+  post: 'M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z',
+  circle: 'M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z',
+  user: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'
+}
+
 const posts = ref([])
 const circles = ref([])
 const users = ref([])
@@ -98,9 +117,9 @@ let fetchGen = 0
 
 // 三段配置（顺序：帖子 → 圈子 → 用户）
 const sections = computed(() => [
-  { type: 'post', labelKey: 'trending.posts', list: posts.value },
-  { type: 'circle', labelKey: 'trending.circles', list: circles.value },
-  { type: 'user', labelKey: 'trending.users', list: users.value }
+  { type: 'post', labelKey: 'trending.posts', icon: SECTION_ICONS.post, list: posts.value },
+  { type: 'circle', labelKey: 'trending.circles', icon: SECTION_ICONS.circle, list: circles.value },
+  { type: 'user', labelKey: 'trending.users', icon: SECTION_ICONS.user, list: users.value }
 ])
 
 const isEmpty = computed(() =>
@@ -139,6 +158,8 @@ const fetchTrending = async () => {
     posts.value = []
     circles.value = []
     users.value = []
+    // 列表已清空，live 指示器同步熄灭，避免误显示旧刷新时间
+    refreshedAt.value = 0
   } finally {
     if (gen === fetchGen) loading.value = false
   }
@@ -149,6 +170,13 @@ const handleWindowChange = () => {
   circles.value = []
   users.value = []
   fetchTrending()
+}
+
+// 按钮组没有 radio 的受控语义，切换时手动赋值再触发刷新
+const switchWindow = (v) => {
+  if (window.value === v) return
+  window.value = v
+  handleWindowChange()
 }
 
 onMounted(() => {
@@ -201,8 +229,27 @@ onBeforeUnmount(() => {
 
 .header-left {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
+}
+
+/* 页面身份图标：主题绿渐变方块 + 白火焰 */
+.title-flame {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-gradient);
+  color: rgba(255, 255, 255, 0.95);
+  /* box-shadow: 0 4px 14px rgba(102, 234, 194, 0.3);
+  flex-shrink: 0; */
+}
+
+.title-flame svg {
+  width: 18px;
+  height: 18px;
 }
 
 .page-title {
@@ -212,9 +259,94 @@ onBeforeUnmount(() => {
   color: rgba(255, 255, 255, 0.95);
 }
 
+/* 时间窗切换：NButtonGroup 圆角胶囊分段控件（内联渲染，scoped :deep 可命中）。
+   组合按钮自身不定高、按钮光环层 border-radius: inherit，
+   外侧圆角由 round 提供、相邻内侧圆角由 naive 内置 !important 压平，
+   不再与自定义样式争抢优先级 */
+.window-switch {
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 去掉按钮自带边框，外框统一由胶囊容器提供。
+   naive 的 hover/focus/pressed 边框规则带伪类、优先级更高，单条 !important 统一压掉 */
+.window-switch :deep(.n-button__border),
+.window-switch :deep(.n-button__state-border) {
+  border: none !important;
+}
+
+.window-switch :deep(.n-button) {
+  padding: 0 14px;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 未选中 hover：白色微亮底（naive 默认类型各状态底色本就是透明，无冲突） */
+.window-switch :deep(.n-button:not(.is-active):hover) {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* 选中：主题绿淡底；补齐 hover/focus/active 变体，
+   避免交互瞬间被 naive 同优先级的透明底色规则顶掉 */
+.window-switch :deep(.n-button.is-active),
+.window-switch :deep(.n-button.is-active:hover),
+.window-switch :deep(.n-button.is-active:focus),
+.window-switch :deep(.n-button.is-active:active) {
+  background-color: rgba(102, 234, 194, 0.16);
+}
+
+/* 文案色写在 __content 上：直接命中恒优先于 naive 设在按钮根上的 color 继承 */
+.window-switch :deep(.n-button .n-button__content) {
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 600;
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.window-switch :deep(.n-button:hover .n-button__content) {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.window-switch :deep(.n-button.is-active .n-button__content) {
+  color: #8af0d0;
+}
+
+/* 键盘可达性：焦点可见时给一圈主题绿描边 */
+.window-switch :deep(.n-button:focus-visible) {
+  outline: 2px solid rgba(102, 234, 194, 0.4);
+  outline-offset: -2px;
+}
+
+/* 「X 分钟前更新」胶囊：有数据时绿点呼吸，无数据灰点静止 */
 .refreshed-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.55);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
+
+.refreshed-label.is-live .live-dot {
+  background: #66eac2;
+  box-shadow: 0 0 6px rgba(102, 234, 194, 0.8);
+  animation: hot-live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes hot-live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 /* 全空态 */
@@ -229,14 +361,45 @@ onBeforeUnmount(() => {
 .trending-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
+/* 段标题：玻璃图标块 + 标题 + 渐变延伸线 */
 .section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 2px;
+}
+
+.section-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(102, 234, 194, 0.1);
+  border: 1px solid rgba(102, 234, 194, 0.22);
+  color: #8af0d0;
+  flex-shrink: 0;
+}
+
+.section-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.section-label {
   font-size: 15px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
-  padding: 4px 2px;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.section-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(102, 234, 194, 0.3), rgba(102, 234, 194, 0.04));
 }
 
 .section-list {
@@ -245,13 +408,40 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
+/* 列表进场 stagger：逐项延迟 40ms，弹性回弹进入（离开不做动画，列表为整体换血） */
+.section-list > * {
+  animation: hot-item-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.section-list > *:nth-child(1) { animation-delay: 0.02s; }
+.section-list > *:nth-child(2) { animation-delay: 0.06s; }
+.section-list > *:nth-child(3) { animation-delay: 0.1s; }
+.section-list > *:nth-child(4) { animation-delay: 0.14s; }
+.section-list > *:nth-child(5) { animation-delay: 0.18s; }
+.section-list > *:nth-child(6) { animation-delay: 0.22s; }
+.section-list > *:nth-child(7) { animation-delay: 0.26s; }
+.section-list > *:nth-child(8) { animation-delay: 0.3s; }
+.section-list > *:nth-child(9) { animation-delay: 0.34s; }
+.section-list > *:nth-child(10) { animation-delay: 0.38s; }
+
+@keyframes hot-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* 骨架 */
 .skel-row {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.03);
 }
 
@@ -262,7 +452,7 @@ onBeforeUnmount(() => {
   border-radius: 6px;
 }
 
-.skel-rank { width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0; }
+.skel-rank { width: 18px; height: 18px; border-radius: 6px; flex-shrink: 0; }
 .skel-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; }
 .skel-text { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .skel-line { height: 12px; width: 60%; }

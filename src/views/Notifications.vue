@@ -38,15 +38,15 @@
             </button>
           </div>
 
-          <!-- 通知列表 -->
+          <!-- 通知列表：整条为真实链接，右键/中键可新标签页打开 -->
           <div class="notice-list">
-            <button
+            <SmartLink
               v-for="item in notices"
               :key="item.id"
-              type="button"
               class="notice-item"
               :class="{ unread: !item.is_read }"
-              @click="handleClickNotice(item)"
+              :to="noticeTarget(item)"
+              @click="markReadAndBump(item)"
             >
               <NAvatar
                 round
@@ -63,7 +63,7 @@
                 <div class="notice-time">{{ formatTime(item.create_time) }}</div>
               </div>
               <span v-if="!item.is_read" class="unread-dot"></span>
-            </button>
+            </SmartLink>
 
             <!-- 空态 -->
             <NEmpty v-if="!loading && !notices.length" :description="t('notice.empty')" class="notice-empty" />
@@ -85,15 +85,14 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
 import { NAvatar, NButton, NEmpty, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
+import SmartLink from '@/components/SmartLink.vue'
 import { getNoticeList, markNoticesRead, markAllNoticesRead } from '@/api/notice'
 import { useFormatTime } from '@/utils/i18n'
 
-const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
@@ -189,27 +188,25 @@ const switchTab = (type) => {
   loadNotices(true)
 }
 
-// 点击通知：未读则顺手标读，再跳帖子详情（有 comment_id 带上定位参数）
-const handleClickNotice = async (item) => {
-  if (!item.is_read) {
-    item.is_read = true
-    try {
-      await markNoticesRead([item.id])
-      // 通知顶栏角标本地校正
-      window.dispatchEvent(new CustomEvent('notice-read', { detail: { count: 1 } }))
-    } catch (error) {
-      console.error('标记已读失败:', error)
-    }
-  }
-
-  if (!item.post_id) return
-  router.push({
+// 通知跳转目标：帖子详情（有 comment_id 带上定位参数）；无 post_id 时降级为普通块
+const noticeTarget = (item) => {
+  if (!item.post_id) return null
+  return {
     path: `/post/${item.post_id}`,
     query: item.comment_id ? { comment_id: item.comment_id } : {}
-  }).catch(() => {
-    // 目标帖子可能已删除（404），提示后停留当前页
-    message.warning(t('notice.targetDeleted'))
-  })
+  }
+}
+
+// 点击通知顺手标记已读并校正顶栏角标（跳转由 SmartLink 承担）
+const markReadAndBump = async (item) => {
+  if (item.is_read) return
+  item.is_read = true
+  try {
+    await markNoticesRead([item.id])
+    window.dispatchEvent(new CustomEvent('notice-read', { detail: { count: 1 } }))
+  } catch (error) {
+    console.error('标记已读失败:', error)
+  }
 }
 
 // 全部已读：本地清零角标 + 列表样式
@@ -380,7 +377,7 @@ onUnmounted(() => {
   gap: 4px;
 }
 
-/* 通知条目：原生 button 重置默认外观（内层圆角比容器小一档） */
+/* 通知条目：整条为链接（SmartLink 渲染 <a>），重置链接默认外观（内层圆角比容器小一档） */
 .notice-item {
   display: flex;
   align-items: flex-start;
@@ -392,6 +389,7 @@ onUnmounted(() => {
   background: none;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   color: inherit;
   cursor: pointer;
   transition: background 0.2s ease;

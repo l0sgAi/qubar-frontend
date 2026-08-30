@@ -52,8 +52,10 @@
           :key="group.id"
           class="group-card"
           :bordered="false"
-          hoverable
-          @click="handleClick(group)">
+          hoverable>
+          <!-- 整卡封面链接（stretched-link）：铺满卡片承担圈子跳转，
+               右键/中键可新标签页打开 -->
+          <SmartLink class="post-cover-link" :to="`/circle/${group.id}`" :aria-label="group.name" />
           <div class="group-info">
             <NAvatar round :size="60" :src="group.avatar">
               <div v-if="!group.avatar">{{ (group.name || '').charAt(0) }}</div>
@@ -83,13 +85,12 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
 import { NCard, NAvatar, NIcon, NInput, NButton, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useFormatNumber } from '@/utils/i18n'
 import { getMyCircles, getUserCircles } from '@/api/post'
+import SmartLink from '@/components/SmartLink.vue'
 
-const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
 const { formatNumber } = useFormatNumber()
@@ -121,7 +122,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['click', 'total-change'])
+const emit = defineEmits(['total-change'])
 
 const searchKey = ref('')
 const loading = ref(false)
@@ -262,13 +263,8 @@ watch(() => props.active, (next, prev) => {
   }
 })
 
-// 点击圈子：跳转圈子详情，同时上抛 click 供父组件兜底
-const handleClick = (group) => {
-  emit('click', group)
-  if (group && group.id) {
-    router.push(`/circle/${group.id}`)
-  }
-}
+// 圈子跳转已由卡片封面链接（SmartLink）承担：真实 <a href>，
+// 支持 hover URL / 右键新标签页；此处不再监听点击（旧版 emit+push 会双跳转）
 
 onMounted(() => {
   if (isFetchMode.value) {
@@ -315,6 +311,7 @@ onBeforeUnmount(() => {
 }
 
 .group-card {
+  position: relative;
   background: rgba(255, 255, 255, 0.02) !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
   border-radius: 16px !important;
@@ -327,6 +324,13 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
   transform: translateY(-4px);
+}
+
+/* 整卡封面链接（stretched-link）：铺满卡片让浏览器在任意位置识别出圈子链接 */
+.post-cover-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 .group-info {

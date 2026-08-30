@@ -30,9 +30,9 @@
             :src="post.author_avatar || '/default-avatar.png'"
           />
           <div class="author-text">
-            <div class="author-name" :class="{ clickable: post.author_id }" @click="goToUserDetail(post.author_id)">
+            <SmartLink class="author-name" :class="{ clickable: post.author_id }" :to="post.author_id ? `/user/${post.author_id}` : null">
               {{ post.author_name || t('user.anonymous') }}
-            </div>
+            </SmartLink>
             <div class="post-time">
               {{ formatTime(post.create_time) }}
             </div>
@@ -147,8 +147,8 @@
 <script setup>
 import { NCard, NTag, NAvatar, NButton, NIcon } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import MentionPreview from '@/components/MentionPreview.vue'
+import SmartLink from '@/components/SmartLink.vue'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 
 defineProps({
@@ -167,17 +167,9 @@ defineEmits(['like', 'collect'])
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
 const { formatNumber } = useFormatNumber()
-const router = useRouter()
 
 const VIEW_COUNT_CAP = 1_000_000_000
 const STATS_COUNT_CAP = 100_000_000
-
-// 跳转到用户详情页
-const goToUserDetail = (userId) => {
-  if (userId) {
-    router.push(`/user/${userId}`)
-  }
-}
 
 const getStatusText = (status) => {
   const statusMap = {
@@ -250,6 +242,7 @@ const getStatusTagType = (status) => {
   font-size: 18px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
   transition: color 0.2s;
 }
 

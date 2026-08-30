@@ -1,8 +1,11 @@
 <template>
-  <NCard class="post-card" :bordered="false" @click="handleClick">
+  <NCard class="post-card" :bordered="false">
+    <!-- 整卡封面链接（stretched-link）：铺满卡片承担帖子跳转，hover 任意位置显示
+         /post/:id、右键/中键可新标签页打开；圈子/用户/轮播等交互区抬 z-index 各自响应 -->
+    <SmartLink class="post-cover-link" :to="`/post/${postId}`" :aria-label="title" />
     <!-- 帖子头部 -->
     <div v-if="showCircle" class="post-header">
-      <div class="circle-info" @click.stop="goToCircle">
+      <SmartLink class="circle-info" :to="circleId ? `/circle/${circleId}` : null">
         <NAvatar
           round
           :size="48"
@@ -11,19 +14,19 @@
           <div v-if="circleAvatar===undefined || circleAvatar===''">{{ circleName.charAt(0) }}</div>
         </NAvatar>
         <span class="circle-name">{{ circleName }}</span>
-      </div>
+      </SmartLink>
       <div class="header-spacer"></div>
-      <div class="user-info" @click.stop="goToUser">
+      <SmartLink class="user-info" :to="userId ? `/user/${userId}` : null">
         <div class="user-meta">
           <div class="user-name">{{ userName }}</div>
           <div class="post-time">
             <NTime :time="postTime" format="yyyy-MM-dd HH:mm" />
           </div>
         </div>
-      </div>
+      </SmartLink>
     </div>
     <div v-else class="post-header">
-      <div class="author-info" @click.stop="goToUser">
+      <SmartLink class="author-info" :to="userId ? `/user/${userId}` : null">
         <NAvatar round :size="40" :src="userAvatar">
           <div v-if="!userAvatar">{{ userName.charAt(0) }}</div>
         </NAvatar>
@@ -33,7 +36,7 @@
             <NTime :time="postTime" format="yyyy-MM-dd HH:mm" />
           </div>
         </div>
-      </div>
+      </SmartLink>
     </div>
 
     <!-- 帖子内容 -->
@@ -89,15 +92,14 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { NCard, NAvatar, NButton, NIcon, NTime, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { toggleLike } from '@/api/like'
 import { useDebounceFn } from '@/utils/throttle'
 import ImageCarousel from '@/components/post-detail/ImageCarousel.vue'
+import SmartLink from '@/components/SmartLink.vue'
 import { useFormatNumber } from '@/utils/i18n'
 
-const router = useRouter()
 const { t } = useI18n()
 const { formatNumber } = useFormatNumber()
 
@@ -247,26 +249,11 @@ const handleCollect = () => {
   isCollected.value = !isCollected.value
   message.info(isCollected.value ? t('post.actions.favorite') : t('common.cancel'))
 }
-
-const handleClick = () => {
-  router.push(`/post/${props.postId}`)
-}
-
-const goToCircle = () => {
-  if (props.circleId) {
-    router.push(`/circle/${props.circleId}`)
-  }
-}
-
-const goToUser = () => {
-  if (props.userId) {
-    router.push(`/user/${props.userId}`)
-  }
-}
 </script>
 
 <style scoped>
 .post-card {
+  position: relative;
   margin-bottom: 20px;
   background: rgba(255, 255, 255, 0.03) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -282,6 +269,14 @@ const goToUser = () => {
   cursor: pointer;
 }
 
+/* 整卡封面链接（stretched-link）：铺满卡片让浏览器在任意位置识别出帖子链接
+   （hover 状态栏 URL / 右键新标签页）；内层交互区（圈子/用户/轮播）抬层优先响应 */
+.post-cover-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
 /* 帖子头部 */
 .post-header {
   display: flex;
@@ -291,6 +286,8 @@ const goToUser = () => {
 }
 
 .circle-info {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 15px;
@@ -323,6 +320,8 @@ const goToUser = () => {
 }
 
 .user-info {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -340,6 +339,8 @@ const goToUser = () => {
 }
 
 .author-info {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -420,8 +421,11 @@ const goToUser = () => {
   opacity: 1;
 }
 
-/* 图片轮播（封面图/多图统一）：与摘要文本左对齐（16px） */
+/* 图片轮播（封面图/多图统一）：与摘要文本左对齐（16px）；
+   抬层盖住封面链接，图片交互不触发整卡跳转 */
 .post-carousel {
+  position: relative;
+  z-index: 2;
   margin-left: 16px;
   margin-bottom: 12px;
 }

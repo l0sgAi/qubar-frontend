@@ -26,7 +26,10 @@
             <NAvatar round :size="28" :src="user.avatar_url || undefined">
               <span v-if="!user.avatar_url">{{ (user.username || '?').charAt(0).toUpperCase() }}</span>
             </NAvatar>
-            <span class="mention-user-name">{{ user.username }}</span>
+            <div class="mention-user-info">
+              <span class="mention-user-name">{{ user.username }}</span>
+              <span v-if="user.email" class="mention-user-email">{{ user.email }}</span>
+            </div>
             <span class="mention-role" :class="`mention-role--${roleClass(user.role)}`">
               {{ t(`user.roles.${roleClass(user.role)}`) }}
             </span>
@@ -85,8 +88,9 @@ const onResultsScroll = (e) => {
   if (el.scrollHeight - el.scrollTop - el.clientHeight < 24) search.loadMore()
 }
 
-// 弹窗定位参数：估高兜底（nextTick 后测量真实高度再翻转）+ 与光标的间距
-const PANEL_H = 200
+// 弹窗定位参数：估高兜底（nextTick 后测量真实高度再翻转）+ 与光标的间距；
+// 候选行含邮箱两行文本后单行约 48px，按可见 5 行估
+const PANEL_H = 260
 const GAP = 6
 // 弹窗打开时接管的方向/确认/退出键
 const KEYS = new Set(['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'])

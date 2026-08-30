@@ -32,7 +32,7 @@
 
 <script setup>
 import { ref, h, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter, useRoute, RouterLink } from 'vue-router'
 import {
   NLayout,
   NLayoutSider,
@@ -139,7 +139,7 @@ const activeCirclesLoading = ref(false)
 
 // 机器人管理菜单项：对所有用户开放，后端做权限控制（避免异步角色判断导致菜单项跳动）
 const agentMenuItem = computed(() => ({
-  label: t('agent.navEntry'),
+  label: linkLabel('/admin/agents', t('agent.navEntry')),
   key: 'admin-agents',
   icon: () => h(NIcon, null, { default: () => h(RobotOutlined) })
 }))
@@ -206,6 +206,11 @@ const renderSkeletonItem = (key) => ({
   disabled: true
 })
 
+// 导航项 label 用 RouterLink 渲染出真实 <a href>：
+// 保留 hover 状态栏 URL、右键/中键新标签页；普通点击仍由 RouterLink 走 SPA 路由
+const linkLabel = (to, text) => () =>
+  h(RouterLink, { to, class: 'nav-link' }, { default: () => text })
+
 // 当前激活的导航项：根据路由派生
 // SideNav 在每个视图里独立挂载（非常驻布局），若用写死的 ref，
 // 跳转后新挂载的实例会重置为默认值，导致高亮跟不上路由。
@@ -232,17 +237,17 @@ const menuOptions = computed(() => {
   if (isCollapsed.value) {
     return [
       {
-        label: t('nav.home'),
+        label: linkLabel('/home', t('nav.home')),
         key: 'home',
         icon: () => h(NIcon, null, { default: () => h(HomeIcon) })
       },
       {
-        label: t('nav.hot'),
+        label: linkLabel('/hot', t('nav.hot')),
         key: 'hot',
         icon: () => h(NIcon, null, { default: () => h(FireIcon) })
       },
       {
-        label: t('nav.discover'),
+        label: linkLabel('/discover', t('nav.discover')),
         key: 'explore',
         icon: () => h(NIcon, null, { default: () => h(Explore) })
       },
@@ -258,17 +263,17 @@ const menuOptions = computed(() => {
   // 展开时显示完整菜单
   return [
     {
-      label: t('nav.home'),
+      label: linkLabel('/home', t('nav.home')),
       key: 'home',
       icon: () => h(NIcon, null, { default: () => h(HomeIcon) })
     },
     {
-      label: t('nav.hot'),
+      label: linkLabel('/hot', t('nav.hot')),
       key: 'hot',
       icon: () => h(NIcon, null, { default: () => h(FireIcon) })
     },
     {
-      label: t('nav.discover'),
+      label: linkLabel('/discover', t('nav.discover')),
       key: 'explore',
       icon: () => h(NIcon, null, { default: () => h(Explore) })
     },
@@ -290,12 +295,16 @@ const menuOptions = computed(() => {
         ? Array.from({ length: 5 }, (_, i) => renderSkeletonItem(`joined-skeleton-${i}`))
         : [
             ...joinedCircles.value.map(circle => ({
-              label: circle.name,
+              label: linkLabel(`/circle/${circle.id}`, circle.name),
               key: `circle-${circle.id}`,
               icon: () => renderCircleIcon(circle)
             })),
             {
-              label: () => h('span', { style: { color: 'var(--theme-color)' } }, t('circle.viewAll')),
+              label: () => h(RouterLink, {
+                to: { path: '/profile', query: { tab: 'groups' } },
+                class: 'nav-link',
+                style: { color: 'var(--theme-color)' }
+              }, { default: () => t('circle.viewAll') }),
               key: 'view-all-circles',
               icon: () => h(NIcon, { color: 'var(--theme-color)' }, { default: () => h(MoreDotsIcon) })
             }
@@ -311,7 +320,7 @@ const menuOptions = computed(() => {
             children: activeCirclesLoading.value
               ? Array.from({ length: 5 }, (_, i) => renderSkeletonItem(`active-skeleton-${i}`))
               : activeCircles.value.map(circle => ({
-                  label: circle.name,
+                  label: linkLabel(`/circle/${circle.id}`, circle.name),
                   key: `active-circle-${circle.id}`,
                   icon: () => renderCircleIcon(circle)
                 }))
@@ -321,7 +330,9 @@ const menuOptions = computed(() => {
   ]
 })
 
-// 菜单选择处理
+// 菜单选择处理：label 已是 RouterLink，点击文字时这里与 RouterLink 各触发一次
+// 跳转，vue-router 对同地址重复 push 会静默去重，无副作用；保留此 handler 是为了
+// 让点击图标 / 空白区域（落在 <a> 外）仍能跳转
 const handleMenuSelect = (key) => {
   if (key === 'create') {
     showCreateModal.value = true
@@ -444,6 +455,12 @@ const handleCreateSuccess = (data) => {
 
 :deep(.n-menu-item-content-header) {
   color: inherit !important;
+}
+
+/* RouterLink 渲染的菜单链接：跟随菜单配色，去掉默认下划线 */
+:deep(.n-menu-item-content-header a.nav-link) {
+  color: inherit;
+  text-decoration: none;
 }
 
 /* 折叠状态下的图标居中 */

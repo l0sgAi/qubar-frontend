@@ -1,6 +1,6 @@
 <template>
   <!-- 发现帖子方块（灵感墙用）：紧凑卡片，有图显示首图，无图显示文字 -->
-  <div class="discover-post-tile" @click="handleClick">
+  <SmartLink class="discover-post-tile" :to="post.postId ? `/post/${post.postId}` : null">
     <div v-if="coverImage" class="tile-banner">
       <img :src="coverImage" :alt="title" loading="lazy" />
     </div>
@@ -27,13 +27,13 @@
         </span>
       </div>
     </div>
-  </div>
+  </SmartLink>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useFormatNumber } from '@/utils/i18n'
+import SmartLink from '@/components/SmartLink.vue'
 
 const props = defineProps({
   // 已 transform 的 post 对象（camelCase，与 PostCard 同源）
@@ -43,9 +43,7 @@ const props = defineProps({
   }
 })
 
-const router = useRouter()
 const { formatNumber } = useFormatNumber()
-
 const title = computed(() => props.post.title || '')
 const content = computed(() => props.post.content || '')
 const userName = computed(() => props.post.userName || '')
@@ -59,11 +57,6 @@ const coverImage = computed(() => {
   if (Array.isArray(imgs) && imgs.length > 0) return imgs[0]
   return props.post.coverImage || ''
 })
-
-const handleClick = () => {
-  const id = props.post.postId
-  if (id) router.push(`/post/${id}`)
-}
 </script>
 
 <style scoped>

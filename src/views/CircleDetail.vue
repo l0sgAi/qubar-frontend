@@ -87,6 +87,24 @@
                 {{t('post.createPost')}}
               </NButton>
 
+              <!-- 管理按钮（圈主/管理员可见），有待审核申请时显示数量角标 -->
+              <NButton
+                v-if="canManage"
+                size="large"
+                type="primary"
+                secondary
+                round
+                @click="router.push(`/circle/${circleDetail.id}/members`)"
+              >
+                <template #icon>
+                  <NIcon><ShieldCheckIcon /></NIcon>
+                </template>
+                {{ t('circle.manage.entry') }}
+                <span v-if="pendingModCount > 0" class="manage-badge">
+                  {{ pendingModFull ? t('circle.manage.badgeFull') : pendingModCount }}
+                </span>
+              </NButton>
+
               <!-- 加入/退出按钮 -->
               <NButton
                 v-if="!circleDetail.is_joined"
@@ -293,11 +311,14 @@ import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
 import PostList from '@/components/PostList.vue'
 import PostListSkeleton from '@/components/PostListSkeleton.vue'
-import { getCircleDetail, joinCircle, leaveCircle, getCirclePosts } from '@/api/circle'
+import { getCircleDetail, joinCircle, leaveCircle, getCirclePosts, getCircleMembers } from '@/api/circle'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
+import { useCircleMeta } from '@/composables/useCircleMeta'
+import { isManager, MEMBER_PAGE_SIZE } from '@/constants/circle'
 import { Bell as BellIcon, BellOff as BellOffIcon, Edit as EditIcon, DotsVertical as MoreIcon } from '@vicons/tabler'
 import { User as UserIcon, FileText as FileTextIcon, Flame as FlameIcon } from '@vicons/tabler'
+import { ShieldCheck as ShieldCheckIcon } from '@vicons/tabler'
 
 const route = useRoute()
 const router = useRouter()
@@ -493,35 +514,8 @@ const formatDate = (dateStr) => {
   })
 }
 
-// 获取加入方式文本
-const getJoinTypeText = (type) => {
-  const types = {
-    0: t('circle.joinTypeDirect'),
-    1: t('circle.joinTypeReview'),
-    2: t('circle.joinTypePrivate')
-  }
-  return types[type] || t('common.unknown')
-}
-
-// 获取角色文本和类型
-const getRoleInfo = (role) => {
-  const roles = {
-    10: { text: t('circle.roleMember'), type: 'default' },
-    20: { text: t('circle.roleAdmin'), type: 'info' },
-    30: { text: t('circle.roleOwner'), type: 'warning' }
-  }
-  return roles[role] || { text: t('common.unknown'), type: 'default' }
-}
-
-// 获取状态文本和类型
-const getMemberStatusInfo = (status) => {
-  const statuses = {
-    0: { text: t('circle.statusNormal'), type: 'success' },
-    1: { text: t('circle.statusNormal'), type: 'success' },
-    2: { text: t('circle.statusMuted'), type: 'error' }
-  }
-  return statuses[status] || { text: t('common.unknown'), type: 'default' }
-}
+// 角色/状态/加入方式文案映射（与成员管理页共用，含 0-4 全量状态）
+const { getRoleInfo, getMemberStatusInfo, getJoinTypeText } = useCircleMeta()
 
 // 获取圈子详情
 const fetchCircleDetail = async () => {
@@ -548,6 +542,9 @@ const fetchCircleDetail = async () => {
         name: circleDetail.value.name,
         avatar_url: circleDetail.value.avatar_url
       })
+
+      // 管理角色时拉取待审核数，供管理入口角标展示
+      fetchPendingModCount()
 
       // TODO: 根据category_id获取分类名称
     }
@@ -629,6 +626,36 @@ const handleMoreSelect = (key) => {
   }
 }
 
+// ---------- 管理入口（圈主/管理员） ----------
+
+const canManage = computed(() => isManager(circleDetail.value.member_role))
+
+// 待审核角标（入口提示）：拉一页 status=0&size=20，满页显示「20+」
+const pendingModCount = ref(0)
+const pendingModFull = ref(false)
+
+// 世代守卫：切换圈子后旧请求的响应直接丢弃，防止角标被上一个圈子的数据覆盖
+let pendingModGen = 0
+
+const fetchPendingModCount = async () => {
+  const gen = ++pendingModGen
+  if (!canManage.value) return
+  try {
+    const res = await getCircleMembers({
+      circle_id: circleDetail.value.id,
+      status: '0',
+      size: MEMBER_PAGE_SIZE
+    })
+    if (gen !== pendingModGen) return
+    pendingModCount.value = res.data?.members?.length || 0
+    pendingModFull.value = pendingModCount.value >= MEMBER_PAGE_SIZE
+  } catch {
+    if (gen !== pendingModGen) return
+    pendingModCount.value = 0
+    pendingModFull.value = false
+  }
+}
+
 // 无限滚动
 const hotSentinel = ref(null)
 const newSentinel = ref(null)
@@ -685,6 +712,8 @@ watch(() => route.params.id, async (newId, oldId) => {
   hotHasMore.value = true
   newHasMore.value = true
   topHasMore.value = true
+  pendingModCount.value = 0
+  pendingModFull.value = false
 
   await fetchCircleDetail()
   fetchPosts(activeTab.value)
@@ -872,6 +901,20 @@ onUnmounted(() => {
 
 .card-body {
   padding: 20px;
+}
+
+/* 管理按钮上的待审核数量角标 */
+.manage-badge {
+  min-width: 18px;
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: rgba(255, 90, 90, 0.9);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
 }
 
 /* 统计数据 */
