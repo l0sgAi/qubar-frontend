@@ -74,6 +74,20 @@ const router = createRouter({
       component: () => import('../views/CircleDetail.vue')
     },
     {
+      // 圈子成员管理：需登录；圈主/管理员（member_role>=20）校验在页面内自查（非管理角色 /circle/members 返回 403）
+      path: '/circle/:id/members',
+      name: 'circle-members',
+      component: () => import('../views/CircleMembers.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      // 圈子资料编辑：需登录；圈主可改全部字段、管理员仅部分字段（页面内按 member_role 自查并按角色渲染）
+      path: '/circle/:id/edit',
+      name: 'circle-edit',
+      component: () => import('../views/CircleEdit.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       // 帖子详情：访客可读（/post/detail/:id 已开放 anonymous）
       path: '/post/:id',
       name: 'post-detail',

@@ -17,7 +17,7 @@
               <h1 class="page-title">{{ t('trending.title') }}</h1>
               <span class="refreshed-label" :class="{ 'is-live': refreshedAt > 0 }">
                 <i class="live-dot"></i>{{ refreshedLabel }}
-              </span>
+              </span> 
             </div>
             <NButtonGroup size="small" class="window-switch">
               <NButton round :class="{ 'is-active': window === '24h' }" @click="switchWindow('24h')">
