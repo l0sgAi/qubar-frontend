@@ -25,24 +25,22 @@
         <!-- 管理页共享页头：返回 + 圈子信息 + 角色 + 成员管理/编辑资料切换（含待审核角标） -->
         <CircleAdminHeader ref="adminHeaderRef" active="members" :circle="circle" />
 
-        <!-- 成员 Tab：待审核(0) / 正常成员(1) / 禁言中(2) / 已拉黑(3) -->
+        <!-- 成员 Tab：正常成员(1) / 待审核(0) / 禁言中(2) / 已拉黑(3)；搜索框固定在 tab 行右侧 -->
         <div class="members-panel">
-          <!-- 搜索框：作用于当前 Tab（服务端按用户名/邮箱匹配，可与 status 过滤叠加） -->
-          <div class="members-toolbar">
-            <NInput
-              v-model:value="searchInput"
-              class="member-search"
-              size="small"
-              clearable
-              :placeholder="t('circle.manage.searchPlaceholder')"
-            >
-              <template #prefix>
-                <NIcon size="14"><SearchIcon /></NIcon>
-              </template>
-            </NInput>
-          </div>
-
           <NTabs v-model:value="activeTab" type="line" animated size="large">
+            <!-- 搜索框：作用于当前 Tab（服务端按用户名/邮箱匹配，可与 status 过滤叠加） -->
+            <template #suffix>
+              <NInput
+                v-model:value="searchInput"
+                class="member-search"
+                clearable
+                :placeholder="t('circle.manage.searchPlaceholder')"
+              >
+                <template #prefix>
+                  <NIcon size="14"><SearchIcon /></NIcon>
+                </template>
+              </NInput>
+            </template>
             <NTabPane v-for="tab in tabDefs" :key="tab.key" :name="tab.key" display-directive="show:lazy">
               <template #tab>{{ tab.label }}</template>
 
@@ -310,15 +308,15 @@ const myRole = computed(() => circle.value.member_role || 0)
 const pageLoading = ref(true)
 const actingId = ref('')
 
-// Tab 定义：key → 后端 status（注意按文档以字符串传参）
+// Tab 定义：key → 后端 status（注意按文档以字符串传参）；默认展示正常成员
 const TAB_STATUS = { pending: '0', normal: '1', muted: '2', banned: '3' }
 const tabDefs = computed(() => [
-  { key: 'pending', label: t('circle.manage.tabs.pending') },
   { key: 'normal', label: t('circle.manage.tabs.normal') },
+  { key: 'pending', label: t('circle.manage.tabs.pending') },
   { key: 'muted', label: t('circle.manage.tabs.muted') },
   { key: 'banned', label: t('circle.manage.tabs.banned') }
 ])
-const activeTab = ref('pending')
+const activeTab = ref('normal')
 
 // 每个 Tab 独立的游标分页状态（keyword 为该 Tab 的搜索关键字，服务端按用户名/邮箱匹配）
 const tabState = reactive({
@@ -706,11 +704,11 @@ const initPage = async () => {
       router.replace(`/circle/${circleId.value}`)
       return
     }
-    activeTab.value = 'pending'
+    activeTab.value = 'normal'
     // 先渲染列表面板（哨兵元素就位），再发首页请求，成功后才能挂上观察器
     pageLoading.value = false
     await nextTick()
-    await loadTab('pending', true)
+    await loadTab('normal', true)
   } catch (error) {
     console.error('加载圈子信息失败:', error)
     message.error(t('messages.getDetailFailed', { error: error.message || t('common.unknownError') }))
@@ -760,18 +758,22 @@ onUnmounted(cleanupObservers)
   border-radius: 16px;
 }
 
-/* 搜索框：作用于当前 Tab */
-.members-toolbar {
-  padding: 8px 0 4px;
-}
-
+/* 搜索框：胶囊造型，固定在 tab 行右侧（NTabs suffix 插槽），作用于当前 Tab */
 .member-search {
-  max-width: 280px;
+  width: 220px;
+  --n-border-radius: 999px !important;
+  --n-color: rgba(255, 255, 255, 0.05) !important;
+  --n-color-focus: rgba(255, 255, 255, 0.08) !important;
+  --n-border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  --n-border-hover: 1px solid rgba(102, 234, 194, 0.45) !important;
+  --n-border-focus: 1px solid rgba(102, 234, 194, 0.65) !important;
+  --n-box-shadow-focus: 0 0 0 3px rgba(102, 234, 194, 0.15) !important;
+  --n-caret-color: #66eac2 !important;
 }
 
 @media (max-width: 640px) {
   .member-search {
-    max-width: 100%;
+    width: 150px;
   }
 }
 

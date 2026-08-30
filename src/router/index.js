@@ -75,17 +75,18 @@ const router = createRouter({
     },
     {
       // 圈子成员管理：需登录；圈主/管理员（member_role>=20）校验在页面内自查（非管理角色 /circle/members 返回 403）
+      // pageFade：与编辑资料互切时启用页面级淡入过渡（见 App.vue）
       path: '/circle/:id/members',
       name: 'circle-members',
       component: () => import('../views/CircleMembers.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, pageFade: true }
     },
     {
       // 圈子资料编辑：需登录；圈主可改全部字段、管理员仅部分字段（页面内按 member_role 自查并按角色渲染）
       path: '/circle/:id/edit',
       name: 'circle-edit',
       component: () => import('../views/CircleEdit.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, pageFade: true }
     },
     {
       // 帖子详情：访客可读（/post/detail/:id 已开放 anonymous）

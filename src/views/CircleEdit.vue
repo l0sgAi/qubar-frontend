@@ -94,62 +94,42 @@
 
               <NFormItem :label="t('circle.form.avatar')" path="avatar_url">
                 <div class="image-field">
-                  <div class="image-preview">
-                    <img v-if="form.avatar_url" :src="form.avatar_url" class="preview-img preview-img--avatar" />
-                    <div v-else class="preview-empty">{{ t('user.notSet') }}</div>
-                    <NUpload
-                      class="image-upload"
-                      :max="1"
-                      :file-list="avatarFileList"
-                      @update:file-list="handleAvatarChange"
-                      :custom-request="handleUploadAvatar"
-                      list-type="text"
-                      accept="image/*"
-                    >
-                      <NButton size="small" round secondary>{{ t('circle.form.avatarUpload') }}</NButton>
-                    </NUpload>
-                    <NButton
-                      v-if="form.avatar_url"
-                      size="tiny"
-                      quaternary
-                      round
-                      type="error"
-                      @click="removeAvatar"
-                    >
-                      {{ t('circle.edit.removeImage') }}
-                    </NButton>
-                  </div>
+                  <!-- image-card 上传（参考 UserProfile 修改头像交互）：
+                       图片即卡片，预览/删除为悬浮角标；max=1 时上传卡自动隐藏 -->
+                  <NUpload
+                    class="image-card-upload"
+                    :max="1"
+                    :file-list="avatarFileList"
+                    list-type="image-card"
+                    accept="image/*"
+                    :custom-request="handleUploadAvatar"
+                    @update:file-list="handleAvatarChange"
+                  >
+                    <div class="upload-trigger">
+                      <NIcon :size="20"><UploadIcon /></NIcon>
+                      <span>{{ t('circle.form.avatarUpload') }}</span>
+                    </div>
+                  </NUpload>
                   <NText depth="3" style="font-size: 12px">{{ t('circle.form.avatarTip') }}</NText>
                 </div>
               </NFormItem>
 
               <NFormItem :label="t('circle.form.cover')" path="cover_url">
                 <div class="image-field">
-                  <div class="image-preview">
-                    <img v-if="form.cover_url" :src="form.cover_url" class="preview-img preview-img--cover" />
-                    <div v-else class="preview-empty preview-empty--cover">{{ t('user.notSet') }}</div>
-                    <NUpload
-                      class="image-upload"
-                      :max="1"
-                      :file-list="coverFileList"
-                      @update:file-list="handleCoverChange"
-                      :custom-request="handleUploadCover"
-                      list-type="text"
-                      accept="image/*"
-                    >
-                      <NButton size="small" round secondary>{{ t('circle.form.avatarUpload') }}</NButton>
-                    </NUpload>
-                    <NButton
-                      v-if="form.cover_url"
-                      size="tiny"
-                      quaternary
-                      round
-                      type="error"
-                      @click="removeCover"
-                    >
-                      {{ t('circle.edit.removeImage') }}
-                    </NButton>
-                  </div>
+                  <NUpload
+                    class="image-card-upload"
+                    :max="1"
+                    :file-list="coverFileList"
+                    list-type="image-card"
+                    accept="image/*"
+                    :custom-request="handleUploadCover"
+                    @update:file-list="handleCoverChange"
+                  >
+                    <div class="upload-trigger">
+                      <NIcon :size="20"><UploadIcon /></NIcon>
+                      <span>{{ t('circle.form.avatarUpload') }}</span>
+                    </div>
+                  </NUpload>
                   <NText depth="3" style="font-size: 12px">{{ t('circle.form.coverTip') }}</NText>
                 </div>
               </NFormItem>
@@ -231,9 +211,10 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  NForm, NFormItem, NInput, NButton, NText, NUpload,
+  NForm, NFormItem, NInput, NButton, NText, NUpload, NIcon,
   NRadioGroup, NRadio, NSelect, NSpace, useMessage
 } from 'naive-ui'
+import { Upload as UploadIcon } from '@vicons/tabler'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
@@ -356,12 +337,16 @@ const cropperTitle = computed(() =>
 )
 const cropperType = computed(() => pendingCrop.value?.type || 'avatar')
 
+// image-card 列表与表单字段同步：列表被清空（悬浮角标删除 / 裁剪取消）即清空字段，
+// 回填 finished 项则由 fillForm / handleCropConfirm 负责
 const handleAvatarChange = (options) => {
   avatarFileList.value = options
+  if (options.length === 0) form.avatar_url = ''
 }
 
 const handleCoverChange = (options) => {
   coverFileList.value = options
+  if (options.length === 0) form.cover_url = ''
 }
 
 // 选图后先裁剪再上传
@@ -399,12 +384,13 @@ const handleCropConfirm = (payload) => {
   if (!p) return
   const url = payload?.url
   if (!url) return
+  // 以 finished 项回填列表：image-card 直接展示服务端图片，上传卡随 max=1 隐藏
   if (p.type === 'avatar') {
     form.avatar_url = url
-    avatarFileList.value = []
+    avatarFileList.value = [{ id: `avatar-${Date.now()}`, name: 'avatar.jpg', status: 'finished', url }]
   } else {
     form.cover_url = url
-    coverFileList.value = []
+    coverFileList.value = [{ id: `cover-${Date.now()}`, name: 'cover.jpg', status: 'finished', url }]
   }
   p.onFinish()
   pendingCrop.value = null
@@ -416,23 +402,18 @@ const handleCropConfirm = (payload) => {
 
 const handleCropCancel = () => {
   const p = pendingCrop.value
-  if (p) p.onError()
+  if (p) {
+    p.onError()
+    // onError 会把本次文件标记为 error 留在列表里，image-card 下会残留失败卡片；
+    // 用户是主动取消，直接从列表移除，恢复到裁剪前的状态
+    avatarFileList.value = avatarFileList.value.filter((f) => f.id !== p.file.id)
+    coverFileList.value = coverFileList.value.filter((f) => f.id !== p.file.id)
+  }
   pendingCrop.value = null
   if (cropperImageSrc.value.startsWith('blob:')) {
     URL.revokeObjectURL(cropperImageSrc.value)
     cropperImageSrc.value = ''
   }
-}
-
-// 移除图片：提交时传 "" 清空
-const removeAvatar = () => {
-  form.avatar_url = ''
-  avatarFileList.value = []
-}
-
-const removeCover = () => {
-  form.cover_url = ''
-  coverFileList.value = []
 }
 
 // ---------- 初始化与保存 ----------
@@ -454,6 +435,13 @@ const fillForm = () => {
     initial[key] = next[key]
     form[key] = next[key]
   })
+  // 已有图片以 finished 项回填 image-card；删除走卡片悬浮角标（handleAvatarChange 同步字段）
+  avatarFileList.value = form.avatar_url
+    ? [{ id: 'avatar', name: 'avatar.jpg', status: 'finished', url: form.avatar_url }]
+    : []
+  coverFileList.value = form.cover_url
+    ? [{ id: 'cover', name: 'cover.jpg', status: 'finished', url: form.cover_url }]
+    : []
 }
 
 const initPage = async () => {
@@ -595,7 +583,19 @@ watch(() => route.params.id, (newId, oldId) => {
   color: rgba(255, 255, 255, 0.45);
 }
 
-/* 图片字段：预览 + 上传 + 移除 */
+/* ===== 输入/选择：圆润 + 聚焦绿光晕（与 AgentFormModal 同一范式，圆角 12 < 分区 16） ===== */
+.edit-form :deep(.n-input),
+.edit-form :deep(.n-base-selection) {
+  --n-border-radius: 12px !important;
+}
+
+.edit-form :deep(.n-input--focus),
+.edit-form :deep(.n-base-selection:focus-within) {
+  --n-border-focus: 1px solid rgba(102, 234, 194, 0.65) !important;
+  --n-box-shadow-focus: 0 0 0 3px rgba(102, 234, 194, 0.15) !important;
+}
+
+/* ===== 图片字段：image-card 上传（参考 UserProfile 头像上传交互） ===== */
 .image-field {
   display: flex;
   flex-direction: column;
@@ -603,46 +603,22 @@ watch(() => route.params.id, (newId, oldId) => {
   width: 100%;
 }
 
-.image-preview {
+/* 上传触发卡内容：图标 + 文案，hover 提亮为主题绿 */
+.upload-trigger {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.preview-img {
-  object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.preview-img--avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-}
-
-.preview-img--cover {
-  width: 192px;
-  height: 48px;
-}
-
-.preview-empty {
-  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.preview-empty--cover {
-  width: 192px;
-  height: 48px;
-  border-radius: 10px;
+.image-card-upload:hover .upload-trigger {
+  color: #8af0d0;
 }
 
 /* 底部操作 */
