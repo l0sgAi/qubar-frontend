@@ -3,9 +3,16 @@
     <NGlobalStyle />
     <NMessageProvider>
       <NDialogProvider>
-        <!-- meta.pageFade 的路由（圈子管理两页）用 out-in 淡入切换；其余路由保持原行为 -->
+        <!-- meta.pageFade 的路由（圈子管理两页）用 out-in 过渡。
+             duration 显式声明换场时机（根节点无过渡属性，Vue 无法自动探测），
+             动画本体只作用于各页 .main-content，见 main.css 的 .page-fade-* -->
         <router-view v-slot="{ Component, route }">
-          <Transition v-if="route.meta.pageFade" name="page-fade" mode="out-in">
+          <Transition
+            v-if="route.meta.pageFade"
+            name="page-fade"
+            mode="out-in"
+            :duration="{ enter: 220, leave: 160 }"
+          >
             <component :is="Component" :key="route.name" />
           </Transition>
           <component v-else :is="Component" />

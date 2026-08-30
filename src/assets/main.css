@@ -686,22 +686,36 @@ body {
 /* =========================================================
  * 页面级路由过渡：圈子管理页（成员管理 ↔ 编辑资料）互切
  * 由路由 meta.pageFade 开启（App.vue 按需包 Transition）。
+ * 关键点：只动画各页的 .main-content，页面根节点不做 opacity/transform——
+ * 顶栏/侧栏是 fixed 定位的根子元素，动画根节点会把它们一并淡出，
+ * 且 transform/opacity 会临时改变 fixed 后代的定位基准导致跳位。
+ * 换场时机由 App.vue 的 :duration 显式驱动（时长需与此处一致）。
  * 进入带轻微回弹、离开用标准缓动，与下拉/弹窗动画同语言。
  * ========================================================= */
-.page-fade-enter-active {
-  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+.page-fade-enter-active .main-content {
+  animation: page-fade-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.page-fade-leave-active {
-  transition: opacity 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+.page-fade-leave-active .main-content {
+  animation: page-fade-out 0.16s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.page-fade-enter-from {
-  opacity: 0;
-  transform: translateY(10px);
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.page-fade-leave-to {
-  opacity: 0;
+@keyframes page-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
