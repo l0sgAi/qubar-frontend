@@ -34,6 +34,29 @@ export default {
     enabled: 'Enabled'
   },
 
+  // Browser tab titles (document.title, see applyPageTitle in router/index.js)
+  title: {
+    brand: 'Qubar',
+    slogan: 'Discover Your Passion',
+    success: 'Login Success',
+    home: 'Home',
+    hot: 'Hot',
+    discover: 'Discover',
+    createPost: 'Create Post',
+    profile: 'Profile',
+    userDetail: 'User Profile',
+    terms: 'Terms of Service',
+    privacy: 'Privacy Policy',
+    searchResults: 'Search Results',
+    searchKeyword: 'Search "{keyword}"',
+    circleDetail: 'Circle Detail',
+    circleMembers: 'Member Management',
+    circleEdit: 'Edit Circle',
+    postDetail: 'Post Detail',
+    notifications: 'Messages',
+    adminAgents: 'Agent Management'
+  },
+
   // 时间相关
   time: {
     justNow: 'Just now',

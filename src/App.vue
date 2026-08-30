@@ -31,6 +31,7 @@ import { darkTheme, zhCN, enUS } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { NConfigProvider, NGlobalStyle, NMessageProvider, NDialogProvider } from 'naive-ui'
 import LoginPromptModal from '@/components/LoginPromptModal.vue'
+import { applyPageTitle } from '@/utils/pageTitle'
 
 const router = useRouter()
 const { locale } = useI18n()
@@ -77,6 +78,11 @@ watch(() => router.currentRoute.value.name, (newRouteName) => {
 
 // Naive UI 组件国际化
 const naiveUILocale = computed(() => locale.value === 'zh-CN' ? zhCN : enUS)
+
+// 语言切换时同步刷新浏览器标签页标题（路由切换时由 afterEach 处理）
+watch(locale, () => {
+  applyPageTitle(router.currentRoute.value)
+})
 </script>
 
 <style>

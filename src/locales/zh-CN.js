@@ -34,6 +34,29 @@ export default {
     enabled: '已开启'
   },
 
+  // 浏览器标签页标题（document.title，见 router/index.js 的 applyPageTitle）
+  title: {
+    brand: '趣吧 Qubar',
+    slogan: '发现你的热爱',
+    success: '登录成功',
+    home: '主页',
+    hot: '热点',
+    discover: '发现',
+    createPost: '创建帖子',
+    profile: '个人中心',
+    userDetail: '用户主页',
+    terms: '用户协议',
+    privacy: '隐私政策',
+    searchResults: '搜索结果',
+    searchKeyword: '搜索「{keyword}」',
+    circleDetail: '圈子详情',
+    circleMembers: '成员管理',
+    circleEdit: '编辑圈子资料',
+    postDetail: '帖子详情',
+    notifications: '消息中心',
+    adminAgents: '机器人管理'
+  },
+
   // 时间相关
   time: {
     justNow: '刚刚',
