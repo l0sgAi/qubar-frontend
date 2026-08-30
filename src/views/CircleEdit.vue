@@ -127,7 +127,7 @@
                   >
                     <div class="upload-trigger">
                       <NIcon :size="20"><UploadIcon /></NIcon>
-                      <span>{{ t('circle.form.avatarUpload') }}</span>
+                      <span>{{ t('circle.form.coverUpload') }}</span>
                     </div>
                   </NUpload>
                   <NText depth="3" style="font-size: 12px">{{ t('circle.form.coverTip') }}</NText>
@@ -444,10 +444,16 @@ const fillForm = () => {
     : []
 }
 
+// 世代守卫：同组件复用切换圈子时，旧请求的响应直接丢弃，
+// 不得覆盖 circle、触发跳转/填表或提前结束骨架屏
+let initPageGen = 0
+
 const initPage = async () => {
+  const gen = ++initPageGen
   pageLoading.value = true
   try {
     const res = await getCircleDetail(circleId.value)
+    if (gen !== initPageGen) return
     circle.value = res.data || {}
     // 页面内自查角色：非管理侧退回详情页
     if (!isManager(circle.value.member_role)) {
@@ -458,11 +464,14 @@ const initPage = async () => {
     fillForm()
     loadCategories()
   } catch (error) {
+    if (gen !== initPageGen) return
     console.error('加载圈子信息失败:', error)
     message.error(t('messages.getDetailFailed', { error: error.message || t('common.unknownError') }))
     router.replace(`/circle/${circleId.value}`)
   } finally {
-    pageLoading.value = false
+    if (gen === initPageGen) {
+      pageLoading.value = false
+    }
   }
 }
 

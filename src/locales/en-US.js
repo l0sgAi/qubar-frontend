@@ -271,6 +271,7 @@ export default {
       avatarUpload: 'Click to Upload',
       avatarTip: 'Recommended size 200x200px',
       cover: 'Cover Image',
+      coverUpload: 'Click to Upload',
       coverTip: 'Recommended size 1200x300px',
       rules: 'Circle Rules',
       rulesPlaceholder: 'Enter behavioral guidelines for the circle...',

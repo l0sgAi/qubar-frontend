@@ -158,6 +158,7 @@
                     <!-- 禁言中：解除禁言 / 拉黑 -->
                     <template v-else-if="tab.key === 'muted'">
                       <NButton
+                        v-if="canModerate(myRole, m.role)"
                         size="tiny"
                         quaternary
                         round
@@ -182,6 +183,7 @@
                     <!-- 已拉黑：解除拉黑 -->
                     <template v-else-if="tab.key === 'banned'">
                       <NButton
+                        v-if="canModerate(myRole, m.role)"
                         size="tiny"
                         quaternary
                         round

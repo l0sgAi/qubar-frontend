@@ -634,7 +634,11 @@ const canManage = computed(() => isManager(circleDetail.value.member_role))
 const pendingModCount = ref(0)
 const pendingModFull = ref(false)
 
+// 世代守卫：切换圈子后旧请求的响应直接丢弃，防止角标被上一个圈子的数据覆盖
+let pendingModGen = 0
+
 const fetchPendingModCount = async () => {
+  const gen = ++pendingModGen
   if (!canManage.value) return
   try {
     const res = await getCircleMembers({
@@ -642,9 +646,11 @@ const fetchPendingModCount = async () => {
       status: '0',
       size: MEMBER_PAGE_SIZE
     })
+    if (gen !== pendingModGen) return
     pendingModCount.value = res.data?.members?.length || 0
     pendingModFull.value = pendingModCount.value >= MEMBER_PAGE_SIZE
   } catch {
+    if (gen !== pendingModGen) return
     pendingModCount.value = 0
     pendingModFull.value = false
   }

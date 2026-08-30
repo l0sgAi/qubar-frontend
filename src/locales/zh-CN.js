@@ -271,6 +271,7 @@ export default {
       avatarUpload: '点击上传',
       avatarTip: '建议尺寸 200x200px',
       cover: '背景封面',
+      coverUpload: '点击上传',
       coverTip: '建议尺寸 1200x300px',
       rules: '圈内规则',
       rulesPlaceholder: '请输入圈子内的行为规范...',
