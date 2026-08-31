@@ -33,7 +33,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useFormatNumber } from '@/utils/i18n'
-import SmartLink from '@/components/SmartLink.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 
 const props = defineProps({
   // 已 transform 的 post 对象（camelCase，与 PostCard 同源）

@@ -96,8 +96,8 @@ import { NCard, NAvatar, NButton, NIcon, NTime, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { toggleLike } from '@/api/like'
 import { useDebounceFn } from '@/utils/throttle'
-import ImageCarousel from '@/components/post-detail/ImageCarousel.vue'
-import SmartLink from '@/components/SmartLink.vue'
+import ImageCarousel from '@/components/common/ImageCarousel.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 import { useFormatNumber } from '@/utils/i18n'
 
 const { t } = useI18n()

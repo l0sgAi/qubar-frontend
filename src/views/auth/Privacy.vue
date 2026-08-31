@@ -69,7 +69,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NCard, NButton } from 'naive-ui'
-import AnimatedBackground from '@/components/AnimatedBackground.vue'
+import AnimatedBackground from '@/components/auth/AnimatedBackground.vue'
 
 const router = useRouter()
 const { t, tm } = useI18n()

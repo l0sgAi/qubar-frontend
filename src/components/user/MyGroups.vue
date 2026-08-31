@@ -89,7 +89,7 @@ import { NCard, NAvatar, NIcon, NInput, NButton, NSpin, useMessage } from 'naive
 import { useI18n } from 'vue-i18n'
 import { useFormatNumber } from '@/utils/i18n'
 import { getMyCircles, getUserCircles } from '@/api/post'
-import SmartLink from '@/components/SmartLink.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 
 const message = useMessage()
 const { t } = useI18n()

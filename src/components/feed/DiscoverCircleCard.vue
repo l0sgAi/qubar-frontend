@@ -55,7 +55,7 @@ import { computed } from 'vue'
 import { NAvatar } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useFormatNumber } from '@/utils/i18n'
-import SmartLink from '@/components/SmartLink.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 
 const props = defineProps({
   // 原始 API 条目（snake_case DiscoverCircleItem）

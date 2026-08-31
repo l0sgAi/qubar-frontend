@@ -8,8 +8,8 @@
 </template>
 
 <script setup>
-import AnimatedBackground from '@/components/AnimatedBackground.vue'
-import LoginCard from '@/components/LoginCard.vue'
+import AnimatedBackground from '@/components/auth/AnimatedBackground.vue'
+import LoginCard from '@/components/auth/LoginCard.vue'
 </script>
 
 <style scoped>

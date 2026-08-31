@@ -66,7 +66,7 @@ import { ref, watch, nextTick, computed, onBeforeUnmount } from 'vue'
 import { NModal, NButton, NSpace, NAvatar, NProgress, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import Cropper from 'cropperjs'
-import CircleHeaderPreview from '@/components/CircleHeaderPreview.vue'
+import CircleHeaderPreview from '@/components/common/CircleHeaderPreview.vue'
 
 const props = defineProps({
   show: { type: Boolean, default: false },

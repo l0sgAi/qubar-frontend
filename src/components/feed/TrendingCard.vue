@@ -42,7 +42,7 @@
 import { computed, useId } from 'vue'
 import { NAvatar } from 'naive-ui'
 import { useFormatNumber } from '@/utils/i18n'
-import SmartLink from '@/components/SmartLink.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 
 const props = defineProps({
   // 条目类型：post | circle | user

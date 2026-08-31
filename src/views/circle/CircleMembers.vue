@@ -275,10 +275,10 @@ import {
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { Search as SearchIcon } from '@vicons/tabler'
-import AppHeader from '@/components/AppHeader.vue'
-import SideNav from '@/components/SideNav.vue'
-import SmartLink from '@/components/SmartLink.vue'
-import CircleAdminHeader from '@/components/CircleAdminHeader.vue'
+import AppHeader from '@/components/layout/AppHeader.vue'
+import SideNav from '@/components/layout/SideNav.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
+import CircleAdminHeader from '@/components/circle/CircleAdminHeader.vue'
 import {
   getCircleDetail, getCircleMembers, setMemberRole, transferOwnership,
   muteMember, unmuteMember, banMember, unbanMember, reviewMember

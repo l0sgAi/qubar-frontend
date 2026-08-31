@@ -24,7 +24,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { NCard, NButton, NScrollbar, useMessage } from 'naive-ui'
 import { useRouter } from 'vue-router'
-import AnimatedBackground from '@/components/AnimatedBackground.vue'
+import AnimatedBackground from '@/components/auth/AnimatedBackground.vue'
 import { auth } from '@/utils/auth'
 
 const router = useRouter()

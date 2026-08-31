@@ -148,8 +148,8 @@ import { NCard, NAvatar, NIcon, NTag, NInput, NButton, NSpin, useMessage } from 
 import { useI18n } from 'vue-i18n'
 import { getHistoryPosts } from '@/api/history'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
-import ImageCarousel from '@/components/post-detail/ImageCarousel.vue'
-import SmartLink from '@/components/SmartLink.vue'
+import ImageCarousel from '@/components/common/ImageCarousel.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 
 const props = defineProps({
   // 当前 tab 是否激活；切回 history tab 时重置并重新拉取首页

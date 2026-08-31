@@ -145,10 +145,10 @@ import {
   darkTheme,
   useMessage
 } from 'naive-ui'
-import AppHeader from '@/components/AppHeader.vue'
-import SideNav from '@/components/SideNav.vue'
-import MyPosts from '@/components/user-profile/MyPosts.vue'
-import MyGroups from '@/components/user-profile/MyGroups.vue'
+import AppHeader from '@/components/layout/AppHeader.vue'
+import SideNav from '@/components/layout/SideNav.vue'
+import MyPosts from '@/components/user/MyPosts.vue'
+import MyGroups from '@/components/user/MyGroups.vue'
 import { getUserDetail } from '@/api/user'
 import { usePageTitle } from '@/composables/usePageTitle'
 

@@ -30,7 +30,7 @@ import { useRouter } from 'vue-router'
 import { darkTheme, zhCN, enUS } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { NConfigProvider, NGlobalStyle, NMessageProvider, NDialogProvider } from 'naive-ui'
-import LoginPromptModal from '@/components/LoginPromptModal.vue'
+import LoginPromptModal from '@/components/auth/LoginPromptModal.vue'
 import { applyPageTitle } from '@/utils/pageTitle'
 
 const router = useRouter()

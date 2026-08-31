@@ -156,8 +156,8 @@ import { auth } from '@/utils/auth'
 import { AddCircleOutlineFilled as AddIcon } from '@vicons/material'
 import { Bell } from '@vicons/tabler'
 import request from '@/utils/request'
-import LanguageSwitcher from './LanguageSwitcher.vue'
-import SmartLink from '@/components/SmartLink.vue'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 import { getUnreadCount } from '@/api/notice'
 
 const router = useRouter()

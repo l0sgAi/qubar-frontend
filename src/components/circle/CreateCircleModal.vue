@@ -238,8 +238,8 @@ import {
 import { useI18n } from 'vue-i18n'
 import { getCategories, createCircle } from '@/api/circle'
 import { useImageUpload } from '@/composables/useImageUpload'
-import ImageCropperModal from '@/components/ImageCropperModal.vue'
-import CircleHeaderPreview from '@/components/CircleHeaderPreview.vue'
+import ImageCropperModal from '@/components/common/ImageCropperModal.vue'
+import CircleHeaderPreview from '@/components/common/CircleHeaderPreview.vue'
 
 const { t } = useI18n()
 

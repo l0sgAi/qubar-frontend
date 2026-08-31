@@ -77,7 +77,7 @@
 import { ref, onMounted } from 'vue'
 import { NConfigProvider, NButton, NIcon, darkTheme, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import RecentPostCard from './RecentPostCard.vue'
+import RecentPostCard from '@/components/feed/RecentPostCard.vue'
 import { getHomeFeed } from '@/api/post'
 import { auth } from '@/utils/auth'
 

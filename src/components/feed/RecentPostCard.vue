@@ -53,7 +53,7 @@
 <script setup>
 import { computed } from 'vue'
 import { NTime } from 'naive-ui'
-import SmartLink from '@/components/SmartLink.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 
 const props = defineProps({
   postId: {

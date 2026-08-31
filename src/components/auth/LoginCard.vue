@@ -344,8 +344,8 @@ import { NCard, NButton, NTabs, NTabPane, NForm, NFormItem, NInput, NIcon, NDivi
 import { Email as EmailIcon, Locked, User as UserIcon } from '@vicons/carbon'
 import { Compass as ExploreIcon } from '@vicons/tabler'
 import { useI18n } from 'vue-i18n'
-import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
-import ForgotPasswordModal from '@/components/ForgotPasswordModal.vue'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
+import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal.vue'
 import { loginWithEmail, sendVerificationCode, verifyEmailCode, registerWithEmail } from '@/api/auth'
 import { auth } from '@/utils/auth'
 

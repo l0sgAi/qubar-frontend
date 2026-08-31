@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import PostCard from './PostCard.vue'
+import PostCard from '@/components/post/PostCard.vue'
 
 defineProps({
   posts: {

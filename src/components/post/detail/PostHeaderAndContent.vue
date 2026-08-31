@@ -147,8 +147,8 @@
 <script setup>
 import { NCard, NTag, NAvatar, NButton, NIcon } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import MentionPreview from '@/components/MentionPreview.vue'
-import SmartLink from '@/components/SmartLink.vue'
+import MentionPreview from '@/components/post/detail/MentionPreview.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 
 defineProps({

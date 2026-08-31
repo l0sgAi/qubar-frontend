@@ -151,8 +151,8 @@ import { NCard, NAvatar, NIcon, NTag, NInput, NButton, NSpin, NDropdown, useMess
 import { useI18n } from 'vue-i18n'
 import { getMyPosts, getUserPosts } from '@/api/post'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
-import ImageCarousel from '@/components/post-detail/ImageCarousel.vue'
-import SmartLink from '@/components/SmartLink.vue'
+import ImageCarousel from '@/components/common/ImageCarousel.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 
 const message = useMessage()
 const { t } = useI18n()

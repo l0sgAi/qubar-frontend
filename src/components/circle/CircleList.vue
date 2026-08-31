@@ -74,7 +74,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { NAvatar, NButton, NIcon, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { Search as SearchIcon, User as UserIcon, FileText as FileTextIcon, Flame as FireIcon } from '@vicons/tabler'
-import SmartLink from '@/components/SmartLink.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 
 const { t } = useI18n()
 

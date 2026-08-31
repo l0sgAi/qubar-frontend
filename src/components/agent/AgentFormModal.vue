@@ -255,7 +255,7 @@ import {
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { createAgent, updateAgent } from '@/api/agent'
-import ImageCropperModal from '@/components/ImageCropperModal.vue'
+import ImageCropperModal from '@/components/common/ImageCropperModal.vue'
 import { useImageUpload } from '@/composables/useImageUpload'
 
 // llm_params 后端白名单键（值为数字，其余键一律 400）

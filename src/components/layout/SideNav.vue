@@ -43,7 +43,7 @@ import {
 import { Explore } from '@vicons/carbon'
 import { RobotOutlined } from '@vicons/antd'
 import { useI18n } from 'vue-i18n'
-import CreateCircleModal from './CreateCircleModal.vue'
+import CreateCircleModal from '@/components/circle/CreateCircleModal.vue'
 import { getMyCircles, getActiveCircles, getRandomCircles } from '@/api/post'
 import { auth } from '@/utils/auth'
 
