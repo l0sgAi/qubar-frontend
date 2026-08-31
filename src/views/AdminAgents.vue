@@ -62,7 +62,10 @@
 
           <!-- 管理员：双 tab（全局机器人管理 + 可管理圈子） -->
           <NTabs v-else-if="isAdmin" v-model:value="activeTab" type="line" animated class="agents-tabs">
-            <NTabPane name="global" :tab="t('agent.tabs.global')">
+            <!-- display-directive="show"：pane 挂载后常驻（v-show 切显隐），circles 数据随页面
+                 加载预取；切换只翻转显隐，animated 的高度动画量到的是最终内容高度，
+                 不会出现「数据返回换内容把未伸展容器撑裁切」的竞态 -->
+            <NTabPane name="global" :tab="t('agent.tabs.global')" display-directive="show">
               <!-- 机器人表格：外观走官方 theme-overrides（圆角/透明底/悬浮色），
                    不与组件默认样式打架，避免「外圆内方」双层圆角 -->
               <NDataTable
@@ -86,7 +89,7 @@
                 />
               </div>
             </NTabPane>
-            <NTabPane name="circles" :tab="t('agent.tabs.circles')">
+            <NTabPane name="circles" :tab="t('agent.tabs.circles')" display-directive="show">
               <ManagedCircleList v-model:keyword="circleKeyword" />
             </NTabPane>
           </NTabs>

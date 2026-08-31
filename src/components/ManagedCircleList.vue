@@ -1,14 +1,18 @@
 <template>
   <div class="managed-circle-list">
-    <!-- 加载骨架 -->
+    <!-- 加载骨架：与真实卡片同构（头行 + 描述两行 + 统计行），高度≈内容高度，
+         tab 切入时外层按此测高做动画不会裁切 -->
     <div v-if="loading && !circles.length" class="circle-grid">
       <div v-for="i in 6" :key="i" class="circle-card circle-card-skeleton">
-        <div class="skel" style="width: 44px; height: 44px; border-radius: 10px" />
-        <div class="skel-lines">
-          <div class="skel" style="width: 60%; height: 15px" />
-          <div class="skel" style="width: 90%; height: 12px" />
-          <div class="skel" style="width: 40%; height: 12px" />
+        <div class="circle-card-head">
+          <div class="skel" style="width: 44px; height: 44px; border-radius: 10px" />
+          <div class="skel-lines">
+            <div class="skel" style="width: 60%; height: 15px" />
+            <div class="skel" style="width: 38%; height: 20px" />
+          </div>
         </div>
+        <div class="skel" style="height: 39px" />
+        <div class="skel" style="width: 65%; height: 18px" />
       </div>
     </div>
 
@@ -276,10 +280,8 @@ const handleSelect = circle => {
   justify-content: center;
 }
 
-/* 骨架卡片 */
+/* 骨架卡片：布局同真实卡片（column 由 .circle-card 继承），仅去指针 */
 .circle-card-skeleton {
-  flex-direction: row;
-  align-items: center;
   cursor: default;
 }
 
