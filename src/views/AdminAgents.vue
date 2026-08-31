@@ -15,7 +15,8 @@
             <div class="header-left">
               <h1 class="page-title">{{ t('agent.title') }}</h1>
             </div>
-            <div class="header-actions">
+            <!-- 搜索/新建仅属于「全局机器人管理」tab -->
+            <div v-if="isAdmin && activeTab === 'global'" class="header-actions">
               <NInput
                 v-model:value="keyword"
                 size="small"
@@ -29,7 +30,6 @@
                 </template>
               </NInput>
               <NButton
-                v-if="isAdmin && !checkingRole"
                 type="primary"
                 size="small"
                 class="create-btn"
@@ -40,35 +40,44 @@
             </div>
           </div>
 
-          <!-- 非管理员：入口被隐藏但直达 URL 时兜底提示 -->
-          <div v-if="!checkingRole && !isAdmin" class="forbidden">
-            <NIcon size="48" :color="'rgba(255,255,255,0.25)'"><ShieldIcon /></NIcon>
-            <p>{{ t('agent.noPermission') }}</p>
+          <!-- 角色查询中：轻量加载占位 -->
+          <div v-if="checkingRole" class="page-loading">
+            <NSpin size="large" />
           </div>
 
-          <!-- 机器人表格：外观走官方 theme-overrides（圆角/透明底/悬浮色），
-               不与组件默认样式打架，避免「外圆内方」双层圆角 -->
-          <NDataTable
-            v-else
-            :columns="columns"
-            :data="agents"
-            :loading="loading || checkingRole"
-            :row-key="row => row.id"
-            :bordered="false"
-            :theme-overrides="tableThemeOverrides"
-            size="small"
-            class="agents-table"
-          />
+          <!-- 管理员：双 tab（全局机器人管理 + 可管理圈子） -->
+          <NTabs v-else-if="isAdmin" v-model:value="activeTab" type="line" animated class="agents-tabs">
+            <NTabPane name="global" :tab="t('agent.tabs.global')">
+              <!-- 机器人表格：外观走官方 theme-overrides（圆角/透明底/悬浮色），
+                   不与组件默认样式打架，避免「外圆内方」双层圆角 -->
+              <NDataTable
+                :columns="columns"
+                :data="agents"
+                :loading="loading"
+                :row-key="row => row.id"
+                :bordered="false"
+                :theme-overrides="tableThemeOverrides"
+                size="small"
+                class="agents-table"
+              />
 
-          <!-- 分页 -->
-          <div v-if="total > pageSize" class="pagination-row">
-            <NPagination
-              v-model:page="page"
-              :page-size="pageSize"
-              :item-count="total"
-              @update:page="fetchAgents"
-            />
-          </div>
+              <!-- 分页 -->
+              <div v-if="total > pageSize" class="pagination-row">
+                <NPagination
+                  v-model:page="page"
+                  :page-size="pageSize"
+                  :item-count="total"
+                  @update:page="fetchAgents"
+                />
+              </div>
+            </NTabPane>
+            <NTabPane name="circles" :tab="t('agent.tabs.circles')">
+              <ManagedCircleList />
+            </NTabPane>
+          </NTabs>
+
+          <!-- 非管理员：仅可管理圈子列表（选择圈子进入其代理管理页） -->
+          <ManagedCircleList v-else />
         </div>
       </div>
     </div>
@@ -86,13 +95,14 @@
 import { ref, computed, h, onMounted, watch } from 'vue'
 import {
   NDataTable, NButton, NInput, NIcon, NAvatar, NTag, NSwitch,
-  NPagination, NPopconfirm, NText, useMessage
+  NPagination, NPopconfirm, NText, NTabs, NTabPane, NSpin, useMessage
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import { Search as SearchIcon, Shield as ShieldIcon } from '@vicons/tabler'
+import { Search as SearchIcon } from '@vicons/tabler'
 import AppHeader from '@/components/AppHeader.vue'
 import SideNav from '@/components/SideNav.vue'
 import AgentFormModal from '@/components/AgentFormModal.vue'
+import ManagedCircleList from '@/components/ManagedCircleList.vue'
 import { getAgentList, updateAgent, deleteAgent } from '@/api/agent'
 import { getUserInfo } from '@/api/auth'
 import { useDebounceFn } from '@/utils/throttle'
@@ -101,9 +111,11 @@ const { t } = useI18n()
 const message = useMessage()
 const offset = ref(260)
 
-// ---- 权限自查：后端约定管理员为 role=1，非管理员接口一律 403 ----
+// ---- 权限自查：后端约定管理员为 role=1 ----
+// 管理员：双 tab（全局机器人管理 / 可管理圈子）；非管理员：仅圈子列表
 const isAdmin = ref(false)
 const checkingRole = ref(true)
+const activeTab = ref('global')
 
 onMounted(async () => {
   try {
@@ -419,17 +431,20 @@ const handleFormSuccess = vo => {
   transform: translateY(0);
 }
 
-/* 非管理员空态：内层玻璃卡片 */
-.forbidden {
+/* 角色查询中的轻量加载占位 */
+.page-loading {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 72px 24px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  color: var(--text-secondary);
+  justify-content: center;
+  padding: 72px 0;
+}
+
+/* Tab：下划线激活项用主题绿 */
+.agents-tabs {
+  margin-top: -4px;
+}
+
+.agents-tabs :deep(.n-tabs-tab) {
+  border-radius: 8px;
 }
 
 /* 表格外壳：仅装饰（微透底 + 玻璃描边）；圆角/行悬浮/表头全部由

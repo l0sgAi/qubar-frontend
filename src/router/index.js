@@ -100,6 +100,13 @@ const router = createRouter({
       meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleEdit' }
     },
     {
+      // 圈子机器人管理：需登录；圈主/管理员校验以服务端为准（本期为占位页，Phase 2/3 落地真实管理 UI）
+      path: '/circle/:id/agents',
+      name: 'circle-agents',
+      component: () => import('../views/CircleAgents.vue'),
+      meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleAgents' }
+    },
+    {
       // 帖子详情：访客可读（/post/detail/:id 已开放 anonymous）
       path: '/post/:id',
       name: 'post-detail',
@@ -114,7 +121,8 @@ const router = createRouter({
       meta: { requiresAuth: true, titleKey: 'title.notifications' }
     },
     {
-      // 机器人管理：需登录；管理员（role=1）校验在页面内自查（/agent/* 非管理员返回 403）
+      // 机器人管理：需登录。管理员（role=1）页面内自查后见「全局机器人管理 + 可管理圈子」双 tab；
+      // 普通用户仅见可管理圈子列表（圈子选择器），全局 /agent/* 接口非管理员返回 403
       path: '/admin/agents',
       name: 'admin-agents',
       component: () => import('../views/AdminAgents.vue'),

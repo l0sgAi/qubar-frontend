@@ -55,12 +55,14 @@ export default {
     postDetail: 'Post Detail',
     notifications: 'Messages',
     adminAgents: 'Agent Management',
+    circleAgents: 'Circle Agents',
     // Dynamic title templates: show concrete content after data loads (see utils/pageTitle.js)
     postDetailName: '{name}',
     circleDetailName: '{name}',
     userDetailName: '{name}',
     circleMembersName: 'Member Management: {name}',
     circleEditName: 'Edit Circle: {name}',
+    circleAgentsName: 'Agent Management: {name}',
     profileName: 'Profile: {name}'
   },
 
@@ -458,11 +460,33 @@ export default {
     keyword: 'Keyword'
   },
 
-  // AI agent management (/admin/agents, admins only, role=1)
+  // AI agent management (/admin/agents; admins see global+circles tabs, regular users see managed circles only)
   agent: {
     title: 'Agent Management',
     navEntry: 'Agents',
     noPermission: 'Access denied: admins only',
+    tabs: {
+      global: 'Global Agents',
+      circles: 'Managed Circles'
+    },
+    circleList: {
+      searchPlaceholder: 'Search circle name or description',
+      roleOwner: 'Owner',
+      roleAdmin: 'Admin',
+      statusPending: 'Circle under review; agent management unavailable',
+      statusBanned: 'Circle banned; agent management unavailable',
+      agentsBound: '{count}/5 bound',
+      members: '{count} members',
+      posts: '{count} posts',
+      noDescription: 'No description yet',
+      empty: 'You have no manageable circles',
+      emptySearch: 'No matching circles'
+    },
+    circlePage: {
+      titleWithName: '{name} · Agents',
+      underConstruction: 'Circle-level agent management is under construction',
+      backToList: 'Back to list'
+    },
     searchPlaceholder: 'Search agents by name',
     create: 'New Agent',
     edit: 'Edit Agent',

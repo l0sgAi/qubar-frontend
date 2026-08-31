@@ -128,6 +128,26 @@ export function getCircleMembers(params) {
 }
 
 /**
+ * 获取我可管理的圈子列表（我是圈主 role=30 / 管理员 role=20 的圈子）
+ * AI 代理管理控制台的圈子选择器数据源；与 /circle/my（我加入的所有圈子）不同，
+ * 本接口只返回管理角色圈子，直查 DB 无缓存，角色变更即时可见。
+ * @param {Object} params - 查询参数
+ * @param {string} [params.keyword] - 按 name/description 子串过滤（大小写不敏感，% _ \ 按字面匹配）
+ * @param {number} [params.page] - 页码从 1 开始，<=0 按 1 处理
+ * @param {number} [params.size] - 每页条数，<=0 或 >100 回落为 20
+ * @returns {Promise} 分页信封：{ total, page, per_page, data?: ManagedCircleItem[] }
+ *   注意：空结果时 data 键整体缺失，调用方必须 res.data ?? [] 兜底；
+ *   排序固定（圈主在前，同角色按建圈时间新→旧）；列表含非正常状态圈子（status 0/2），前端按需置灰
+ */
+export function getManagedCircles(params) {
+  return request({
+    url: '/circle/manage/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 设为/取消管理员（仅圈主可用）
  * @param {Object} data - 操作数据
  * @param {string} data.circle_id - 圈子ID

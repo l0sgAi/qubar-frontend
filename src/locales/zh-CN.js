@@ -55,12 +55,14 @@ export default {
     postDetail: '帖子详情',
     notifications: '消息中心',
     adminAgents: '机器人管理',
+    circleAgents: '圈子机器人管理',
     // 动态标题模板：详情页数据加载成功后展示具体内容（见 utils/pageTitle.js）
     postDetailName: '{name}',
     circleDetailName: '{name}',
     userDetailName: '{name}',
     circleMembersName: '成员管理：{name}',
     circleEditName: '编辑圈子资料：{name}',
+    circleAgentsName: '机器人管理：{name}',
     profileName: '个人中心：{name}'
   },
 
@@ -458,11 +460,33 @@ export default {
     keyword: '关键词'
   },
 
-  // AI 回复机器人管理（/admin/agents，仅管理员 role=1 可见）
+  // AI 回复机器人管理（/admin/agents；管理员见全局+圈子双 tab，普通用户仅见可管理圈子列表）
   agent: {
     title: '机器人管理',
     navEntry: '机器人管理',
     noPermission: '无权访问：仅管理员可管理机器人',
+    tabs: {
+      global: '全局机器人管理',
+      circles: '可管理圈子'
+    },
+    circleList: {
+      searchPlaceholder: '搜索圈子名称或简介',
+      roleOwner: '圈主',
+      roleAdmin: '管理员',
+      statusPending: '圈子审核中，暂不可管理代理',
+      statusBanned: '圈子已被封禁，暂不可管理代理',
+      agentsBound: '已绑定 {count}/5',
+      members: '{count} 成员',
+      posts: '{count} 帖子',
+      noDescription: '这个圈子还没有简介',
+      empty: '你暂无可管理的圈子',
+      emptySearch: '没有匹配的圈子'
+    },
+    circlePage: {
+      titleWithName: '{name} · 机器人管理',
+      underConstruction: '圈子级机器人管理建设中，敬请期待',
+      backToList: '返回列表'
+    },
     searchPlaceholder: '搜索机器人名称',
     create: '新建机器人',
     edit: '编辑机器人',
