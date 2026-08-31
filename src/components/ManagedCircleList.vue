@@ -1,21 +1,5 @@
 <template>
   <div class="managed-circle-list">
-    <!-- 搜索框 -->
-    <div class="circle-list-toolbar">
-      <NInput
-        v-model:value="keyword"
-        size="small"
-        round
-        clearable
-        :placeholder="t('agent.circleList.searchPlaceholder')"
-        class="circle-search-input"
-      >
-        <template #prefix>
-          <NIcon size="14"><SearchIcon /></NIcon>
-        </template>
-      </NInput>
-    </div>
-
     <!-- 加载骨架 -->
     <div v-if="loading && !circles.length" class="circle-grid">
       <div v-for="i in 6" :key="i" class="circle-card circle-card-skeleton">
@@ -104,9 +88,9 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { NInput, NIcon, NAvatar, NTag, NTooltip, NPagination, useMessage } from 'naive-ui'
+import { NIcon, NAvatar, NTag, NTooltip, NPagination, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import { Search as SearchIcon, LayoutGrid as AlbumsIcon } from '@vicons/tabler'
+import { LayoutGrid as AlbumsIcon } from '@vicons/tabler'
 import { getManagedCircles } from '@/api/circle'
 import { useDebounceFn } from '@/utils/throttle'
 
@@ -120,7 +104,9 @@ const loading = ref(false)
 const page = ref(1)
 const pageSize = 20
 const total = ref(0)
-const keyword = ref('')
+// 搜索关键词由父级页头输入框持有（与全局机器人搜索同位置），经 v-model:keyword 传入；
+// 组件内 watch + 防抖，300ms 后回第一页重查
+const keyword = defineModel('keyword', { type: String, default: '' })
 
 // 拉取世代：防抖后仍可能乱序返回（慢请求晚到），过期响应直接丢弃
 let fetchGen = 0
@@ -179,15 +165,6 @@ const handleSelect = circle => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.circle-list-toolbar {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.circle-search-input {
-  max-width: 280px;
 }
 
 .circle-grid {

@@ -15,9 +15,10 @@
             <div class="header-left">
               <h1 class="page-title">{{ t('agent.title') }}</h1>
             </div>
-            <!-- 搜索/新建仅属于「全局机器人管理」tab -->
-            <div v-if="isAdmin && activeTab === 'global'" class="header-actions">
+            <!-- 搜索框固定在页头右侧（两个 tab 同一位置，切换不跳动）；新建按钮仅全局 tab -->
+            <div v-if="!checkingRole" class="header-actions">
               <NInput
+                v-if="isAdmin && activeTab === 'global'"
                 v-model:value="keyword"
                 size="small"
                 round
@@ -29,7 +30,21 @@
                   <NIcon size="14"><SearchIcon /></NIcon>
                 </template>
               </NInput>
+              <NInput
+                v-else
+                v-model:value="circleKeyword"
+                size="small"
+                round
+                clearable
+                :placeholder="t('agent.circleList.searchPlaceholder')"
+                class="search-input"
+              >
+                <template #prefix>
+                  <NIcon size="14"><SearchIcon /></NIcon>
+                </template>
+              </NInput>
               <NButton
+                v-if="isAdmin && activeTab === 'global'"
                 type="primary"
                 size="small"
                 class="create-btn"
@@ -72,12 +87,12 @@
               </div>
             </NTabPane>
             <NTabPane name="circles" :tab="t('agent.tabs.circles')">
-              <ManagedCircleList />
+              <ManagedCircleList v-model:keyword="circleKeyword" />
             </NTabPane>
           </NTabs>
 
           <!-- 非管理员：仅可管理圈子列表（选择圈子进入其代理管理页） -->
-          <ManagedCircleList v-else />
+          <ManagedCircleList v-else v-model:keyword="circleKeyword" />
         </div>
       </div>
     </div>
@@ -139,6 +154,8 @@ const total = ref(0)
 
 // 搜索关键词：ILIKE 名称匹配；空 = 全量
 const keyword = ref('')
+// 圈子列表搜索关键词（页头搜索框与 ManagedCircleList 共享，防抖在组件内）
+const circleKeyword = ref('')
 
 // 拉取世代：防抖后仍可能乱序返回（慢请求晚到），过期响应直接丢弃
 let fetchGen = 0
