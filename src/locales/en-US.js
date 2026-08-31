@@ -147,6 +147,7 @@ export default {
     leaveCircle: 'Leave Circle',
     joined: 'Joined',
     active: 'Active',
+    random: 'Random',
     viewAll: 'View All',
     myCircles: 'My Circles',
     createCircle: 'Create Circle',

@@ -44,7 +44,7 @@ import { Explore } from '@vicons/carbon'
 import { RobotOutlined } from '@vicons/antd'
 import { useI18n } from 'vue-i18n'
 import CreateCircleModal from './CreateCircleModal.vue'
-import { getMyCircles, getActiveCircles } from '@/api/post'
+import { getMyCircles, getActiveCircles, getRandomCircles } from '@/api/post'
 import { auth } from '@/utils/auth'
 
 const router = useRouter()
@@ -128,9 +128,12 @@ const fetchJoinedCircles = async () => {
 
 onMounted(() => {
   // 匿名态（如发现页落地）不拉取登录态圈子，避免 /circle/my、/circle/active 触发 401 重定向
-  if (!auth.isAuthenticated()) return
-  fetchJoinedCircles()
-  fetchActiveCircles()
+  if (auth.isAuthenticated()) {
+    fetchJoinedCircles()
+    fetchActiveCircles()
+  }
+  // 随机圈子无需登录，访客也可展示
+  fetchRandomCircles()
 })
 
 // 近期活跃的兴趣圈（真实数据，取前 5 个）
@@ -159,6 +162,27 @@ const fetchActiveCircles = async () => {
     activeCircles.value = []
   } finally {
     activeCirclesLoading.value = false
+  }
+}
+
+// 随机推荐圈子（真实数据，展示 20 个，每次请求结果不同）
+const randomCircles = ref([])
+const randomCirclesLoading = ref(false)
+
+const fetchRandomCircles = async () => {
+  randomCirclesLoading.value = true
+  try {
+    const res = await getRandomCircles({ size: 20 })
+    randomCircles.value = (res.data?.circles || []).map(c => ({
+      id: c.id,
+      name: c.name || t('circle.interestCircle'),
+      avatar: c.avatar_url || ''
+    }))
+  } catch (e) {
+    console.error('获取随机圈子失败:', e)
+    randomCircles.value = []
+  } finally {
+    randomCirclesLoading.value = false
   }
 }
 
@@ -225,6 +249,7 @@ const activeItem = computed(() => {
     // 匹配「我的圈子」或「近期活跃」中的对应条目
     if (joinedCircles.value.some(c => String(c.id) === id)) return `circle-${id}`
     if (activeCircles.value.some(c => String(c.id) === id)) return `active-circle-${id}`
+    if (randomCircles.value.some(c => String(c.id) === id)) return `random-circle-${id}`
     return `circle-${id}`
   }
   if (path === '/profile' && route.query.tab === 'groups') return 'view-all-circles'
@@ -326,6 +351,23 @@ const menuOptions = computed(() => {
                 }))
           }
         ]
+      : []),
+    ...(randomCirclesLoading.value || randomCircles.value.length
+      ? [
+          { type: 'divider', key: 'd3' },
+          {
+            type: 'group',
+            label: t('circle.random'),
+            key: 'random-group',
+            children: randomCirclesLoading.value
+              ? Array.from({ length: 5 }, (_, i) => renderSkeletonItem(`random-skeleton-${i}`))
+              : randomCircles.value.map(circle => ({
+                  label: linkLabel(`/circle/${circle.id}`, circle.name),
+                  key: `random-circle-${circle.id}`,
+                  icon: () => renderCircleIcon(circle)
+                }))
+          }
+        ]
       : [])
   ]
 })
@@ -348,6 +390,9 @@ const handleMenuSelect = (key) => {
     router.push({ path: '/profile', query: { tab: 'groups' } })
   } else if (key.startsWith('active-circle-')) {
     const circleId = key.replace('active-circle-', '')
+    router.push(`/circle/${circleId}`)
+  } else if (key.startsWith('random-circle-')) {
+    const circleId = key.replace('random-circle-', '')
     router.push(`/circle/${circleId}`)
   } else if (key.startsWith('circle-')) {
     // 提取圈子 ID
@@ -387,22 +432,15 @@ const handleCreateSuccess = (data) => {
   overflow-y: auto;
 }
 
-/* 自定义滚动条 */
-.custom-sider::-webkit-scrollbar {
-  width: 6px;
+/* NLayoutSider 真正滚动的是内部 .n-layout-sider-scroll-container（自带 overflow:auto），
+ * 滚动条长在它上面；隐藏需用 :deep 命中该内部元素，根元素上的 overflow 无效。 */
+:deep(.n-layout-sider-scroll-container) {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge 旧版 */
 }
 
-.custom-sider::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-sider::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-.custom-sider::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+:deep(.n-layout-sider-scroll-container)::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 /* NaiveUI Menu 组件样式覆盖 */

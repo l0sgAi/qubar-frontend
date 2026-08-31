@@ -147,6 +147,7 @@ export default {
     leaveCircle: '退出圈子',
     joined: '已加入',
     active: '近期活跃',
+    random: '随机推荐',
     viewAll: '查看全部',
     myCircles: '我加入的',
     createCircle: '创建圈子',

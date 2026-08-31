@@ -48,6 +48,22 @@ export function getActiveCircles(params) {
 }
 
 /**
+ * 获取随机圈子列表（侧栏随机推荐，每次请求返回一批随机结果，无分页）
+ * 响应结构与 /circle/active 完全一致；recent_post_count 恒为 0，忽略即可。
+ * 无需登录，访客可读。
+ * @param {Object} params - 查询参数
+ * @param {number} params.size - 返回数量，默认20，<=0 或 >100 时后端回退为20
+ * @returns {Promise}
+ */
+export function getRandomCircles(params) {
+  return request({
+    url: '/circle/random',
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 获取指定用户已加入的圈子列表（查看他人主页）
  * 与 /circle/my 的区别：目标用户来自 user_id 查询参数（任意已登录用户均可查看他人加入的圈子）。
  * 响应结构与 /circle/my 一致（circles / total / size / search_after，搜索模式额外可能含 truncated）。
