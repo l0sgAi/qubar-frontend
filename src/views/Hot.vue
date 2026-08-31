@@ -208,7 +208,7 @@ onBeforeUnmount(() => {
   flex: 1;
   min-width: 0;
   max-width: 720px;
-  margin: 0 auto;
+  margin-right: 5dvw;
 }
 
 .hot-container {

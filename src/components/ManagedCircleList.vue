@@ -220,6 +220,25 @@ const handleSelect = circle => {
   gap: 12px;
 }
 
+/* 修正无头像首字符居中：AdminAgents 的 NTabPane display-directive="show" 下，
+   本组件在 display:none 的 pane 内挂载，naive-ui NAvatar 的 fitTextTransform
+   首次在隐藏态测得 offsetWidth/Height=0 → ratio=NaN → 内联 transform 失效；
+   又因 memoedTextHtml 缓存守卫，切回可见态不再重算，.n-avatar__text 停在
+   left/top:50%（左上角贴圆心）→ 首字符偏右下角。CSS 百分比 translate 渲染即正确，
+   !important 用于覆盖 naive-ui 写入的内联 transform（内容恒为单字符，可安全
+   丢弃其 scale 缩放部分）。同 MyGroups.vue 的既有修复。*/
+.circle-avatar :deep(.n-avatar__text) {
+  transform: translate(-50%, -50%) !important;
+}
+
+/* #fallback 插槽（有 avatar_url 但加载失败）的内容不走 .n-avatar__text 包裹，
+   是 .n-avatar（inline-flex）的直接子节点且无对齐规则 → 贴左上角，补 flex 居中；
+   不影响 default/img 路径（前者绝对定位有独立偏移，后者铺满 100%）*/
+.circle-avatar {
+  align-items: center;
+  justify-content: center;
+}
+
 .circle-title {
   display: flex;
   flex-direction: column;
