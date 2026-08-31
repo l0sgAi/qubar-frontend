@@ -4,7 +4,7 @@
     :mask-closable="false"
     preset="card"
     :style="{ width: '640px', borderRadius: '24px' }"
-    :title="isEdit ? t('agent.edit') : t('agent.create')"
+    :title="modalTitle"
     :segmented="{ content: 'soft' }"
     :bordered="false"
     size="huge"
@@ -25,7 +25,7 @@
         <NFormItem :label="t('agent.form.name')" path="name">
           <NInput
             v-model:value="formData.name"
-            :placeholder="t('agent.form.namePlaceholder')"
+            :placeholder="isCircle ? t('agent.form.namePlaceholderCircle') : t('agent.form.namePlaceholder')"
             maxlength="50"
             show-count
           />
@@ -70,56 +70,68 @@
           <span class="section-dot" />
           <span class="section-title">{{ t('agent.form.sectionApi') }}</span>
         </div>
-        <div class="api-grid">
-          <NFormItem :label="t('agent.form.protocol')" path="api_protocol">
-            <NSelect
-              v-model:value="formData.api_protocol"
-              :options="protocolOptions"
-              :placeholder="t('agent.form.protocol')"
-            />
-          </NFormItem>
+        <!-- 圈内管理员编辑：凭据字段（协议/地址/Key）仅圈主可改，后端对管理员混提
+             凭据字段的请求整体 403，故此处整组只读，diff 时也跳过这些键 -->
+        <NAlert
+          v-if="isEdit && !canEditCredentials"
+          :title="t('agent.form.sectionApi')"
+          :bordered="false"
+          class="cred-readonly-alert"
+        >
+          {{ t('agent.circlePage.credentialsOwnerOnly') }}
+        </NAlert>
+        <template v-else>
+          <div class="api-grid">
+            <NFormItem :label="t('agent.form.protocol')" path="api_protocol">
+              <NSelect
+                v-model:value="formData.api_protocol"
+                :options="protocolOptions"
+                :placeholder="t('agent.form.protocol')"
+              />
+            </NFormItem>
 
-          <NFormItem :label="t('agent.form.baseUrl')" path="base_url">
-            <NInput
-              v-model:value="formData.base_url"
-              :placeholder="t('agent.form.baseUrlPlaceholder')"
-            />
-          </NFormItem>
-        </div>
+            <NFormItem :label="t('agent.form.baseUrl')" path="base_url">
+              <NInput
+                v-model:value="formData.base_url"
+                :placeholder="t('agent.form.baseUrlPlaceholder')"
+              />
+            </NFormItem>
+          </div>
 
-        <!-- api_key：创建=明文输入；编辑=掩码展示 + 独立换 key 输入框（不回填旧值） -->
-        <NFormItem v-if="!isEdit" :label="t('agent.form.apiKey')" path="api_key">
-          <NInput
-            v-model:value="formData.api_key"
-            type="password"
-            show-password-on="click"
-            :placeholder="t('agent.form.apiKeyPlaceholder')"
-          />
-        </NFormItem>
-        <NFormItem v-else :label="t('agent.form.apiKey')">
-          <div class="key-block">
-            <NText depth="3" class="key-masked">
-              {{ agent.has_api_key
-                ? t('agent.form.apiKeyCurrent', { mask: agent.api_key_masked })
-                : t('agent.form.apiKeyNone') }}
-            </NText>
+          <!-- api_key：创建=明文输入；编辑=掩码展示 + 独立换 key 输入框（不回填旧值） -->
+          <NFormItem v-if="!isEdit" :label="t('agent.form.apiKey')" path="api_key">
             <NInput
-              v-model:value="formData.new_api_key"
+              v-model:value="formData.api_key"
               type="password"
               show-password-on="click"
-              :placeholder="t('agent.form.apiKeyNewPlaceholder')"
-              :disabled="formData.clear_api_key"
-              class="key-new-input"
+              :placeholder="t('agent.form.apiKeyPlaceholder')"
             />
-            <NCheckbox
-              v-model:checked="formData.clear_api_key"
-              size="small"
-              class="key-clear-check"
-            >
-              {{ t('agent.form.apiKeyClear') }}
-            </NCheckbox>
-          </div>
-        </NFormItem>
+          </NFormItem>
+          <NFormItem v-else :label="t('agent.form.apiKey')">
+            <div class="key-block">
+              <NText depth="3" class="key-masked">
+                {{ agent.has_api_key
+                  ? t('agent.form.apiKeyCurrent', { mask: agent.api_key_masked })
+                  : t('agent.form.apiKeyNone') }}
+              </NText>
+              <NInput
+                v-model:value="formData.new_api_key"
+                type="password"
+                show-password-on="click"
+                :placeholder="t('agent.form.apiKeyNewPlaceholder')"
+                :disabled="formData.clear_api_key"
+                class="key-new-input"
+              />
+              <NCheckbox
+                v-model:checked="formData.clear_api_key"
+                size="small"
+                class="key-clear-check"
+              >
+                {{ t('agent.form.apiKeyClear') }}
+              </NCheckbox>
+            </div>
+          </NFormItem>
+        </template>
 
         <NFormItem :label="t('agent.form.model')" path="model">
           <NInput
@@ -161,15 +173,8 @@
           <span class="section-dot" />
           <span class="section-title">{{ t('agent.form.sectionTrigger') }}</span>
         </div>
-        <!-- 触发模式：1=所有新帖 2=关键词 3=手动；仅 mode=2 时关键词必填 -->
-        <NFormItem :label="t('agent.form.triggerMode')" path="trigger_mode">
-          <NSelect
-            v-model:value="formData.trigger_mode"
-            :options="triggerModeOptions"
-          />
-        </NFormItem>
+        <!-- 触发方式固定为关键词触发（trigger_mode=2），关键词必填 -->
         <NFormItem
-          v-if="formData.trigger_mode === 2"
           :label="t('agent.form.keywords')"
           path="trigger_keywords"
         >
@@ -179,7 +184,7 @@
           />
         </NFormItem>
 
-        <!-- filter_prompt：两阶段回复判定（高级选项），仅 mode=2 生效；
+        <!-- filter_prompt：两阶段回复判定（高级选项）；
              空 = 命中关键词即回复，非空 = LLM 先判定该不该回 -->
         <NFormItem :label="t('agent.form.filterPrompt')" path="filter_prompt">
           <NInput
@@ -239,7 +244,7 @@
           :loading="submitting"
           @click="handleSubmit"
         >
-          {{ isEdit ? t('common.save') : t('agent.create') }}
+          {{ isEdit ? t('common.save') : (isCircle ? t('agent.circlePage.create') : t('agent.create')) }}
         </NButton>
       </div>
     </template>
@@ -255,6 +260,7 @@ import {
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { createAgent, updateAgent } from '@/api/agent'
+import { createCircleAgent, updateCircleAgent } from '@/api/circle'
 import ImageCropperModal from '@/components/common/ImageCropperModal.vue'
 import { useImageUpload } from '@/composables/useImageUpload'
 
@@ -266,7 +272,15 @@ const LLM_PARAM_KEYS = [
 const props = defineProps({
   show: { type: Boolean, default: false },
   // null=创建模式；AgentVO=编辑模式
-  agent: { type: Object, default: null }
+  agent: { type: Object, default: null },
+  // 作用域：global=平台超管的全局机器人（/agent）；circle=圈内机器人（/circle/agent）
+  scope: { type: String, default: 'global' },
+  // 圈子作用域必传：创建请求体的 circle_id（编辑时从 agent.circle_id 取）
+  circleId: { type: String, default: '' },
+  // 编辑模式下凭据字段（api_protocol/base_url/api_key）是否可改：
+  // 圈内仅圈主（30）可改，管理员编辑时传 false——整组隐藏且 diff 跳过，
+  // 避免混提凭据字段触发后端 403。创建不受限（admin+ 均可带凭据创建）
+  canEditCredentials: { type: Boolean, default: true }
 })
 const emit = defineEmits(['update:show', 'success'])
 
@@ -278,19 +292,19 @@ const visible = computed({
   set: v => emit('update:show', v)
 })
 const isEdit = computed(() => !!props.agent)
+const isCircle = computed(() => props.scope === 'circle')
+
+// 弹窗标题：圈内机器人用独立文案（与全局控制台区分）
+const modalTitle = computed(() => {
+  if (isCircle.value) return isEdit.value ? t('agent.circlePage.edit') : t('agent.circlePage.create')
+  return isEdit.value ? t('agent.edit') : t('agent.create')
+})
 
 // 后端当前只支持 openai / anthropic 两种模型协议
 const protocolOptions = [
   { label: 'openai', value: 'openai' },
   { label: 'anthropic', value: 'anthropic' }
 ]
-
-// API 支持的三种触发模式：1=所有新帖 2=关键词 3=手动
-const triggerModeOptions = computed(() => [
-  { label: t('agent.triggerModes.all'), value: 1 },
-  { label: t('agent.triggerModes.keyword'), value: 2 },
-  { label: t('agent.triggerModes.manual'), value: 3 }
-])
 
 const formRef = ref(null)
 const submitting = ref(false)
@@ -315,9 +329,9 @@ const emptyForm = () => ({
     frequency_penalty: 0
   },
   system_prompt: '',
-  // 回复判定条件（仅 mode=2 生效）：空 = 命中关键词即回复
+  // 回复判定条件：空 = 命中关键词即回复
   filter_prompt: '',
-  // 触发模式：1=所有新帖 2=关键词 3=手动，默认关键词触发
+  // 触发方式固定为关键词触发（trigger_mode=2），表单不再提供模式选择
   trigger_mode: 2,
   trigger_keywords: [],
   max_replies_per_hour: 30,
@@ -397,10 +411,9 @@ watch(
       }
       fresh.system_prompt = a.system_prompt || ''
       fresh.filter_prompt = a.filter_prompt || ''
-      // 回填已有触发模式；缺失/遗留的异常值原样保留（不强行迁移到关键词模式，
-      // 避免保存时误提交迁移、或被关键词必填校验卡住），用户显式选择支持的模式
-      // 后才按所选模式校验
-      fresh.trigger_mode = a.trigger_mode
+      // 触发方式固定关键词触发：遗留 mode（1/3）在编辑保存且关键词变更时
+      // 会随 trigger_keywords 一并提交 mode=2，完成迁移
+      fresh.trigger_mode = 2
       fresh.trigger_keywords = [...(a.trigger_keywords || [])]
       fresh.max_replies_per_hour = a.max_replies_per_hour ?? 30
       fresh.min_interval_sec = a.min_interval_sec ?? 60
@@ -433,7 +446,8 @@ const buildLlmParams = () => {
 
 const sortedJson = obj => JSON.stringify(obj, Object.keys(obj).sort())
 
-// 创建：全量字段（后端对未传字段有默认值）；api_key 为空不传
+// 创建：全量字段（后端对未传字段有默认值）；api_key 为空不传；
+// 圈子作用域额外带 circle_id（编辑时后端以路径 id 定位，无须携带）
 const buildCreatePayload = () => {
   const f = formData.value
   const payload = {
@@ -449,6 +463,7 @@ const buildCreatePayload = () => {
     max_replies_per_hour: f.max_replies_per_hour ?? 0,
     min_interval_sec: f.min_interval_sec ?? 0
   }
+  if (isCircle.value) payload.circle_id = props.circleId
   if (f.api_key.trim()) payload.api_key = f.api_key.trim()
   const llm = buildLlmParams()
   if (Object.keys(llm).length) payload.llm_params = llm
@@ -463,26 +478,30 @@ const buildUpdatePayload = () => {
 
   if (f.name.trim() !== a.name) payload.name = f.name.trim()
   if ((f.avatar_url || '').trim() !== (a.avatar_url || '')) payload.avatar_url = f.avatar_url.trim()
-  if ((f.base_url || '').trim() !== (a.base_url || '')) payload.base_url = f.base_url.trim()
-  if (f.api_protocol !== a.api_protocol) payload.api_protocol = f.api_protocol
   if (f.model.trim() !== a.model) payload.model = f.model.trim()
-  if (f.system_prompt !== (a.system_prompt || '')) payload.system_prompt = f.system_prompt
+  if ((f.system_prompt || '') !== (a.system_prompt || '')) payload.system_prompt = f.system_prompt
   // filter_prompt：传空串 = 关闭判定（回到命中即回复），不传 = 保持原条件
   if (f.filter_prompt.trim() !== (a.filter_prompt || '')) payload.filter_prompt = f.filter_prompt.trim()
 
-  // api_key：空串=清除，不传=保持不变
-  if (f.clear_api_key) payload.api_key = ''
-  else if (f.new_api_key.trim()) payload.api_key = f.new_api_key.trim()
+  // 凭据字段（base_url/api_protocol/api_key）：无权限时整组跳过——
+  // 后端对含任一凭据字段的更新请求整体要求圈主，管理员混提即 403
+  if (props.canEditCredentials) {
+    if ((f.base_url || '').trim() !== (a.base_url || '')) payload.base_url = f.base_url.trim()
+    if (f.api_protocol !== a.api_protocol) payload.api_protocol = f.api_protocol
+    // api_key：空串=清除，不传=保持不变
+    if (f.clear_api_key) payload.api_key = ''
+    else if (f.new_api_key.trim()) payload.api_key = f.new_api_key.trim()
+  }
 
   const llm = buildLlmParams()
   if (sortedJson(llm) !== sortedJson(a.llm_params || {})) payload.llm_params = llm
 
-  const modeChanged = f.trigger_mode !== a.trigger_mode
   const keywordsChanged =
     JSON.stringify([...f.trigger_keywords].sort()) !== JSON.stringify([...(a.trigger_keywords || [])].sort())
-  if (modeChanged || keywordsChanged) {
-    // mode=2 必须与关键词同请求提交，故二者联动时一起发
-    payload.trigger_mode = f.trigger_mode
+  if (keywordsChanged) {
+    // 关键词变更时连同 mode=2 一起提交（mode=2 必须与关键词同请求提交；
+    // 遗留 mode=1/3 的机器人借此迁移到关键词触发）
+    payload.trigger_mode = 2
     payload.trigger_keywords = [...f.trigger_keywords]
   }
 
@@ -504,8 +523,13 @@ const handleSubmit = async () => {
   }
 
   const f = formData.value
-  // 后端 400：mode 2 requires keywords -- 前端先拦（仅关键词模式必填）
-  if (f.trigger_mode === 2 && !f.trigger_keywords.length) {
+  // 后端 400：mode 2 requires keywords -- 前端先拦。
+  // 创建必填；编辑仅在关键词有变更（将提交 trigger 字段）时才强制非空，
+  // 避免遗留 mode=1/3 的机器人只改其他字段时被卡住
+  const willSubmitTrigger = !isEdit.value ||
+    JSON.stringify([...f.trigger_keywords].sort()) !==
+      JSON.stringify([...(props.agent.trigger_keywords || [])].sort())
+  if (willSubmitTrigger && !f.trigger_keywords.length) {
     message.warning(t('agent.form.keywordsRequired'))
     return
   }
@@ -518,11 +542,16 @@ const handleSubmit = async () => {
         message.warning(t('agent.form.atLeastOne'))
         return
       }
-      const res = await updateAgent(props.agent.id, payload)
+      // 409 撞名 / 400 校验 / 403 凭据越权等：直接透出后端 message
+      const res = isCircle.value
+        ? await updateCircleAgent(props.agent.id, payload)
+        : await updateAgent(props.agent.id, payload)
       message.success(t('agent.form.updateSuccess'))
       emit('success', res.data)
     } else {
-      const res = await createAgent(buildCreatePayload())
+      const res = isCircle.value
+        ? await createCircleAgent(buildCreatePayload())
+        : await createAgent(buildCreatePayload())
       message.success(t('agent.form.createSuccess'))
       emit('success', res.data)
     }

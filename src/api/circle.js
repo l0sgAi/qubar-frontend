@@ -278,3 +278,102 @@ export function updateCircle(data) {
     data
   })
 }
+
+// ==================== 圈内 AI 机器人管理（/circle/agent）====================
+// 与全局 /agent/* 控制台互不相通：两套机器人 ID 各自独立，跨作用域访问一律 404。
+// 权限：列表/详情/创建/运营字段更新为 admin+（20/30）；凭据字段更新与删除仅圈主（30）。
+// 注意：本期圈内机器人不参与任何回复触发（关键词/手动/@提及均不生效），仅作为配置资产存在。
+
+/**
+ * 创建圈内机器人（admin+；每圈上限 5 个，超出返回 409）
+ * 创建成功统一返回 200/`Created successfully`（非 201）；不传 status 默认启用。
+ * @param {Object} data - 机器人数据
+ * @param {string} data.circle_id - 归属圈子 ID（必填，来自 /circle/manage/list）
+ * @param {string} data.name - 展示名，圈内唯一，1-50 字符（UTF-8 字节，中文约 16 字）
+ * @param {string} [data.avatar_url] - 头像 URL，可空
+ * @param {string} data.api_protocol - 协议：openai/anthropic
+ * @param {string} [data.base_url] - 自定义 API 地址，可空
+ * @param {string} [data.api_key] - 明文提交，服务端加密存储，响应永不回显
+ * @param {string} data.model - 模型名，1-100 字符
+ * @param {Object} [data.llm_params] - LLM 参数，白名单键且值为数字
+ * @param {string} [data.system_prompt] - 系统提示词，可空
+ * @param {string} [data.filter_prompt] - 回复判定条件，≤2000 字符，可空
+ * @param {number} [data.trigger_mode] - 触发模式：1=全部新帖（本期不生效）2=关键词 3=手动
+ * @param {string[]} [data.trigger_keywords] - 触发关键词；mode=2 时必须非空
+ * @param {number} [data.max_replies_per_hour] - 每小时回复上限，0=不限
+ * @param {number} [data.min_interval_sec] - 最小回复间隔秒，0=不限
+ * @param {number} [data.status] - 0=停用 1=启用，缺省启用
+ * @returns {Promise} data 为创建后的完整圈内机器人对象（含 circle_id）
+ */
+export function createCircleAgent(data) {
+  return request({
+    url: '/circle/agent',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 获取圈内机器人列表（admin+；offset 分页）
+ * @param {Object} params - 查询参数
+ * @param {string} params.circle_id - 圈子 ID（必填，非法 UUID 返回 400）
+ * @param {string} [params.keyword] - 按机器人 name 子串过滤（大小写不敏感）
+ * @param {number} [params.page] - 页码，默认 1（<=0 规整为 1）
+ * @param {number} [params.size] - 每页数量，默认 20（<=0 或 >100 回落 20）
+ * @returns {Promise} 分页信封：{ total, page, per_page, data?: CircleAgent[] }
+ *   注意：空结果时 data 键整体缺失（omitempty），调用方必须 res.data ?? [] 兜底；
+ *   total 可用于配额展示（每圈上限 5）
+ */
+export function getCircleAgentList(params) {
+  return request({
+    url: '/circle/agent/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取圈内机器人详情（admin+）
+ * 机器人不存在 / 属于其他圈 / 是全局机器人 → 一律 404（不区分原因）。
+ * @param {string} id - 机器人 ID(UUID)
+ * @returns {Promise} data 为完整圈内机器人对象；
+ *   可选字符串字段（avatar_url/base_url/system_prompt/filter_prompt/api_key_masked）
+ *   为空时键缺失，读取时用 ?? '' 兜底
+ */
+export function getCircleAgentDetail(id) {
+  return request({
+    url: `/circle/agent/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 部分更新圈内机器人（指针语义：只传要改的字段，未传字段不动；全部不传返回 400）
+ * 权限分组：运营字段（name/avatar_url/model/llm_params/system_prompt/filter_prompt/
+ * trigger_mode/trigger_keywords/max_replies_per_hour/min_interval_sec/status）admin+ 可改；
+ * 凭据字段（api_protocol/base_url/api_key）仅圈主——请求体中任一凭据字段非空即整体
+ * 要求圈主，管理员混提也会 403，前端须按表单分组控制提交。
+ * 特殊语义：api_key 传空串=清除，不传=保持不变；llm_params/trigger_keywords 整体替换。
+ * @param {string} id - 机器人 ID(UUID)
+ * @param {Object} data - 只含变更字段的对象（按权限裁剪）
+ * @returns {Promise} data 为更新后的完整圈内机器人对象
+ */
+export function updateCircleAgent(id, data) {
+  return request({
+    url: `/circle/agent/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除圈内机器人（仅圈主；软删=停用+标记删除，名称随即释放可复用，无恢复入口）
+ * @param {string} id - 机器人 ID(UUID)
+ * @returns {Promise} 成功响应 data 为空
+ */
+export function deleteCircleAgent(id) {
+  return request({
+    url: `/circle/agent/${id}`,
+    method: 'delete'
+  })
+}

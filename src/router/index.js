@@ -100,7 +100,8 @@ const router = createRouter({
       meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleEdit' }
     },
     {
-      // 圈子机器人管理：需登录；圈主/管理员校验以服务端为准（本期为占位页，Phase 2/3 落地真实管理 UI）
+      // 圈子机器人管理：需登录；圈主/管理员（member_role>=20）管理本圈机器人（每圈上限 5 个），
+      // 删除与凭据字段（协议/地址/Key）修改仅圈主——校验以服务端为准（403 时页面内 toast）
       path: '/circle/:id/agents',
       name: 'circle-agents',
       component: () => import('@/views/circle/CircleAgents.vue'),
