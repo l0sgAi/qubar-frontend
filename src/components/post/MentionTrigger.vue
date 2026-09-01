@@ -65,6 +65,12 @@ const props = defineProps({
   selectedIds: {
     type: Array,
     default: () => []
+  },
+  // 圈子作用域：帖子/评论属于某圈子时传其 uuid（本圈机器人可见、其他圈机器人被排除）；
+  // 不传 = 全站搜索。发帖页切换圈子时随父级响应式更新，内部自动按新圈子重查
+  circleId: {
+    type: String,
+    default: null
   }
 })
 
@@ -76,7 +82,7 @@ const open = ref(false)
 const pos = reactive({ x: 0, y: 0 })
 const activeIdx = ref(0)
 const panelEl = ref(null)
-const search = useUserSearch({ size: 10, delay: 300 })
+const search = useUserSearch({ size: 10, delay: 300, circleId: () => props.circleId })
 
 // 角色语义映射：0=普通用户 1=管理员 2=机器人（与 UserProfile roleMap 一致），
 // 类名与 i18n key（user.roles.*）共用同一段

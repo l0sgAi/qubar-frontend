@@ -2,11 +2,13 @@
 // 内置单调序号丢弃过期响应、关键词变更即作废旧结果；
 // 空 keyword 立即查询（弹层刚打开时的默认列表），有关键词才防抖。
 // 支持后端 search_after 游标分页：loadMore 追加下一页，hasMore 标记是否还有更多。
-import { ref } from 'vue'
+// circleId 支持传值 / ref / getter（toValue 取值）：圈子内 @选人时传圈子 uuid，
+// 圈子作用域变化时按当前 keyword 自动重查（如发帖页切换所属圈子）。
+import { ref, toValue, watch } from 'vue'
 import { searchUsers } from '@/api/user'
 import { useDebounceFn } from '@/utils/throttle'
 
-export function useUserSearch({ size = 10, delay = 300 } = {}) {
+export function useUserSearch({ size = 10, delay = 300, circleId = null } = {}) {
   const keyword = ref('')
   const users = ref([])
   const loading = ref(false)
@@ -14,6 +16,14 @@ export function useUserSearch({ size = 10, delay = 300 } = {}) {
   const hasMore = ref(false)
   let searchAfter = ''
   let searchSeq = 0
+
+  // 组装请求参数：圈子作用域仅在非空时携带（不传 = 全站搜索）
+  const buildParams = () => {
+    const params = { keyword: keyword.value, size }
+    const cid = toValue(circleId)
+    if (cid) params.circle_id = cid
+    return params
+  }
 
   // 应用响应：mode=replace（新搜索）或 append（翻页）；过期响应直接丢弃
   const apply = (res, seq, mode) => {
@@ -35,7 +45,7 @@ export function useUserSearch({ size = 10, delay = 300 } = {}) {
     // loading 期间 loadMore 不会再启动，故这里同时覆盖了下方 catch 的错误路径
     loadingMore.value = false
     try {
-      const res = await searchUsers({ keyword: kw, size })
+      const res = await searchUsers(buildParams())
       apply(res, seq, 'replace')
     } catch (error) {
       if (seq !== searchSeq) return
@@ -54,8 +64,7 @@ export function useUserSearch({ size = 10, delay = 300 } = {}) {
     const seq = searchSeq
     try {
       const res = await searchUsers({
-        keyword: keyword.value,
-        size,
+        ...buildParams(),
         search_after: searchAfter
       })
       apply(res, seq, 'append')
@@ -95,6 +104,12 @@ export function useUserSearch({ size = 10, delay = 300 } = {}) {
     searchAfter = ''
     keyword.value = ''
   }
+
+  // 圈子作用域变化（如发帖页切换所属圈子）：已有结果按新圈子重查，避免选中旧圈子可见的用户
+  watch(() => toValue(circleId), (val, old) => {
+    if (val === old) return
+    if (keyword.value || users.value.length) search(keyword.value)
+  })
 
   return { keyword, users, loading, loadingMore, hasMore, search, loadMore, invalidate }
 }

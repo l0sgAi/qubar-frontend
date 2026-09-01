@@ -60,11 +60,13 @@
               </NIcon>
             </template>
           </NButton>
-          <!-- @提及：按钮选人 + 编辑器内输入 @ 触发选人，共用同一份已选列表 -->
-          <MentionPicker :selected-ids="selectedIds" @select="appendAtEnd" />
+          <!-- @提及：按钮选人 + 编辑器内输入 @ 触发选人，共用同一份已选列表；
+               圈子内评论 @选人按帖子所属圈子过滤可见机器人 -->
+          <MentionPicker :selected-ids="selectedIds" :circle-id="circleId" @select="appendAtEnd" />
           <MentionTrigger
             :get-editor-view="getCommentEditorView"
             :selected-ids="selectedIds"
+            :circle-id="circleId"
             @select="recordSelection"
           />
         </div>
@@ -107,6 +109,11 @@ const props = defineProps({
   postId: {
     type: String,
     required: true
+  },
+  // 帖子所属圈子 uuid：评论 @选人按圈子作用域搜索（null = 全站搜索）
+  circleId: {
+    type: String,
+    default: null
   },
   language: {
     type: String,

@@ -53,10 +53,11 @@
           </template>
         </NButton>
         <!-- @提及：按钮选人 + 编辑器内输入 @ 触发选人，共用同一份已选列表 -->
-        <MentionPicker :selected-ids="selectedIds" :icon-size="16" @select="appendAtEnd" />
+        <MentionPicker :selected-ids="selectedIds" :circle-id="circleId" :icon-size="16" @select="appendAtEnd" />
         <MentionTrigger
           :get-editor-view="getReplyEditorView"
           :selected-ids="selectedIds"
+          :circle-id="circleId"
           @select="recordSelection"
         />
       </div>
@@ -100,6 +101,11 @@ const props = defineProps({
   postId: {
     type: String,
     required: true
+  },
+  // 帖子所属圈子 uuid：回复 @选人按圈子作用域搜索（null = 全站搜索）
+  circleId: {
+    type: String,
+    default: null
   },
   rootId: {
     type: String,

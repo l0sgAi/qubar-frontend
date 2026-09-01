@@ -59,6 +59,7 @@
           <CommentReplyEditor
             v-if="activeReplyId === comment.id"
             :post-id="postId"
+            :circle-id="circleId"
             :root-id="comment.id"
             :reply-to-id="null"
             :reply-to-name="comment.author_name"
@@ -152,6 +153,7 @@
                 <CommentReplyEditor
                   v-if="activeReplyId === reply.id"
                   :post-id="postId"
+                  :circle-id="circleId"
                   :root-id="comment.id"
                   :reply-to-id="reply.id"
                   :reply-to-name="reply.author_name"
@@ -255,6 +257,11 @@ const props = defineProps({
   postId: {
     type: String,
     required: true
+  },
+  // 帖子所属圈子 uuid：回复 @选人按圈子作用域搜索（null = 全站搜索）
+  circleId: {
+    type: String,
+    default: null
   },
   sort: {
     type: String,

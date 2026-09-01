@@ -107,10 +107,11 @@
                         </NIcon>
                       </template>
                     </NButton>
-                    <!-- @提及：按钮选人 + 编辑器内输入 @ 触发选人，共用同一份已选列表 -->
+                    <!-- @提及：编辑器内输入 @ 触发选人；圈内置顶/正文 @选人按所属圈子过滤可见机器人 -->
                         <MentionTrigger
                       :get-editor-view="getPostEditorView"
                       :selected-ids="selectedIds"
+                      :circle-id="formData.circle_id"
                       @select="recordSelection"
                     />
                   </div>

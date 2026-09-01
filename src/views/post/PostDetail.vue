@@ -23,6 +23,7 @@
             >
             <CommentEditor
               :post-id="route.params.id"
+              :circle-id="post.circle_id"
               :language="language"
               @submit="handleSubmitComment"
               @upload-img="handleCommentUploadImg"
@@ -31,6 +32,7 @@
             <CommentList
               ref="commentListRef"
               :post-id="route.params.id"
+              :circle-id="post.circle_id"
               v-model:sort="commentSort"
               v-model:comment-count="commentCount"
               :language="language"
