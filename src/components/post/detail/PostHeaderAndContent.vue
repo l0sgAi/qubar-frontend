@@ -82,6 +82,7 @@
     <div class="post-content">
       <MentionPreview
         :content="post.content"
+        :mentions="post.mentions"
         :language="language"
       />
     </div>

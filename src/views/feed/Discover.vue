@@ -314,9 +314,9 @@ const disconnectAll = () => {
   observers = []
 }
 
-// stream/wall 的底部哨兵：帖子优先，墙模式下帖子耗尽则补圈子
+// stream/wall 的底部哨兵：帖子优先，帖子耗尽则补圈子（两种模式都是帖子+圈子混排）
 const onMainIntersect = () => {
-  if (mode.value === 'wall' && !postsHasMore.value && circlesHasMore.value) {
+  if (!postsHasMore.value && circlesHasMore.value) {
     return loadMoreCircles()
   }
   if (postsHasMore.value) return loadMorePosts()

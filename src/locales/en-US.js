@@ -136,7 +136,16 @@ export default {
     latest:'Latest',
     highlights:'Highlights',
     postNotFound: 'Post not found',
-    viewDetail: 'View details'
+    viewDetail: 'View details',
+    loadCirclesFailed: 'Failed to load circles',
+    publishSuccess: 'Published successfully',
+    publishNoId: 'Post ID not received, returning to home',
+    publishFailed: 'Publish failed, please try again',
+    validation: {
+      circleRequired: 'Please select a circle',
+      titleRequired: 'Please enter a title',
+      contentRequired: 'Please enter content'
+    }
   },
 
   // 圈子相关
@@ -166,6 +175,8 @@ export default {
     createPost: 'Post',
     members: 'Members',
     posts: 'Posts',
+    membersShort: 'Members',
+    postsShort: 'Posts',
     description: 'Description',
     noCircles: 'No circles yet',
     noCircleResults: 'No circle results',
@@ -385,6 +396,9 @@ export default {
     disabled: 'Disabled',
     userSearchInDevelopment: 'User search in development...',
     anonymous: 'Anonymous',
+    unknownUser: 'Unknown User',
+    idNotFound: 'User ID not found',
+    fetchFailed: 'Failed to fetch user info',
     admin: 'Admin',
     noUserResults: 'No user results',
     today: 'Today',
@@ -811,6 +825,25 @@ export default {
     emptyFollowing: "You haven't joined any circles yet — explore circles you might like",
     loadFailed: 'Failed to load',
     loginRequiredTab: 'This content requires login to view'
+  },
+
+  // Search results page
+  search: {
+    emptyKeyword: 'Please enter a search keyword',
+    unknownCircle: 'Unknown circle',
+    untitled: 'Untitled',
+    failed: 'Search failed',
+    failedRetry: 'Search failed, please try again later'
+  },
+
+  // OAuth success callback page (/auth/success)
+  authCallback: {
+    welcome: 'Welcome back!',
+    processing: 'Processing...',
+    enterCommunity: 'Enter Community',
+    signingIn: 'Signing in...',
+    loginFailed: 'Login failed',
+    noLoginInfo: 'No login info detected, redirecting to login page...'
   },
 
   // 消息提示

@@ -125,7 +125,7 @@ onMounted(async () => {
   // 获取搜索关键词
   keyword.value = route.query.q || ''
   if (!keyword.value) {
-    message.warning('请输入搜索关键词')
+    message.warning(t('search.emptyKeyword'))
     router.push('/home')
     return
   }
@@ -178,7 +178,8 @@ watch(() => route.query, async (newQuery) => {
   }
 
   if ((newKeyword && newKeyword !== keyword.value) || newCircleId !== circleId.value) {
-    keyword.value = newKeyword
+    // newQuery.q 可能为 undefined（仅 circle_id 变化时），与 onMounted 一致归一为空串
+    keyword.value = newKeyword || ''
     circleId.value = newCircleId
 
     // 如果有新的圈子ID，获取圈子信息
@@ -250,14 +251,14 @@ const transformPostData = (apiPosts) => {
   return apiPosts.map(post => ({
     postId: post.id,
     circleId: post.circle_id || null,
-    circleName: post.circle_name || '未知圈子',
+    circleName: post.circle_name || t('search.unknownCircle'),
     circleAvatar: post.circle_avatar || '',
     circleColor: '#ec4899',
     userId: post.user_id || null,
-    userName: post.author_name || '匿名用户',
+    userName: post.author_name || t('user.anonymous'),
     userAvatar: post.author_avatar || '',
     userColor: '#a855f7',
-    title: post.title || '无标题',
+    title: post.title || t('search.untitled'),
     content: post.summary || post.content || '',
     coverImage: post.first_image || '',
     images: post.images || [],
@@ -316,11 +317,12 @@ const searchPostsData = async () => {
         hasMorePosts.value = false
       }
     } else {
-      message.error(response.msg || '搜索失败')
+      // 响应信封的错误字段是 message（与 L416/L474 一致），优先展示服务端文案
+      message.error(response.message || t('search.failed'))
     }
   } catch (error) {
     console.error('搜索帖子失败:', error)
-    message.error('搜索失败，请稍后重试')
+    message.error(t('search.failedRetry'))
   } finally {
     loadingPosts.value = false
   }
@@ -413,11 +415,11 @@ const searchCirclesData = async () => {
         hasMore.value = false
       }
     } else {
-      message.error(response.message || '搜索失败')
+      message.error(response.message || t('search.failed'))
     }
   } catch (error) {
     console.error('搜索兴趣圈失败:', error)
-    message.error('搜索失败，请稍后重试')
+    message.error(t('search.failedRetry'))
   } finally {
     loading.value = false
   }
@@ -471,11 +473,11 @@ const searchUsersData = async () => {
         hasMoreUsers.value = false
       }
     } else {
-      message.error(response.message || '搜索失败')
+      message.error(response.message || t('search.failed'))
     }
   } catch (error) {
     console.error('搜索用户失败:', error)
-    message.error('搜索失败，请稍后重试')
+    message.error(t('search.failedRetry'))
   } finally {
     loadingUsers.value = false
   }

@@ -29,6 +29,7 @@
           <div class="comment-content">
             <MentionPreview
               :content="comment.content"
+              :mentions="comment.mentions"
               :language="language"
             />
           </div>
@@ -123,6 +124,7 @@
                 <div class="comment-content">
                   <MentionPreview
                     :content="reply.content"
+                    :mentions="reply.mentions"
                     :language="language"
                   />
                 </div>

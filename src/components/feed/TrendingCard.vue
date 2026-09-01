@@ -41,6 +41,7 @@
 <script setup>
 import { computed, useId } from 'vue'
 import { NAvatar } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
 import { useFormatNumber } from '@/utils/i18n'
 import SmartLink from '@/components/common/SmartLink.vue'
 
@@ -67,6 +68,7 @@ const props = defineProps({
 // 防止时间窗切换卸载首个实例后其余火焰丢失渐变
 const flameGradId = `hot-flame-${useId()}`
 
+const { t } = useI18n()
 const { formatNumber } = useFormatNumber()
 
 // 跳转目标：按类型归一到真实 URL，交给 SmartLink 渲染 <a href>
@@ -113,7 +115,7 @@ const secondary = computed(() => {
     return segs.length ? segs.join(' · ') : ''
   }
   if (props.type === 'circle') {
-    return `${formatNumber(props.item.member_count)} 成员 · ${formatNumber(props.item.post_count)} 帖`
+    return `${formatNumber(props.item.member_count)} ${t('circle.members')} · ${formatNumber(props.item.post_count)} ${t('circle.posts')}`
   }
   // user 无额外字段
   return ''

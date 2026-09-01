@@ -11,7 +11,7 @@
           <AddIcon />
         </NIcon>
       </template>
-      发帖
+      {{ t('circle.createPost') }}
     </NButton>
   </div>
 </template>
@@ -19,9 +19,11 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { NButton, NIcon } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
 import { AddCircleOutlineFilled as AddIcon } from '@vicons/material'
 
 const router = useRouter()
+const { t } = useI18n()
 
 const handleClick = () => {
   router.push('/create-post')

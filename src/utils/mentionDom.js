@@ -17,13 +17,28 @@ const acceptText = (node) => {
 }
 
 // 把文本节点内的 @token 改写为链接；返回是否发生了 DOM 改写
-export const applyMentionLinks = (rootEl) => {
+// contentMentions：当前渲染内容自带的权威提及清单（后端随内容回传的 mentions）。
+// 传了数组（含空数组）就只给清单内的名字建链——会话级缓存只按用户名映射 uuid，
+// 改名/账号重名后缓存会残留旧映射，不校验会把旧内容的 @token 链到错误的人；
+// 旧内容没有该字段（undefined）时回退全局缓存，维持原行为。
+export const applyMentionLinks = (rootEl, contentMentions) => {
   if (!rootEl) return false
+  const scoped = Array.isArray(contentMentions)
+  const scopedMap = new Map()
+  if (scoped) {
+    contentMentions.forEach((u) => {
+      if (u?.id && u.username) scopedMap.set(String(u.username).toLowerCase(), u.id)
+    })
+  }
+  const lookup = scoped ? (name) => scopedMap.get(String(name).toLowerCase()) : peekUserId
   // 扫描正则与编辑器侧同源（getMentionFullRe）：已知名（选人/后端 mentions 回灌时
   // 进入缓存的名字）以转义字面量进 alternation、长名优先，覆盖含点号等字符集外
   // 字符的用户名（如机器人名 GLM-5.3-te，纯字符集扫描会在点号处截断致缓存查不到）；
   // 字符集内的名字走通用分支。已知名快照变化时正则按 key 自动重建，每轮取最新。
-  const re = getMentionFullRe(knownUsernames())
+  // 有权威清单时以清单中的名字为已知名，避免清单外名字参与整名优先匹配。
+  const re = getMentionFullRe(scoped
+    ? contentMentions.map((u) => u?.username).filter(Boolean).map(String)
+    : knownUsernames())
   const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, { acceptNode: acceptText })
   const nodes = []
   while (walker.nextNode()) nodes.push(walker.currentNode)
@@ -38,12 +53,12 @@ export const applyMentionLinks = (rootEl) => {
     let last = 0
     let m
     while ((m = re.exec(text)) !== null) {
-      // 词数从多到少逐个回查缓存：最长命中即提及跨度（整名优先，防短词误链）
+      // 词数从多到少逐个回查：最长命中即提及跨度（整名优先，防短词误链）
       const words = m[2].split(' ')
       let hit = null
       for (let k = words.length; k >= 1; k--) {
         const name = words.slice(0, k).join(' ')
-        const id = peekUserId(name)
+        const id = lookup(name)
         if (id) {
           hit = { name, id }
           break

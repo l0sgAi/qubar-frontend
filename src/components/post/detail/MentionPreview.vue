@@ -25,6 +25,12 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  // 当前内容的权威提及清单（后端随内容回传的 mentions: [{id, username}]）。
+  // 传了数组就只给清单内的名字建链；不传（旧内容无该字段）回退会话级缓存
+  mentions: {
+    type: Array,
+    default: undefined
+  },
   language: {
     type: String,
     default: 'zh-CN'
@@ -40,7 +46,7 @@ const run = () => {
   rafId = 0
   const el = rootEl.value
   if (!el) return
-  applyMentionLinks(el)
+  applyMentionLinks(el, props.mentions)
 }
 
 const scheduleRun = () => {
@@ -48,7 +54,7 @@ const scheduleRun = () => {
 }
 
 // 内容变化 → 等 DOM 提交后跑一遍；onHtmlChanged 兜底 md-editor 内部 500ms renderDelay 的异步渲染
-watch(() => props.content, () => nextTick(scheduleRun))
+watch([() => props.content, () => props.mentions], () => nextTick(scheduleRun))
 onMounted(scheduleRun)
 onBeforeUnmount(() => {
   if (rafId) cancelAnimationFrame(rafId)

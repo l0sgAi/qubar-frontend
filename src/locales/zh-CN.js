@@ -136,7 +136,16 @@ export default {
     latest:'最新',
     highlights:'精华',
     postNotFound: '帖子不存在',
-    viewDetail: '查看详情'
+    viewDetail: '查看详情',
+    loadCirclesFailed: '加载圈子列表失败',
+    publishSuccess: '发布成功',
+    publishNoId: '未获取到帖子ID，返回首页',
+    publishFailed: '发布失败，请重试',
+    validation: {
+      circleRequired: '请选择所属圈子',
+      titleRequired: '请输入帖子标题',
+      contentRequired: '请输入帖子正文'
+    }
   },
 
   // 圈子相关
@@ -166,6 +175,8 @@ export default {
     createPost: '发帖',
     members: '成员',
     posts: '帖子',
+    membersShort: '成员',
+    postsShort: '帖子',
     description: '简介',
     noCircles: '暂无圈子',
     noCircleResults: '暂无圈子结果',
@@ -385,6 +396,9 @@ export default {
     disabled: '禁用',
     userSearchInDevelopment: '用户搜索功能开发中...',
     anonymous: '匿名用户',
+    unknownUser: '未知用户',
+    idNotFound: '用户ID不存在',
+    fetchFailed: '获取用户信息失败',
     admin: '管理员',
     noUserResults: '暂无用户结果',
     today: '今天',
@@ -810,6 +824,25 @@ export default {
     emptyFollowing: '还没有加入圈子，去发现感兴趣的圈子吧',
     loadFailed: '加载失败',
     loginRequiredTab: '此内容需要登录后查看'
+  },
+
+  // 搜索结果页
+  search: {
+    emptyKeyword: '请输入搜索关键词',
+    unknownCircle: '未知圈子',
+    untitled: '无标题',
+    failed: '搜索失败',
+    failedRetry: '搜索失败，请稍后重试'
+  },
+
+  // OAuth 登录成功回调页（/auth/success）
+  authCallback: {
+    welcome: '欢迎回来！',
+    processing: '处理中...',
+    enterCommunity: '进入社区',
+    signingIn: '正在登录...',
+    loginFailed: '登录失败',
+    noLoginInfo: '未检测到登录信息，正在跳转到登录页...'
   },
 
   // 消息提示
