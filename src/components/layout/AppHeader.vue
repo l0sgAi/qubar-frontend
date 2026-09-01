@@ -158,7 +158,7 @@ import { Bell } from '@vicons/tabler'
 import request from '@/utils/request'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
-import { getUnreadCount } from '@/api/notice'
+import { useNoticeStream } from '@/composables/useNoticeStream'
 
 const router = useRouter()
 const route = useRoute()
@@ -173,7 +173,16 @@ const clearCircleSearch = inject('clearCircleSearch', () => {})
 // 用户信息
 const username = ref('User')
 const userAvatarUrl = ref('')
-const notificationCount = ref(0)
+
+// 未读数：SSE 实时推送为主、30s 轮询降级（连接管理在 useNoticeStream 内）。
+// 本地校正事件（notice-read/notice-read-all）仍直接改此 ref，SSE 随后推全量覆盖，语义一致。
+const { unreadCount: notificationCount, start: startNoticeStream, stop: stopNoticeStream } = useNoticeStream({
+  onAuthExpired: () => {
+    // 服务端检测到登出/过期/被踢下线（token 已在 composable 内清除）
+    message.warning(t('common.logout'))
+    router.push('/')
+  }
+})
 
 // 是否登录（匿名态如发现页落地时，顶栏改显「登录」按钮）
 const isLoggedIn = computed(() => auth.isAuthenticated())
@@ -215,9 +224,7 @@ onMounted(() => {
 
   if (auth.isAuthenticated()) {
     fetchUserInfo()
-    fetchUnreadCount()
-    // 轮询间隔 ≥30s（对接文档建议）
-    unreadTimer = setInterval(fetchUnreadCount, 30000)
+    startNoticeStream()
   }
   window.addEventListener('notice-read', handleNoticeReadEvent)
   window.addEventListener('notice-read-all', handleNoticeReadAllEvent)
@@ -231,10 +238,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
   window.removeEventListener('notice-read', handleNoticeReadEvent)
   window.removeEventListener('notice-read-all', handleNoticeReadAllEvent)
-  if (unreadTimer) {
-    clearInterval(unreadTimer)
-    unreadTimer = null
-  }
+  stopNoticeStream()
 })
 
 // 监听路由变化，同步搜索框内容
@@ -334,22 +338,7 @@ const handleNotification = () => {
   router.push('/notifications')
 }
 
-// 未读数：进入拉一次 + 30s 轮询（通知落库有约 5s 延迟，软实时即可）
-const fetchUnreadCount = async () => {
-  if (!auth.isAuthenticated()) return
-  try {
-    const res = await getUnreadCount()
-    if (res.data) {
-      notificationCount.value = res.data.unread_count || 0
-    }
-  } catch (error) {
-    console.error('获取未读通知数失败:', error)
-  }
-}
-
-let unreadTimer = null
-
-// 通知页已读操作后的本地校正（read 按条数减、read-all 清零）
+// 通知页已读操作后的本地校正（read 按条数减、read-all 清零；SSE 全量推送随后覆盖校准）
 const handleNoticeReadEvent = (e) => {
   notificationCount.value = Math.max(0, notificationCount.value - (e.detail?.count || 0))
 }

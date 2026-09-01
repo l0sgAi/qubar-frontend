@@ -74,15 +74,6 @@
               </div>
             </div>
 
-            <!-- 本期提示：机器人仅作为配置资产保存，不参与任何回复触发 -->
-            <NAlert
-              :title="t('agent.form.noteTitle')"
-              :bordered="false"
-              class="reply-note"
-            >
-              {{ t('agent.circlePage.replyNotLive') }}
-            </NAlert>
-
             <!-- 机器人表格（列结构与 AdminAgents 全局控制台一致） -->
             <NDataTable
               v-if="agents.length || loading"
