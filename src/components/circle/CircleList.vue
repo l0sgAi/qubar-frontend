@@ -23,7 +23,7 @@
             :size="56"
             :src="circle.avatar_url"
           >
-            <div v-if="circle.avatar_url===undefined || circle.avatar_url==''">{{ circle.name.charAt(0) }}</div>
+            <div v-if="!circle.avatar_url">{{ circle.name?.charAt(0) }}</div>
           </NAvatar>
         </div>
         <div class="circle-info">
@@ -34,13 +34,13 @@
               <NIcon size="14">
                 <UserIcon />
               </NIcon>
-              {{ formatNumber(circle.member_count) }} {{ t('circle.members').substring(0, 2) }}
+              {{ formatNumber(circle.member_count) }} {{ t('circle.membersShort') }}
             </span>
             <span class="stat-item">
               <NIcon size="14">
                 <FileTextIcon />
               </NIcon>
-              {{ formatNumber(circle.post_count) }} {{ t('circle.posts').substring(0, 2) }}
+              {{ formatNumber(circle.post_count) }} {{ t('circle.postsShort') }}
             </span>
             <span class="stat-item hot" v-if="circle.hot > 0">
               <NIcon size="14">

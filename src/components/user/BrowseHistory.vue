@@ -263,6 +263,8 @@ const fetchPosts = async (append = false) => {
     }
   } catch (error) {
     console.error('获取浏览历史失败:', error)
+    // 追加加载失败时关掉 hasMore，防止触底哨兵立即反复重试
+    if (append) hasMore.value = false
     message.error(error.message || t('common.operationFailed'))
   } finally {
     loading.value = false

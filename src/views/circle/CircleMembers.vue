@@ -736,6 +736,8 @@ watch(() => route.params.id, (newId, oldId) => {
   circle.value = {}
   Object.keys(tabState).forEach((key) => {
     tabState[key] = { members: [], cursor: '', hasMore: true, loading: false, loaded: false, keyword: '' }
+    // 同时作废上一个圈子仍在途的 loadTab，防止旧响应通过世代校验后写回新列表
+    genMap[key]++
   })
   searchInput.value = ''
   initPage()

@@ -63,7 +63,7 @@
           </NFormItem>
 
           <div class="forgot-row">
-            <span class="forgot-link" @click="forgotModalShow = true">{{ t('login.forgotPassword') }}</span>
+            <NButton text class="forgot-link" @click="forgotModalShow = true">{{ t('login.forgotPassword') }}</NButton>
           </div>
 
           <NButton
@@ -347,7 +347,7 @@ import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal.vue'
 import { loginWithEmail, sendVerificationCode, verifyEmailCode, registerWithEmail } from '@/api/auth'
-import { auth } from '@/utils/auth'
+import { auth, OAUTH_RETURN_PATH_KEY } from '@/utils/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -513,6 +513,11 @@ const passwordStrengthLabel = computed(() => {
 
 // ---- 倒计时 ----
 function startCountdown() {
+  // 先清掉可能存在的旧定时器，保证任意时刻只有一个倒计时在跑
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
   countdown.value = 60
   countdownTimer = setInterval(() => {
     countdown.value--
@@ -576,6 +581,8 @@ function handleForgotSuccess(email) {
 
 // ---- 注册 Step 1: 发送验证码 ----
 async function handleSendCode() {
+  // 防止请求 pending 期间重复点击造成并发请求 / 多个倒计时
+  if (sendCodeLoading.value) return
   if (registerStep.value === 1) {
     try {
       await step1FormRef.value?.validate()
@@ -643,18 +650,33 @@ async function handleRegister() {
 }
 
 // ---- OAuth ----
+// OAuth 为整页跳转，query.redirect 会在跳转中丢失：先校验并暂存站内回跳地址，
+// 由回调页（Success.vue）在登录成功后消费。校验规则与 redirectAfterAuth 一致，
+// 仅允许站内路径，防止开放重定向。
+function storeOauthReturnPath() {
+  const redirect = route.query.redirect
+  if (typeof redirect === 'string' && redirect.startsWith('/') && redirect !== '/') {
+    sessionStorage.setItem(OAUTH_RETURN_PATH_KEY, redirect)
+  } else {
+    sessionStorage.removeItem(OAUTH_RETURN_PATH_KEY)
+  }
+}
+
 function handleGoogleLogin() {
   oauthLoading.value = true
+  storeOauthReturnPath()
   window.location.href = 'https://api.qubar.site/auth/google/login'
 }
 
 function handleGithubLogin() {
   oauthLoading.value = true
+  storeOauthReturnPath()
   window.location.href = 'https://api.qubar.site/auth/github/login'
 }
 
 function handleAzureLogin() {
   oauthLoading.value = true
+  storeOauthReturnPath()
   window.location.href = 'https://api.qubar.site/auth/azure/login'
 }
 </script>

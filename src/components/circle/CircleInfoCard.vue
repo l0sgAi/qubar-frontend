@@ -123,12 +123,12 @@
           </NTag>
         </div>
         <div v-if="circleDetail.member_is_top" class="info-row">
-          <span class="label">置顶显示</span>
-          <span class="value">是</span>
+          <span class="label">{{ t('circle.pinnedDisplay') }}</span>
+          <span class="value">{{ t('common.yes') }}</span>
         </div>
         <div v-if="circleDetail.member_is_disturb" class="info-row">
-          <span class="label">消息免打扰</span>
-          <span class="value">已开启</span>
+          <span class="label">{{ t('circle.messageDisturb') }}</span>
+          <span class="value">{{ t('common.enabled') }}</span>
         </div>
       </div>
 
@@ -226,9 +226,9 @@ const formatNumber = (num) => {
 
 // 格式化日期为国际通用格式：YYYY/MM/DD
 const formatDate = (dateStr) => {
-  if (!dateStr) return '未知'
+  if (!dateStr) return t('common.unknown')
   const date = new Date(dateStr)
-  if (Number.isNaN(date.getTime())) return '未知'
+  if (Number.isNaN(date.getTime())) return t('common.unknown')
   const pad = (n) => String(n).padStart(2, '0')
   return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`
 }

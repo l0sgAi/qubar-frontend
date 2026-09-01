@@ -24,7 +24,7 @@
             <NTabPane name="posts" display-directive="show">
               <template #tab>
                 <NSpace align="center" :size="6">
-                  <span>帖子</span>
+                  <span>{{ t('user.posts') }}</span>
                   <NTag size="small" :bordered="false" round>{{ postsTotal }}</NTag>
                 </NSpace>
               </template>
@@ -39,7 +39,7 @@
             <NTabPane v-if="!isBot" name="groups" display-directive="show">
               <template #tab>
                 <NSpace align="center" :size="6">
-                  <span>兴趣圈</span>
+                  <span>{{ t('user.myGroups') }}</span>
                   <NTag size="small" :bordered="false" round>{{ groupsTotal }}</NTag>
                 </NSpace>
               </template>
@@ -62,12 +62,12 @@
                 :src="userInfo.avatar_url"
                 round
                 class="sidebar-avatar">
-                 <div class="avatar-font" 
-                 v-if="!userInfo.avatar_url || userInfo.avatar_url == ''">
-                 {{ userInfo.username.charAt(0) }}
+                 <div class="avatar-font"
+                 v-if="!userInfo.avatar_url">
+                 {{ userInfo.username?.charAt(0) }}
                 </div>
             </NAvatar>
-              <h2 class="sidebar-username">{{ userInfo.username || '未设置' }}</h2>
+              <h2 class="sidebar-username">{{ userInfo.username || t('user.notSet') }}</h2>
             </div>
 
             <!-- 用户基本信息 -->
@@ -76,48 +76,48 @@
               <!-- 机器人：只显示角色和状态 -->
               <div v-if="isBot" class="info-list">
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">角色</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.role') }}</NText>
                   <NTag :type="getRoleType(userInfo.role)" size="small" round>
                     {{ getRoleText(userInfo.role) }}
                   </NTag>
                 </div>
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">状态</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.status') }}</NText>
                   <NTag :type="userInfo.status === 1 ? 'success' : 'error'" size="small" round>
-                    {{ userInfo.status === 1 ? '正常' : '禁用' }}
+                    {{ userInfo.status === 1 ? t('user.normal') : t('user.disabled') }}
                   </NTag>
                 </div>
               </div>
               <!-- 普通用户：完整信息 -->
               <div v-else class="info-list">
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">邮箱</NText>
-                  <NText style="font-size: 15px;">{{ userInfo.email || '未设置' }}</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.email') }}</NText>
+                  <NText style="font-size: 15px;">{{ userInfo.email || t('user.notSet') }}</NText>
                 </div>
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">手机号</NText>
-                  <NText style="font-size: 15px;">{{ userInfo.phone || '未绑定' }}</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.phone') }}</NText>
+                  <NText style="font-size: 15px;">{{ userInfo.phone || t('user.notBound') }}</NText>
                 </div>
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">性别</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.gender') }}</NText>
                   <NTag :type="getGenderType(userInfo.gender)" size="small" round>
                     {{ getGenderText(userInfo.gender) }}
                   </NTag>
                 </div>
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">生日</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.birthday') }}</NText>
                   <NText style="font-size: 15px;">{{ formatDate(userInfo.birthdate) }}</NText>
                 </div>
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">角色</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.role') }}</NText>
                   <NTag :type="getRoleType(userInfo.role)" size="small" round>
                     {{ getRoleText(userInfo.role) }}
                   </NTag>
                 </div>
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">状态</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.status') }}</NText>
                   <NTag :type="userInfo.status === 1 ? 'success' : 'error'" size="small" round>
-                    {{ userInfo.status === 1 ? '正常' : '禁用' }}
+                    {{ userInfo.status === 1 ? t('user.normal') : t('user.disabled') }}
                   </NTag>
                 </div>
               </div>
@@ -151,12 +151,14 @@ import MyPosts from '@/components/user/MyPosts.vue'
 import MyGroups from '@/components/user/MyGroups.vue'
 import { getUserDetail } from '@/api/user'
 import { usePageTitle } from '@/composables/usePageTitle'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
 const offset = ref(260)
 const route = useRoute()
 const message = useMessage()
 const { setTitleData } = usePageTitle()
+const { t, locale } = useI18n()
 
 // 当前激活的标签页
 const activeTab = ref('posts')
@@ -199,7 +201,7 @@ const fetchUserInfo = async () => {
   try {
     const userId = route.params.id
     if (!userId) {
-      message.error('用户ID不存在')
+      message.error(t('user.idNotFound'))
       router.push('/home')
       return
     }
@@ -212,12 +214,12 @@ const fetchUserInfo = async () => {
         setTitleData('title.userDetailName', { name: userInfo.value.username })
       }
     } else {
-      message.error('获取用户信息失败')
+      message.error(t('user.fetchFailed'))
       router.push('/home')
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)
-    message.error('获取用户信息失败')
+    message.error(t('user.fetchFailed'))
     router.push('/home')
   }
 }
@@ -226,20 +228,21 @@ const fetchUserInfo = async () => {
 
 // 格式化日期
 const formatDate = (dateStr) => {
-  if (!dateStr) return '未设置'
+  if (!dateStr) return t('user.notSet')
   const date = new Date(dateStr)
-  return date.toLocaleDateString('zh-CN')
+  if (Number.isNaN(date.getTime())) return t('user.notSet')
+  return date.toLocaleDateString(locale.value)
 }
 
 // 获取性别文本
 const getGenderText = (gender) => {
   const genderMap = {
-    0: '未设置',
-    1: '男',
-    2: '女',
-    3: '其他'
+    0: t('user.genders.notSet'),
+    1: t('user.genders.male'),
+    2: t('user.genders.female'),
+    3: t('user.genders.other')
   }
-  return genderMap[gender] || '未设置'
+  return genderMap[gender] || t('user.genders.notSet')
 }
 
 // 获取性别标签类型
@@ -256,11 +259,11 @@ const getGenderType = (gender) => {
 // 获取角色文本
 const getRoleText = (role) => {
   const roleMap = {
-    0: '普通用户',
-    1: '管理员',
-    2: '机器人'
+    0: t('user.roles.user'),
+    1: t('user.roles.admin'),
+    2: t('user.roles.agentBot')
   }
-  return roleMap[role] || '普通用户'
+  return roleMap[role] || t('user.roles.user')
 }
 
 // 获取角色标签类型

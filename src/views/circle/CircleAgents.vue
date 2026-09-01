@@ -335,14 +335,14 @@ const columns = computed(() => [
     render: row => h('div', { class: 'c-agent-cell-trigger' }, [
       h('span', { class: 'c-agent-cell-trigger-mode' }, triggerModeText(row.trigger_mode)),
       ...(row.trigger_mode === 2 && row.trigger_keywords?.length
-        ? [h('div', { class: 'c-agent-cell-keywords' },
-            row.trigger_keywords.slice(0, 3).map(kw =>
+        ? [h('div', { class: 'c-agent-cell-keywords' }, [
+            ...row.trigger_keywords.slice(0, 3).map(kw =>
               h(NTag, { size: 'tiny', bordered: false, type: 'info', key: kw }, { default: () => kw })
             ),
             row.trigger_keywords.length > 3
               ? h(NText, { depth: 3, style: 'font-size: 11px' }, { default: () => `+${row.trigger_keywords.length - 3}` })
               : null
-          )]
+          ].filter(Boolean))]
         : [])
     ])
   },

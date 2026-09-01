@@ -640,12 +640,17 @@ const handleCropCancel = () => {
 // 更新用户信息
 const handleUpdateInfo = async () => {
   try {
+    // 与 openEditModal 的种子值逐字段对比，只有真正变化才算修改
+    // （此前 gender 恒有定义导致 hasChanges 永远为 true）
+    const currentBirthdateTs = userInfo.value.birthdate
+      ? new Date(userInfo.value.birthdate).getTime()
+      : null
     const hasChanges =
-      formData.value.username ||
-      formData.value.phone ||
-      formData.value.avatar_url ||
-      formData.value.gender !== undefined ||
-      formData.value.birthdate
+      formData.value.username !== (userInfo.value.username || '') ||
+      formData.value.phone !== (userInfo.value.phone || '') ||
+      formData.value.avatar_url !== (userInfo.value.avatar_url || '') ||
+      formData.value.gender !== (userInfo.value.gender ?? 0) ||
+      formData.value.birthdate !== currentBirthdateTs
 
     if (!hasChanges) {
       message.warning(t('user.editModal.noChangesWarning'))

@@ -5,7 +5,7 @@
 
     <NCard class="success-container" :bordered="false">
       <div class="success-view">
-        <h2 class="welcome-title">欢迎回来!</h2>
+        <h2 class="welcome-title">{{ t('authCallback.welcome') }}</h2>
         <NButton
           type="primary"
           size="large"
@@ -13,7 +13,7 @@
           @click="handleEnterCommunity"
           :loading="loading"
         >
-          {{ loading ? '处理中...' : '进入社区' }}
+          {{ loading ? t('authCallback.processing') : t('authCallback.enterCommunity') }}
         </NButton>
       </div>
     </NCard>
@@ -24,11 +24,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { NCard, NButton, NScrollbar, useMessage } from 'naive-ui'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import AnimatedBackground from '@/components/auth/AnimatedBackground.vue'
-import { auth } from '@/utils/auth'
+import { auth, OAUTH_RETURN_PATH_KEY } from '@/utils/auth'
 
 const router = useRouter()
 const message = useMessage()
+const { t } = useI18n()
 
 const token = ref('')
 const userEmail = ref('')
@@ -41,24 +43,14 @@ const userInitial = computed(() => {
 onMounted(async () => {
   const urlParams = new URLSearchParams(window.location.search)
 
-  // 方式1：后端直接在 URL 参数中返回 token
-  const urlToken = urlParams.get('token')
-  const expire = urlParams.get('expire') || '259200' // 默认 3 天
-  const email = urlParams.get('email')
-
-  if (urlToken) {
-    // 后端直接返回 token
-    handleLoginSuccess(urlToken, expire, email || 'user@example.com')
-    return
-  }
-
-  // 方式2：后端返回 JSON 格式（需要解析）
-  // 检查 URL 中是否有特殊标识，或者尝试读取页面内容
+  // 安全要求：不接受 URL 直接携带的 token（会泄漏到浏览器历史/日志），
+  // 仅支持后端下发的一次性授权 code，页面加载后由前端换取 token
   const code = urlParams.get('code')
   if (code) {
-    // Google OAuth 回调，需要发送给后端
+    // OAuth 回调，需要发送给后端
+    loading.value = true
     try {
-      message.loading('正在登录...', { duration: 0 })
+      message.loading(t('authCallback.signingIn'), { duration: 0 })
 
       const response = await fetch('https://api.qubar.site/auth/google/callback', {
         method: 'POST',
@@ -73,11 +65,12 @@ onMounted(async () => {
       if (data.code === 200 && data.data && data.data.token) {
         handleLoginSuccess(data.data.token, data.data.expire, data.data.email || 'user@example.com')
       } else {
-        throw new Error(data.message || '登录失败')
+        throw new Error(data.message || t('common.unknownError'))
       }
     } catch (error) {
+      loading.value = false
       message.destroyAll()
-      message.error('登录失败: ' + error.message)
+      message.error(t('authCallback.loginFailed') + ': ' + error.message)
       // console.error('OAuth 登录错误:', error)
       setTimeout(() => {
         router.push('/')
@@ -86,12 +79,19 @@ onMounted(async () => {
     return
   }
 
-  // 既没有 token 也没有 code，可能是直接访问
-  message.warning('未检测到登录信息，正在跳转到登录页...')
+  // 没有 code，可能是直接访问
+  message.warning(t('authCallback.noLoginInfo'))
   setTimeout(() => {
     router.push('/')
   }, 2000)
 })
+
+// 消费 OAuth 跳转前暂存的站内回跳地址（一次性，读后即删），无则回主页
+const consumeReturnPath = () => {
+  const path = sessionStorage.getItem(OAUTH_RETURN_PATH_KEY)
+  sessionStorage.removeItem(OAUTH_RETURN_PATH_KEY)
+  return (typeof path === 'string' && path.startsWith('/') && path !== '/') ? path : '/home'
+}
 
 const handleLoginSuccess = (tokenValue, expire, email) => {
   token.value = tokenValue
@@ -105,22 +105,22 @@ const handleLoginSuccess = (tokenValue, expire, email) => {
 
   loading.value = false
   message.destroyAll()
-  message.success('登录成功！', { duration: 2000 })
+  message.success(t('login.messages.loginSuccess'), { duration: 2000 })
   // console.log('登录成功，Token已保存:', {
   //   token: tokenValue.substring(0, 20) + '...',
   //   expire: expire + '秒',
   //   email: email
   // })
 
-  // 自动跳转到主页
+  // 自动跳转到回跳地址或主页
   setTimeout(() => {
-    router.push('/home')
+    router.push(consumeReturnPath())
   }, 1500)
 }
 
 const handleEnterCommunity = () => {
-  // 跳转到系统主页
-  router.push('/home')
+  // 跳转到回跳地址或系统主页
+  router.push(consumeReturnPath())
 }
 </script>
 

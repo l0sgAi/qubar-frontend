@@ -111,9 +111,10 @@ const props = defineProps({
     type: String,
     default: null
   },
+  // 直接回复根评论时为 null（此时用 rootId 作为 reply_to_id）
   replyToId: {
     type: String,
-    required: true
+    default: null
   },
   replyToName: {
     type: String,

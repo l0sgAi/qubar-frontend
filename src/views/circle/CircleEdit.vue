@@ -504,11 +504,14 @@ const handleSave = async () => {
   })
 
   saving.value = true
+  // 与 initPage 同一世代守卫：保存期间路由切换到别的圈子时，丢弃本次重拉结果
+  const gen = initPageGen
   try {
     await updateCircle(payload)
     message.success(t('circle.edit.saveSuccess'))
     // 保存后重拉详情，以服务端数据为准刷新表单与快照
     const res = await getCircleDetail(circleId.value)
+    if (gen !== initPageGen) return
     if (res.data) circle.value = res.data
     fillForm()
     // 圈子名可能已修改，同步刷新标签页标题
@@ -516,6 +519,7 @@ const handleSave = async () => {
       setTitleData('title.circleEditName', { name: circle.value.name })
     }
   } catch (error) {
+    if (gen !== initPageGen) return
     handleSaveError(error)
   } finally {
     saving.value = false

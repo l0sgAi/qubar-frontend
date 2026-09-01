@@ -23,11 +23,11 @@
             :size="56"
             :src="user.avatar_url"
             >
-            <div v-if="user.avatar_url===undefined || user.avatar_url==''">{{ user.username.charAt(0) }}</div>
+            <div v-if="!user.avatar_url">{{ user.username?.charAt(0) }}</div>
           </NAvatar>
         </div>
         <div class="user-info">
-          <h3 class="user-name">{{ user.username || '未知用户' }}</h3>
+          <h3 class="user-name">{{ user.username || t('user.unknownUser') }}</h3>
           <p class="user-email">{{ user.email || '' }}</p>
           <div class="user-stats">
             <span class="stat-item">
@@ -97,11 +97,14 @@ const formatDate = (dateString) => {
   if (!dateString) return ''
   try {
     const date = new Date(dateString)
+    if (Number.isNaN(date.getTime())) return dateString
     const now = new Date()
-    const diffTime = Math.abs(now - date)
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    // 按自然日（本地零点）计算天数差：今天=0、昨天=1；
+    // 不取绝对值，未来时间戳不会被误贴「昨天/N天前」标签
+    const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+    const diffDays = Math.round((startOfDay(now) - startOfDay(date)) / 86400000)
 
-    if (diffDays === 0) {
+    if (diffDays <= 0) {
       return t('user.today')
     } else if (diffDays === 1) {
       return t('user.yesterday')

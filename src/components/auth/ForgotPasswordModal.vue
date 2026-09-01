@@ -297,6 +297,11 @@ const passwordStrengthLabel = computed(() => {
 
 // ---- 倒计时 ----
 function startCountdown() {
+  // 先清掉可能存在的旧定时器，保证任意时刻只有一个倒计时在跑
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
   countdown.value = 60
   countdownTimer = setInterval(() => {
     countdown.value--
@@ -340,6 +345,8 @@ onUnmounted(() => {
 
 // ---- Step 1: 发送验证码 ----
 async function handleSendCode() {
+  // 防止请求 pending 期间重复点击造成并发请求 / 多个倒计时
+  if (sendCodeLoading.value) return
   if (step.value === 1) {
     try {
       await step1FormRef.value?.validate()

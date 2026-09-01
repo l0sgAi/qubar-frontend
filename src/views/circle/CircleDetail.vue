@@ -303,7 +303,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, inject } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, inject, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NTabs, NTabPane, NButton, NIcon, NDropdown, NTag, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -696,6 +696,8 @@ const setupObservers = () => {
 onMounted(async () => {
   await fetchCircleDetail()
   fetchPosts(activeTab.value)
+  // 哨兵元素渲染在 v-if="loading" 的 v-else 分支里，需等 DOM 更新后 ref 才有值
+  await nextTick()
   setupObservers()
 })
 
@@ -724,6 +726,8 @@ watch(() => route.params.id, async (newId, oldId) => {
 
   await fetchCircleDetail()
   fetchPosts(activeTab.value)
+  // 同上：loading 置 false 后哨兵元素要等下一次 DOM 更新才存在
+  await nextTick()
   setupObservers()
 })
 

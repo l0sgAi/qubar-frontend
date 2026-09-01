@@ -249,23 +249,23 @@ const toolbars = [
 ]
 
 // 表单验证规则
-const rules = {
+const rules = computed(() => ({
   circle_id: {
     required: true,
-    message: '请选择所属圈子',
+    message: t('post.validation.circleRequired'),
     trigger: ['change', 'blur']
   },
   title: {
     required: true,
-    message: '请输入帖子标题',
+    message: t('post.validation.titleRequired'),
     trigger: ['blur', 'input']
   },
   content: {
     required: true,
-    message: '请输入帖子正文',
+    message: t('post.validation.contentRequired'),
     trigger: ['blur', 'input']
   }
-}
+}))
 
 // 加载用户已加入的圈子列表
 const loadCircles = async (keyword = '') => {
@@ -286,7 +286,7 @@ const loadCircles = async (keyword = '') => {
     }
   } catch (error) {
     console.error('加载圈子列表失败:', error)
-    message.error('加载圈子列表失败')
+    message.error(t('post.loadCirclesFailed'))
   } finally {
     loadingCircles.value = false
   }
@@ -429,7 +429,7 @@ const handleSubmit = async () => {
 
     const res = await createPost(submitData)
 
-    message.success('发布成功')
+    message.success(t('post.publishSuccess'))
 
     // 跳转到帖子详情页
     if (res.data) {
@@ -439,7 +439,7 @@ const handleSubmit = async () => {
         params: { id: postId }
       })
     } else {
-      message.warning('未获取到帖子ID，返回首页')
+      message.warning(t('post.publishNoId'))
       router.push('/home')
     }
   } catch (error) {
@@ -448,7 +448,7 @@ const handleSubmit = async () => {
       // 表单验证错误
       return
     }
-    message.error(error.message || '发布失败，请重试')
+    message.error(error.message || t('post.publishFailed'))
   } finally {
     submitting.value = false
   }

@@ -13,7 +13,7 @@
       <div v-for="comment in comments" :key="comment.id" class="comment-item">
         <div class="comment-avatar">
           <NAvatar round :size="36" :src="comment.author_avatar || undefined">
-          <div v-if="comment.author_avatar===undefined">{{ comment.author_name.charAt(0) }}</div>
+          <div v-if="!comment.author_avatar">{{ comment.author_name?.charAt(0) }}</div>
           </NAvatar>
         </div>
         <div class="comment-body">
@@ -85,16 +85,16 @@
               <div class="replies-sort-toggle">
                 <span
                   class="sort-option"
-                  :class="{ active: repliesSort === 1, disabled: getRepliesData(comment.id).sortLoading }"
-                  @click="repliesSort !== 1 && !getRepliesData(comment.id).sortLoading && toggleRepliesSort(comment.id)"
+                  :class="{ active: getRepliesData(comment.id).sort === 1, disabled: getRepliesData(comment.id).sortLoading }"
+                  @click="getRepliesData(comment.id).sort !== 1 && !getRepliesData(comment.id).sortLoading && toggleRepliesSort(comment.id)"
                 >
                   {{ t('comment.sort.newest') }}
                 </span>
                 <span class="sort-divider">/</span>
                 <span
                   class="sort-option"
-                  :class="{ active: repliesSort === 0, disabled: getRepliesData(comment.id).sortLoading }"
-                  @click="repliesSort !== 0 && !getRepliesData(comment.id).sortLoading && toggleRepliesSort(comment.id)"
+                  :class="{ active: getRepliesData(comment.id).sort === 0, disabled: getRepliesData(comment.id).sortLoading }"
+                  @click="getRepliesData(comment.id).sort !== 0 && !getRepliesData(comment.id).sortLoading && toggleRepliesSort(comment.id)"
                 >
                   {{ t('comment.sort.hottest') }}
                 </span>
@@ -103,7 +103,7 @@
             <div v-for="reply in getCurrentReplies(comment.id)" :key="reply.id" class="comment-item reply-item">
               <div class="comment-avatar">
                 <NAvatar round :size="28" :src="reply.author_avatar || undefined">
-                  <div v-if="reply.author_avatar===undefined">{{ reply.author_name.charAt(0) }}</div>
+                  <div v-if="!reply.author_avatar">{{ reply.author_name?.charAt(0) }}</div>
                 </NAvatar>
               </div>
               <div class="comment-body">
@@ -283,9 +283,10 @@ const { t } = useI18n()
 const { formatTime } = useFormatTime()
 const { formatNumber } = useFormatNumber()
 
-// 获取用户ID（兼容多种字段名）
+// 获取用户ID（兼容多种字段名）；注意不能回退到 item.id——那是评论ID，
+// 作者信息缺失时会错误地链到 /user/<评论ID>
 const getUserId = (item) => {
-  return item.author_id || item.user_id || item.userId || item.authorId || item.id
+  return item.author_id || item.user_id || item.userId || item.authorId || null
 }
 
 // 作者名统一用 SmartLink 渲染为真实链接；无 id 时降级为纯文本块
@@ -309,12 +310,9 @@ const nextCursor = ref('')
 const initialized = ref(false)
 
 // 回复展开状态和分页数据（游标分页 + 页面缓存）
-// 格式: { [commentId]: { pages: [[]], currentPage: 0, cursors: [''], hasMoreMap: {}, loading: false } }
+// 格式: { [commentId]: { pages: [[]], currentPage: 0, cursors: [''], hasMoreMap: {}, loading: false, sort: 1 } }
 const repliesData = ref({})
 const loadingReplies = ref({})
-
-// 回复排序状态：0=最热（最多点赞），1=最新（默认）
-const repliesSort = ref(1)
 
 // 获取某个评论的回复数据
 const getRepliesData = (commentId) => {
@@ -326,7 +324,8 @@ const getRepliesData = (commentId) => {
       hasMoreMap: {},        // 每页是否有更多数据 {pageIndex: boolean}
       loading: false,
       pageLoading: false,    // 页面加载状态（用于显示遮罩）
-      sortLoading: false     // 排序切换加载状态
+      sortLoading: false,    // 排序切换加载状态
+      sort: 1                // 该评论的回复排序：0=最热（最多点赞），1=最新（默认），按评论独立
     }
   }
   return repliesData.value[commentId]
@@ -518,8 +517,8 @@ let lazyObserver = null
 // 排序映射：newest → 1（时间倒序），hottest → 0（点赞倒序）
 const getSortValue = () => props.sort === 'newest' ? 1 : 0
 
-// 回复排序值：0=最热（最多点赞），1=最新（默认）
-const getRepliesSortValue = () => repliesSort.value
+// 回复排序值：0=最热（最多点赞），1=最新（默认）；按评论独立存储
+const getRepliesSortValue = (commentId) => getRepliesData(commentId).sort
 
 // 切换回复排序
 const toggleRepliesSort = async (commentId) => {
@@ -528,10 +527,8 @@ const toggleRepliesSort = async (commentId) => {
   // 如果正在加载，忽略
   if (data.sortLoading) return
 
-  // 切换排序值
-  if (repliesSort.value === 0 || repliesSort.value === 1) {
-    repliesSort.value = repliesSort.value === 0 ? 1 : 0
-  }
+  // 切换该评论自己的排序值（不影响其他评论）
+  data.sort = data.sort === 0 ? 1 : 0
 
   // 设置排序加载状态
   data.sortLoading = true
@@ -542,7 +539,7 @@ const toggleRepliesSort = async (commentId) => {
     if (comment) {
       const params = {
         root_id: comment.id,
-        sort: getRepliesSortValue()
+        sort: getRepliesSortValue(commentId)
       }
 
       const res = await getCommentReplies(params)
@@ -619,7 +616,7 @@ const loadReplies = async (comment) => {
   try {
     const params = {
       root_id: comment.id,
-      sort: getRepliesSortValue()
+      sort: getRepliesSortValue(comment.id)
     }
 
     // 非首页需要传游标
@@ -681,7 +678,7 @@ const nextPage = async (commentId) => {
     try {
       const params = {
         root_id: comment.id,
-        sort: getRepliesSortValue(),
+        sort: getRepliesSortValue(commentId),
         cursor: data.cursors[data.currentPage + 1]
       }
 

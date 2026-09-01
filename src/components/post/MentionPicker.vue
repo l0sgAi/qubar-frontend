@@ -44,7 +44,6 @@
             </NAvatar>
             <div class="mention-user-info">
               <span class="mention-user-name">{{ user.username }}</span>
-              <span v-if="user.email" class="mention-user-email">{{ user.email }}</span>
             </div>
             <span class="mention-role" :class="`mention-role--${roleClass(user.role)}`">
               {{ t(`user.roles.${roleClass(user.role)}`) }}

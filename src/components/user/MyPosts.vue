@@ -335,13 +335,12 @@ const getPostMenuOptions = () => {
 }
 
 const handleAction = (key, post) => {
+  // 提示消息由父组件 UserProfile 统一弹出，这里只转发事件，避免重复通知
   switch (key) {
     case 'edit':
-      message.info(`${t('common.edit')}: ${post.title}`)
       emit('edit', post)
       break
     case 'delete':
-      message.warning(`${t('common.delete')}: ${post.title}`)
       emit('delete', post)
       break
   }
