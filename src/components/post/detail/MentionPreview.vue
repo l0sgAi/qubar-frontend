@@ -40,7 +40,7 @@ const run = () => {
   rafId = 0
   const el = rootEl.value
   if (!el) return
-  applyMentionLinks(el, scheduleRun)
+  applyMentionLinks(el)
 }
 
 const scheduleRun = () => {

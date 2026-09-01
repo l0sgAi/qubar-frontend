@@ -220,7 +220,7 @@ const handleSubmit = async () => {
       newComment.extra_data = extraData
     }
 
-    // 后端若回传 mentions（需求见 docs/mention-backend-requirements.md），乐观渲染前回灌
+    // 后端回传 mentions（契约见 docs/mention-user-ids-integration.md），乐观渲染前回灌
     seedContentMentions([newComment])
 
     emit('submit', newComment)
