@@ -34,6 +34,38 @@ export default {
     enabled: 'Enabled'
   },
 
+  // Browser tab titles (document.title, see applyPageTitle in router/index.js)
+  title: {
+    brand: 'Qubar',
+    slogan: 'Discover Your Passion',
+    success: 'Login Success',
+    home: 'Home',
+    hot: 'Hot',
+    discover: 'Discover',
+    createPost: 'Create Post',
+    profile: 'Profile',
+    userDetail: 'User Profile',
+    terms: 'Terms of Service',
+    privacy: 'Privacy Policy',
+    searchResults: 'Search Results',
+    searchKeyword: 'Search "{keyword}"',
+    circleDetail: 'Circle Detail',
+    circleMembers: 'Member Management',
+    circleEdit: 'Edit Circle',
+    postDetail: 'Post Detail',
+    notifications: 'Messages',
+    adminAgents: 'Agent Management',
+    circleAgents: 'Circle Agents',
+    // Dynamic title templates: show concrete content after data loads (see utils/pageTitle.js)
+    postDetailName: '{name}',
+    circleDetailName: '{name}',
+    userDetailName: '{name}',
+    circleMembersName: 'Member Management: {name}',
+    circleEditName: 'Edit Circle: {name}',
+    circleAgentsName: 'Agent Management: {name}',
+    profileName: 'Profile: {name}'
+  },
+
   // 时间相关
   time: {
     justNow: 'Just now',
@@ -104,7 +136,16 @@ export default {
     latest:'Latest',
     highlights:'Highlights',
     postNotFound: 'Post not found',
-    viewDetail: 'View details'
+    viewDetail: 'View details',
+    loadCirclesFailed: 'Failed to load circles',
+    publishSuccess: 'Published successfully',
+    publishNoId: 'Post ID not received, returning to home',
+    publishFailed: 'Publish failed, please try again',
+    validation: {
+      circleRequired: 'Please select a circle',
+      titleRequired: 'Please enter a title',
+      contentRequired: 'Please enter content'
+    }
   },
 
   // 圈子相关
@@ -117,6 +158,7 @@ export default {
     leaveCircle: 'Leave Circle',
     joined: 'Joined',
     active: 'Active',
+    random: 'Random',
     viewAll: 'View All',
     myCircles: 'My Circles',
     createCircle: 'Create Circle',
@@ -133,6 +175,8 @@ export default {
     createPost: 'Post',
     members: 'Members',
     posts: 'Posts',
+    membersShort: 'Members',
+    postsShort: 'Posts',
     description: 'Description',
     noCircles: 'No circles yet',
     noCircleResults: 'No circle results',
@@ -352,6 +396,9 @@ export default {
     disabled: 'Disabled',
     userSearchInDevelopment: 'User search in development...',
     anonymous: 'Anonymous',
+    unknownUser: 'Unknown User',
+    idNotFound: 'User ID not found',
+    fetchFailed: 'Failed to fetch user info',
     admin: 'Admin',
     noUserResults: 'No user results',
     today: 'Today',
@@ -427,11 +474,42 @@ export default {
     keyword: 'Keyword'
   },
 
-  // AI agent management (/admin/agents, admins only, role=1)
+  // AI agent management (/admin/agents; admins see global+circles tabs, regular users see managed circles only)
   agent: {
     title: 'Agent Management',
     navEntry: 'Agents',
     noPermission: 'Access denied: admins only',
+    tabs: {
+      global: 'Global Agents',
+      circles: 'Managed Circles'
+    },
+    circleList: {
+      searchPlaceholder: 'Search circle name or description',
+      roleOwner: 'Owner',
+      roleAdmin: 'Admin',
+      statusPending: 'Circle under review; agent management unavailable',
+      statusBanned: 'Circle banned; agent management unavailable',
+      agentsBound: '{count}/5 bound',
+      members: '{count} members',
+      posts: '{count} posts',
+      noDescription: 'No description yet',
+      empty: 'You have no manageable circles',
+      emptySearch: 'No matching circles'
+    },
+    circlePage: {
+      titleWithName: '{name} · Agents',
+      backToList: 'Back to list',
+      create: 'New Agent',
+      edit: 'Edit Agent',
+      quota: '{count}/5 bound',
+      quotaFull: 'Up to 5 agents per circle; delete one to free a slot',
+      noPermission: 'Access denied: only the circle owner/admins can manage circle agents',
+      empty: 'No agents in this circle yet — create the first one',
+      emptySearch: 'No matching agents',
+      loadFailed: 'Failed to load circle agents',
+      replyNotLive: 'Circle agents do not reply to posts yet (keyword/manual triggers are inactive); they are saved as configuration only. Replies will arrive in a later release.',
+      credentialsOwnerOnly: 'Protocol, base URL and API key can only be changed by the circle owner.'
+    },
     searchPlaceholder: 'Search agents by name',
     create: 'New Agent',
     edit: 'Edit Agent',
@@ -459,6 +537,7 @@ export default {
       sectionTrigger: 'Trigger & Rate Limit',
       name: 'Name',
       namePlaceholder: '1-50 chars, globally unique',
+      namePlaceholderCircle: '1-50 chars, unique in this circle',
       avatarUrl: 'Avatar',
       avatarUpload: 'Upload Avatar',
       avatarRemove: 'Remove',
@@ -480,10 +559,9 @@ export default {
       llmParams: 'LLM Params (replaced as a whole)',
       systemPrompt: 'System Prompt',
       systemPromptPlaceholder: 'Persona and reply requirements (optional)',
-      triggerMode: 'Trigger Mode',
       keywords: 'Trigger Keywords',
       keywordsPlaceholder: 'Type a keyword and press Enter',
-      keywordsRequired: 'At least one keyword is required in keyword mode',
+      keywordsRequired: 'At least one trigger keyword is required',
       filterPrompt: 'Reply Filter (optional)',
       filterPromptPlaceholder: 'e.g. Only reply to programming questions. Leave empty to reply on any keyword hit',
       maxReplies: 'Max replies / hour',
@@ -747,6 +825,25 @@ export default {
     emptyFollowing: "You haven't joined any circles yet — explore circles you might like",
     loadFailed: 'Failed to load',
     loginRequiredTab: 'This content requires login to view'
+  },
+
+  // Search results page
+  search: {
+    emptyKeyword: 'Please enter a search keyword',
+    unknownCircle: 'Unknown circle',
+    untitled: 'Untitled',
+    failed: 'Search failed',
+    failedRetry: 'Search failed, please try again later'
+  },
+
+  // OAuth success callback page (/auth/success)
+  authCallback: {
+    welcome: 'Welcome back!',
+    processing: 'Processing...',
+    enterCommunity: 'Enter Community',
+    signingIn: 'Signing in...',
+    loginFailed: 'Login failed',
+    noLoginInfo: 'No login info detected, redirecting to login page...'
   },
 
   // 消息提示

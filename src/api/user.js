@@ -34,11 +34,13 @@ export function resetPassword(password, confirmPassword) {
 }
 
 /**
- * 搜索用户列表
+ * 搜索用户列表（@选人）
  * @param {Object} params - 查询参数
- * @param {string} params.keyword - 搜索关键词（可选）
- * @param {number} params.size - 每页数量，默认20，最大100
- * @param {string} params.search_after - 深度分页参数（JSON字符串，可选）
+ * @param {string} params.keyword - 搜索词，匹配 username（权重高）和 email；空串 = 返回全部用户（按注册时间倒序）
+ * @param {number} params.size - 每页数量，默认20，最大100（≤0 或 >100 按 20 处理）
+ * @param {string} params.search_after - 深度分页参数（上一页响应里的 JSON 字符串，axios 会自动 URL encode；首页不传）
+ * @param {string} params.circle_id - 圈子作用域：圈内 @选人时必传圈子 uuid（普通用户 + 全局机器人 + 本圈机器人可见，
+ *                            其他圈子的机器人被排除）；不传 = 全站搜索（所有圈内机器人不可见）
  * @returns {Promise}
  */
 export function searchUsers(params) {

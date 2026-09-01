@@ -87,9 +87,9 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { NAvatar, NButton, NEmpty, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import AppHeader from '@/components/AppHeader.vue'
-import SideNav from '@/components/SideNav.vue'
-import SmartLink from '@/components/SmartLink.vue'
+import AppHeader from '@/components/layout/AppHeader.vue'
+import SideNav from '@/components/layout/SideNav.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
 import { getNoticeList, markNoticesRead, markAllNoticesRead } from '@/api/notice'
 import { useFormatTime } from '@/utils/i18n'
 

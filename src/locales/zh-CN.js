@@ -34,6 +34,38 @@ export default {
     enabled: '已开启'
   },
 
+  // 浏览器标签页标题（document.title，见 router/index.js 的 applyPageTitle）
+  title: {
+    brand: '趣吧 Qubar',
+    slogan: '发现你的热爱',
+    success: '登录成功',
+    home: '主页',
+    hot: '热点',
+    discover: '发现',
+    createPost: '创建帖子',
+    profile: '个人中心',
+    userDetail: '用户主页',
+    terms: '用户协议',
+    privacy: '隐私政策',
+    searchResults: '搜索结果',
+    searchKeyword: '搜索「{keyword}」',
+    circleDetail: '圈子详情',
+    circleMembers: '成员管理',
+    circleEdit: '编辑圈子资料',
+    postDetail: '帖子详情',
+    notifications: '消息中心',
+    adminAgents: '机器人管理',
+    circleAgents: '圈子机器人管理',
+    // 动态标题模板：详情页数据加载成功后展示具体内容（见 utils/pageTitle.js）
+    postDetailName: '{name}',
+    circleDetailName: '{name}',
+    userDetailName: '{name}',
+    circleMembersName: '成员管理：{name}',
+    circleEditName: '编辑圈子资料：{name}',
+    circleAgentsName: '机器人管理：{name}',
+    profileName: '个人中心：{name}'
+  },
+
   // 时间相关
   time: {
     justNow: '刚刚',
@@ -104,7 +136,16 @@ export default {
     latest:'最新',
     highlights:'精华',
     postNotFound: '帖子不存在',
-    viewDetail: '查看详情'
+    viewDetail: '查看详情',
+    loadCirclesFailed: '加载圈子列表失败',
+    publishSuccess: '发布成功',
+    publishNoId: '未获取到帖子ID，返回首页',
+    publishFailed: '发布失败，请重试',
+    validation: {
+      circleRequired: '请选择所属圈子',
+      titleRequired: '请输入帖子标题',
+      contentRequired: '请输入帖子正文'
+    }
   },
 
   // 圈子相关
@@ -117,6 +158,7 @@ export default {
     leaveCircle: '退出圈子',
     joined: '已加入',
     active: '近期活跃',
+    random: '随机推荐',
     viewAll: '查看全部',
     myCircles: '我加入的',
     createCircle: '创建圈子',
@@ -133,6 +175,8 @@ export default {
     createPost: '发帖',
     members: '成员',
     posts: '帖子',
+    membersShort: '成员',
+    postsShort: '帖子',
     description: '简介',
     noCircles: '暂无圈子',
     noCircleResults: '暂无圈子结果',
@@ -352,6 +396,9 @@ export default {
     disabled: '禁用',
     userSearchInDevelopment: '用户搜索功能开发中...',
     anonymous: '匿名用户',
+    unknownUser: '未知用户',
+    idNotFound: '用户ID不存在',
+    fetchFailed: '获取用户信息失败',
     admin: '管理员',
     noUserResults: '暂无用户结果',
     today: '今天',
@@ -427,11 +474,42 @@ export default {
     keyword: '关键词'
   },
 
-  // AI 回复机器人管理（/admin/agents，仅管理员 role=1 可见）
+  // AI 回复机器人管理（/admin/agents；管理员见全局+圈子双 tab，普通用户仅见可管理圈子列表）
   agent: {
     title: '机器人管理',
     navEntry: '机器人管理',
     noPermission: '无权访问：仅管理员可管理机器人',
+    tabs: {
+      global: '全局机器人管理',
+      circles: '可管理圈子'
+    },
+    circleList: {
+      searchPlaceholder: '搜索圈子名称或简介',
+      roleOwner: '圈主',
+      roleAdmin: '管理员',
+      statusPending: '圈子审核中，暂不可管理代理',
+      statusBanned: '圈子已被封禁，暂不可管理代理',
+      agentsBound: '已绑定 {count}/5',
+      members: '{count} 成员',
+      posts: '{count} 帖子',
+      noDescription: '这个圈子还没有简介',
+      empty: '你暂无可管理的圈子',
+      emptySearch: '没有匹配的圈子'
+    },
+    circlePage: {
+      titleWithName: '{name} · 机器人管理',
+      backToList: '返回列表',
+      create: '新建机器人',
+      edit: '编辑机器人',
+      quota: '已绑定 {count}/5',
+      quotaFull: '每圈最多绑定 5 个机器人，删除后可释放名额',
+      noPermission: '无权访问：仅圈主/管理员可管理圈内机器人',
+      empty: '本圈还没有机器人，点击「新建机器人」创建第一个',
+      emptySearch: '没有匹配的机器人',
+      loadFailed: '加载圈内机器人失败',
+      replyNotLive: '圈内机器人暂不会回复圈内帖子（关键词/手动触发均未生效），当前仅保存配置；回复能力将在后续版本开放。',
+      credentialsOwnerOnly: 'API 协议、自定义地址与 API Key 仅圈主可修改；如需调整请联系圈主'
+    },
     searchPlaceholder: '搜索机器人名称',
     create: '新建机器人',
     edit: '编辑机器人',
@@ -459,6 +537,7 @@ export default {
       sectionTrigger: '触发与限频',
       name: '名称',
       namePlaceholder: '1-50 字符，全局唯一',
+      namePlaceholderCircle: '1-50 字符，圈内唯一',
       avatarUrl: '头像',
       avatarUpload: '上传头像',
       avatarRemove: '移除',
@@ -480,9 +559,8 @@ export default {
       llmParams: 'LLM 参数（提交时整体替换）',
       systemPrompt: '系统提示词',
       systemPromptPlaceholder: '机器人的人设与回复要求（可空）',
-      triggerMode: '触发模式',
       keywords: '触发关键词',      keywordsPlaceholder: '输入关键词后回车添加',
-      keywordsRequired: '关键词触发模式下至少需要一个关键词',
+      keywordsRequired: '至少需要一个触发关键词',
       filterPrompt: '回复判定条件（可选）',
       filterPromptPlaceholder: '如：只回复编程相关问题。留空则命中关键词即回复',
       maxReplies: '每小时回复上限',
@@ -746,6 +824,25 @@ export default {
     emptyFollowing: '还没有加入圈子，去发现感兴趣的圈子吧',
     loadFailed: '加载失败',
     loginRequiredTab: '此内容需要登录后查看'
+  },
+
+  // 搜索结果页
+  search: {
+    emptyKeyword: '请输入搜索关键词',
+    unknownCircle: '未知圈子',
+    untitled: '无标题',
+    failed: '搜索失败',
+    failedRetry: '搜索失败，请稍后重试'
+  },
+
+  // OAuth 登录成功回调页（/auth/success）
+  authCallback: {
+    welcome: '欢迎回来！',
+    processing: '处理中...',
+    enterCommunity: '进入社区',
+    signingIn: '正在登录...',
+    loginFailed: '登录失败',
+    noLoginInfo: '未检测到登录信息，正在跳转到登录页...'
   },
 
   // 消息提示

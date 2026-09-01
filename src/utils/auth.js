@@ -1,6 +1,9 @@
 const TOKEN_KEY = 'qubar_token'
 const TOKEN_EXPIRE_KEY = 'qubar_token_expire'
 
+// OAuth 整页跳转前暂存的站内回跳地址（sessionStorage），由登录成功回调页消费后移除
+export const OAUTH_RETURN_PATH_KEY = 'qubar_oauth_return_path'
+
 // 旧版键名（quba_*）一次性迁移，避免已登录用户掉登录状态
 const legacyToken = localStorage.getItem('quba_token')
 if (legacyToken && !localStorage.getItem(TOKEN_KEY)) {

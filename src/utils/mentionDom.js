@@ -1,21 +1,12 @@
-// @提及 渲染侧链接化：遍历 MdPreview 产出的 HTML，把「可解析到 uuid 的 @用户名」
+// @提及 渲染侧链接化：遍历 MdPreview 产出的 HTML，把「缓存中能解析到 uuid 的 @用户名」
 // 文本替换为可点击 <a>。只用 createElement + textContent 构建，无注入面。
-// 提交内容保持纯文本，本工具只在渲染层生效。
-import { MENTION_LEAD, NAME_CHARS } from './mention'
-import { peekUserId, resolveUsernames } from './mentionResolve'
+// 提交内容保持纯文本，本工具只在渲染层生效；缓存未命中的 @token 保持纯文本不建链。
+import { getMentionFullRe } from './mention'
+import { knownUsernames, peekUserId } from './mentionResolve'
 
 // 这些容器内的 @ 不做链接化：代码块/行内码/链接（含 linkify 出的 mailto/URL）等；
 // closest 整棵向上查，隔层包裹（如 <pre><strong>、<button><span>）也一并跳过
 const SKIP_SELECTOR = 'a, pre, code, kbd, script, style, textarea, button, svg'
-// 单轮最多回查多少个未知用户名：防止长评论列表首刷的请求风暴
-const MAX_UNKNOWN_PER_PASS = 12
-// 空格感知候选扫描：@ 后 1~3 个空格分隔词（覆盖「John Doe」「王 小明」类名字）。
-// 不依赖已知名集合即可圈出候选跨度，再按词数从多到少回查缓存（整名优先，miss 缩短一词），
-// 打破「regex 要已知名才能整名匹配 / 已知名要匹配成功才会被回灌」的死锁
-const MENTION_SCAN_RE = new RegExp(
-  `${MENTION_LEAD}@((?:${NAME_CHARS}+)(?: (?:${NAME_CHARS}+)){0,2})(?!${NAME_CHARS})`,
-  'g'
-)
 
 const acceptText = (node) => {
   const parent = node.parentElement
@@ -26,40 +17,52 @@ const acceptText = (node) => {
 }
 
 // 把文本节点内的 @token 改写为链接；返回是否发生了 DOM 改写
-export const applyMentionLinks = (rootEl, onChange) => {
+// contentMentions：当前渲染内容自带的权威提及清单（后端随内容回传的 mentions）。
+// 传了数组（含空数组）就只给清单内的名字建链——会话级缓存只按用户名映射 uuid，
+// 改名/账号重名后缓存会残留旧映射，不校验会把旧内容的 @token 链到错误的人；
+// 旧内容没有该字段（undefined）时回退全局缓存，维持原行为。
+export const applyMentionLinks = (rootEl, contentMentions) => {
   if (!rootEl) return false
+  const scoped = Array.isArray(contentMentions)
+  const scopedMap = new Map()
+  if (scoped) {
+    contentMentions.forEach((u) => {
+      if (u?.id && u.username) scopedMap.set(String(u.username).toLowerCase(), u.id)
+    })
+  }
+  const lookup = scoped ? (name) => scopedMap.get(String(name).toLowerCase()) : peekUserId
+  // 扫描正则与编辑器侧同源（getMentionFullRe）：已知名（选人/后端 mentions 回灌时
+  // 进入缓存的名字）以转义字面量进 alternation、长名优先，覆盖含点号等字符集外
+  // 字符的用户名（如机器人名 GLM-5.3-te，纯字符集扫描会在点号处截断致缓存查不到）；
+  // 字符集内的名字走通用分支。已知名快照变化时正则按 key 自动重建，每轮取最新。
+  // 有权威清单时以清单中的名字为已知名，避免清单外名字参与整名优先匹配。
+  const re = getMentionFullRe(scoped
+    ? contentMentions.map((u) => u?.username).filter(Boolean).map(String)
+    : knownUsernames())
   const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, { acceptNode: acceptText })
   const nodes = []
   while (walker.nextNode()) nodes.push(walker.currentNode)
 
-  const unknown = new Set()
   let mutated = false
 
   // 收集后统一改写：遍历期间不得变更 DOM 结构
   nodes.forEach((node) => {
     const text = node.nodeValue
-    const re = MENTION_SCAN_RE
     re.lastIndex = 0
     let frag = null
     let last = 0
     let m
     while ((m = re.exec(text)) !== null) {
-      // 词数从多到少逐个回查缓存：最长命中即提及跨度（整名优先，防短词误链）。
-      // 未查过的候选不提前中断——更短候选可能已有缓存命中（如「John Doe」未知
-      // 而「John」已缓存）；同时记下最长的未解析候选排队解析，落地后
-      // onUpdate 重跑本 pass 再建链
+      // 词数从多到少逐个回查：最长命中即提及跨度（整名优先，防短词误链）
       const words = m[2].split(' ')
       let hit = null
-      let pendingName = null
       for (let k = words.length; k >= 1; k--) {
         const name = words.slice(0, k).join(' ')
-        const id = peekUserId(name)
+        const id = lookup(name)
         if (id) {
           hit = { name, id }
           break
         }
-        if (id === null) continue // 已确认查无此人 → 缩短一词再试
-        if (!pendingName) pendingName = name // 最长的未解析候选（先到先记）
       }
       if (hit) {
         if (!frag) frag = document.createDocumentFragment()
@@ -74,8 +77,6 @@ export const applyMentionLinks = (rootEl, onChange) => {
         frag.append(a)
         last = tokenStart + 1 + hit.name.length
         mutated = true
-      } else if (pendingName) {
-        unknown.add(pendingName)
       }
       // 零宽匹配死循环保险
       if (m.index === re.lastIndex) re.lastIndex += 1
@@ -85,8 +86,5 @@ export const applyMentionLinks = (rootEl, onChange) => {
     node.replaceWith(frag)
   })
 
-  if (unknown.size) {
-    resolveUsernames([...unknown].slice(0, MAX_UNKNOWN_PER_PASS), onChange)
-  }
   return mutated
 }
