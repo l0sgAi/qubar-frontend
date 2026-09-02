@@ -22,36 +22,39 @@ https://your-backend.com/auth/google/login
 
 ### 推荐方式：后端重定向携带一次性 code
 
-后端处理完 OAuth 后，应该重定向到前端，URL 中只携带一次性 code。
-token、email 等敏感信息不出现在 URL 中，避免被浏览器历史、代理日志和分析工具留存：
+后端收到 OAuth provider 回调后**不消耗 code、不在 URL 中下发 token**，只把 provider 的原始授权码
+302 透传到前端，URL 中携带一次性 code、provider 与 device（token、email 等敏感信息不出现在 URL 中，
+避免被浏览器历史、代理日志和分析工具留存）：
 
 ```
 HTTP 302 Redirect
-Location: https://qubar.site/success?code=4/0ATX87lPy3pP...
+Location: https://qubar.site/success?code=4/0ATX87lPy3pP...&provider=google&device=web
 ```
+
+> **为什么不在后端直接换 token？** 授权码是一次性的：后端 GET 回调若先 Exchange，
+> 前端 POST 再换必然 `invalid_grant`。所以 code 必须原样透传，由前端 POST 回
+> **签发它的 provider 端点**完成交换。
 
 **示例代码（Go）：**
 
 ```go
 // OAuth 回调处理
 func GoogleCallback(c *gin.Context) {
-    // 1. 获取 Google 用户信息
-    // 2. 生成一次性授权码（建议短时有效、仅可使用一次）
-    code := "4/0ATX87lPy3pP..."
+    // 透传 Google 下发的授权码，附带 provider（前端 POST 交换时要路由回本端点）与 device
+    code := c.Query("code")
 
-    // 3. 重定向到前端（不携带 token/email）
     redirectURL := fmt.Sprintf(
-        "https://qubar.site/success?code=%s",
-        code,
+        "https://qubar.site/success?code=%s&provider=google&device=web",
+        url.QueryEscape(code),
     )
     c.Redirect(http.StatusFound, redirectURL)
 }
 ```
 
 **前端接收：**
-[Success.vue:41-94](src/views/Success.vue#L41-L94) 会自动：
-1. 从 URL 参数提取 code
-2. POST 到后端 `/auth/google/callback` 交换 token
+[Success.vue:43-100](src/views/auth/Success.vue#L43-L100) 会自动：
+1. 从 URL 参数提取 code、provider（白名单校验，缺省 google）、device（缺省 web）
+2. POST 到后端 `/auth/<provider>/callback` 交换 token
 3. 保存 token 到 localStorage
 4. 显示成功消息
 5. 1.5秒后自动跳转到 `/home`
@@ -60,18 +63,19 @@ func GoogleCallback(c *gin.Context) {
 
 前端检测到 URL 中的 `code` 参数后，会自动：
 
-1. POST 到后端 `/auth/google/callback` 交换 token
+1. POST 到后端 `/auth/<provider>/callback` 交换 token（provider 取自 URL 参数）
 2. 收到 JSON 响应后保存 token
 3. 跳转到主页
 
 **前端会发送的请求：**
 
 ```javascript
-POST https://api.qubar.site/auth/google/callback
+POST https://api.qubar.site/auth/google/callback   // google 登录；github/azure 走各自端点
 Content-Type: application/json
 
 {
-  "code": "4/0ATX87lPy3pP..."
+  "code": "4/0ATX87lPy3pP...",
+  "device": "web"
 }
 ```
 

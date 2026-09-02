@@ -48,17 +48,22 @@ onMounted(async () => {
   // 仅支持后端下发的一次性授权 code，页面加载后由前端换取 token
   const code = urlParams.get('code')
   if (code) {
+    // 后端跳转 URL 携带 provider/device（契约见 OAUTH_CALLBACK.md）：
+    // code 必须 POST 回签发它的 provider 端点，投错端点会被判 invalid_grant
+    const providerParam = urlParams.get('provider')
+    const provider = ['google', 'github', 'azure'].includes(providerParam) ? providerParam : 'google'
+    const device = urlParams.get('device') || 'web'
     // OAuth 回调，需要发送给后端
     loading.value = true
     try {
       message.loading(t('authCallback.signingIn'), { duration: 0 })
 
-      const response = await fetch(`${API_BASE}/auth/google/callback`, {
+      const response = await fetch(`${API_BASE}/auth/${provider}/callback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ code, device })
       })
 
       const data = await response.json()
