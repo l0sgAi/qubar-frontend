@@ -3,10 +3,11 @@ import { useMessage } from 'naive-ui'
 import { sanitizePayload } from '@/utils/sanitize'
 import { isFeedTabRestricted } from '@/utils/guest-access'
 import { auth } from '@/utils/auth'
+import { API_BASE } from '@/config'
 
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: 'https://api.qubar.site',
+  baseURL: API_BASE,
   headers: {
     // TODO: 解决拦截问题，生产环境可以去掉
     "ngrok-skip-browser-warning": "true" 

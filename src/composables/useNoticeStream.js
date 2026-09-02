@@ -1,9 +1,8 @@
 import { ref } from 'vue'
 import { auth } from '@/utils/auth'
 import { getUnreadCount } from '@/api/notice'
+import { API_BASE } from '@/config'
 
-// SSE 服务端地址（与 utils/request.js 的 axios baseURL 保持一致）
-const API_BASE = 'https://api.qubar.site'
 // 轮询降级间隔（对接文档建议 ≥30s）
 const POLL_INTERVAL = 30000
 

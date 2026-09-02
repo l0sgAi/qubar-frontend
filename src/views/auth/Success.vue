@@ -27,6 +27,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AnimatedBackground from '@/components/auth/AnimatedBackground.vue'
 import { auth, OAUTH_RETURN_PATH_KEY } from '@/utils/auth'
+import { API_BASE } from '@/config'
 
 const router = useRouter()
 const message = useMessage()
@@ -52,7 +53,7 @@ onMounted(async () => {
     try {
       message.loading(t('authCallback.signingIn'), { duration: 0 })
 
-      const response = await fetch('https://api.qubar.site/auth/google/callback', {
+      const response = await fetch(`${API_BASE}/auth/google/callback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
