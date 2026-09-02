@@ -7,7 +7,7 @@
 <title>Qubar 趣吧 · 让每一份热爱都有回音</title>
 <meta name="description" content="Qubar（趣吧）—— 基于 Go + DDD 模块化单体的开源兴趣社区：兴趣圈子、图文帖子、AI 社区机器人、SSE 实时通知与三引擎信息流。">
 <meta name="theme-color" content="#070B09">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='14' cy='14' r='9' fill='none' stroke='%2360F8BB' stroke-width='3'/%3E%3Cline x1='20' y1='20' x2='27' y2='27' stroke='%2360F8BB' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <style>
 :root{
   --mint:#60F8BB;
@@ -44,11 +44,13 @@ section{position:relative;padding:120px 0;scroll-margin-top:80px}
 .nav.scrolled{background:rgba(7,11,9,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-color:var(--line)}
 .nav-inner{display:flex;align-items:center;gap:28px;height:68px}
 .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.15rem;letter-spacing:.01em}
-.logo svg{width:26px;height:26px}
+.logo img{width:26px;height:26px}
 .nav-links{display:flex;gap:26px;margin-left:auto;font-size:.9rem;color:var(--muted)}
 .nav-links a{transition:color .25s}
 .nav-links a:hover{color:var(--mint)}
 .nav-github{margin-left:4px;flex:none}
+.lang-toggle{padding:7px 15px;border-radius:999px;border:1px solid rgba(96,248,187,.3);background:rgba(96,248,187,.04);color:var(--muted);font-size:.8rem;font-weight:600;letter-spacing:.05em;cursor:pointer;transition:color .25s,border-color .25s,background .25s;flex:none}
+.lang-toggle:hover{color:var(--mint);border-color:var(--mint);background:rgba(96,248,187,.1)}
 
 /* ---------- buttons ---------- */
 .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:999px;font-weight:600;font-size:.95rem;border:1px solid transparent;cursor:pointer;transition:transform .25s,box-shadow .25s,background .25s,border-color .25s}
@@ -216,6 +218,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
 /* ---------- responsive ---------- */
 @media (max-width:960px){
   .nav-links{display:none}
+  .lang-toggle{margin-left:auto}
   .split{grid-template-columns:1fr;gap:44px}
   .split-flip .split-visual{order:2}
   .cards{grid-template-columns:repeat(2,1fr)}
@@ -249,17 +252,18 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
 <header class="nav" id="nav">
   <div class="container nav-inner">
     <a class="logo" href="#hero" aria-label="Qubar 首页">
-      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="14" cy="14" r="9.5" stroke="#60F8BB" stroke-width="2.6"/><line x1="20.5" y1="20.5" x2="27" y2="27" stroke="#60F8BB" stroke-width="2.6" stroke-linecap="round"/></svg>
+      <img src="../favicon.svg" alt="" width="26" height="26" aria-hidden="true">
       <span>Qubar</span>
     </a>
     <nav class="nav-links" aria-label="页面导航">
-      <a href="#features">核心功能</a>
-      <a href="#agent">AI 机器人</a>
-      <a href="#realtime">实时互动</a>
-      <a href="#feed">信息流</a>
-      <a href="#arch">架构</a>
-      <a href="#stack">技术栈</a>
+      <a href="#features" data-i18n="nav.features">核心功能</a>
+      <a href="#agent" data-i18n="nav.agent">AI 机器人</a>
+      <a href="#realtime" data-i18n="nav.realtime">实时互动</a>
+      <a href="#feed" data-i18n="nav.feed">信息流</a>
+      <a href="#arch" data-i18n="nav.arch">架构</a>
+      <a href="#stack" data-i18n="nav.stack">技术栈</a>
     </nav>
+    <button class="lang-toggle" id="langToggle" type="button" aria-label="Switch language / 切换语言">EN</button>
     <a class="btn btn-ghost btn-sm nav-github" href="https://github.com/l0sgAi/qubar" target="_blank" rel="noopener">
       <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
       GitHub
@@ -277,23 +281,23 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
     <div class="hero-cursor" id="heroCursor"></div>
   </div>
   <div class="container hero-inner">
-    <div class="hero-badge reveal" style="--d:.05s"><span class="dot"></span>Go · DDD · 模块化单体</div>
-    <h1 class="reveal" style="--d:.15s">让每一份<span class="rotator"><span class="rotator-inner" id="rotator"><span>热爱</span><span>兴趣</span><span>灵感</span><span>好奇心</span></span></span><br>都有回音</h1>
-    <p class="hero-sub reveal" style="--d:.28s">Qubar（趣吧）是一套完整开源的现代兴趣社区：Go + DDD 模块化单体后端，Vue 3 前端。兴趣圈子、图文帖子、AI 社区机器人、SSE 实时通知与三引擎信息流——既是可用的产品，也是一份可读的工程范本。</p>
+    <div class="hero-badge reveal" style="--d:.05s"><span class="dot"></span>Go · DDD · <span data-i18n="hero.badge">模块化单体</span></div>
+    <h1 class="reveal" style="--d:.15s"><span data-i18n="hero.titleA">让每一份</span><span class="rotator"><span class="rotator-inner" id="rotator"><span>热爱</span><span>兴趣</span><span>灵感</span><span>好奇心</span></span></span><span data-i18n="hero.titleB"><br>都有回音</span></h1>
+    <p class="hero-sub reveal" style="--d:.28s" data-i18n="hero.sub">Qubar（趣吧）是一套完整开源的现代兴趣社区：Go + DDD 模块化单体后端，Vue 3 前端。兴趣圈子、图文帖子、AI 社区机器人、SSE 实时通知与三引擎信息流——既是可用的产品，也是一份可读的工程范本。</p>
     <div class="hero-ctas reveal" style="--d:.4s">
       <a class="btn btn-primary" href="https://github.com/l0sgAi/qubar" target="_blank" rel="noopener">
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
-        GitHub 仓库
+        <span data-i18n="hero.cta1">GitHub 仓库</span>
       </a>
-      <a class="btn btn-ghost" href="#features">了解功能
+      <a class="btn btn-ghost" href="#features"><span data-i18n="hero.cta2">了解功能</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
       </a>
     </div>
     <div class="hero-stats reveal" style="--d:.55s">
-      <div class="stat"><div class="stat-num"><span data-count="15">0</span></div><div class="stat-label">自治领域</div></div>
-      <div class="stat"><div class="stat-num"><span data-count="4">0</span></div><div class="stat-label">层领域分层</div></div>
-      <div class="stat"><div class="stat-num"><span data-count="3">0</span></div><div class="stat-label">信息流引擎</div></div>
-      <div class="stat"><div class="stat-num"><span data-count="100">0</span><i>%</i></div><div class="stat-label">代码开源</div></div>
+      <div class="stat"><div class="stat-num"><span data-count="15">0</span></div><div class="stat-label" data-i18n="hero.s1">自治领域</div></div>
+      <div class="stat"><div class="stat-num"><span data-count="4">0</span></div><div class="stat-label" data-i18n="hero.s2">层领域分层</div></div>
+      <div class="stat"><div class="stat-num"><span data-count="3">0</span></div><div class="stat-label" data-i18n="hero.s3">信息流引擎</div></div>
+      <div class="stat"><div class="stat-num"><span data-count="100">0</span><i>%</i></div><div class="stat-label" data-i18n="hero.s4">代码开源</div></div>
     </div>
   </div>
 </section>
@@ -301,40 +305,40 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
 <section id="features">
   <div class="container">
     <div class="sec-head reveal">
-      <span class="eyebrow">核心功能</span>
-      <h2>社区该有的样子，一次给齐</h2>
-      <p class="sec-sub">从圈子到帖子，从互动到搜索，覆盖兴趣社区的完整闭环。</p>
+      <span class="eyebrow" data-i18n="feat.eyebrow">核心功能</span>
+      <h2 data-i18n="feat.title">社区该有的样子，一次给齐</h2>
+      <p class="sec-sub" data-i18n="feat.sub">从圈子到帖子，从互动到搜索，覆盖兴趣社区的完整闭环。</p>
     </div>
     <div class="cards">
       <div class="card reveal" style="--d:0s">
         <div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="12" r="5.2"/><circle cx="16.5" cy="12" r="5.2"/></svg></div>
-        <h3>兴趣圈子</h3>
-        <p>创建并经营你的主题圈子：圈主 / 管理员 / 成员三级 RBAC 权限体系，圈子详情与圈内帖子流井然有序。</p>
+        <h3 data-i18n="feat.c1t">兴趣圈子</h3>
+        <p data-i18n="feat.c1p">创建并经营你的主题圈子：圈主 / 管理员 / 成员三级 RBAC 权限体系，圈子详情与圈内帖子流井然有序。</p>
       </div>
       <div class="card reveal" style="--d:.07s">
         <div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h7.5L19 8.5V19a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19V5a1.5 1.5 0 0 1 1-1.5z"/><path d="M13.5 3.5V9H19"/><path d="M9 12.5h6.5M9 16h4"/></svg></div>
-        <h3>图文帖子</h3>
-        <p>Markdown 编辑器配合多图上传与裁剪，标题、正文、圈子归属一次搞定，发布即进入信息流。</p>
+        <h3 data-i18n="feat.c2t">图文帖子</h3>
+        <p data-i18n="feat.c2p">Markdown 编辑器配合多图上传与裁剪，标题、正文、圈子归属一次搞定，发布即进入信息流。</p>
       </div>
       <div class="card reveal" style="--d:.14s">
         <div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6.5A2.5 2.5 0 0 0 17.5 4h-11A2.5 2.5 0 0 0 4 6.5v7a2.5 2.5 0 0 0 2.5 2.5H9l-5 4V6.5z"/><path d="M8 9.5h8M8 12.5h5"/></svg></div>
-        <h3>评论与互动</h3>
-        <p>二级平铺评论，支持回复、点赞与 @提及；每一次互动，都会实时抵达对方的通知中心。</p>
+        <h3 data-i18n="feat.c3t">评论与互动</h3>
+        <p data-i18n="feat.c3p">二级平铺评论，支持回复、点赞与 @提及；每一次互动，都会实时抵达对方的通知中心。</p>
       </div>
       <div class="card reveal" style="--d:0s">
         <div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1z"/></svg></div>
-        <h3>点赞与收藏</h3>
-        <p>点赞、收藏、浏览历史全量记录，喜欢的内容随时找得回来。</p>
+        <h3 data-i18n="feat.c4t">点赞与收藏</h3>
+        <p data-i18n="feat.c4p">点赞、收藏、浏览历史全量记录，喜欢的内容随时找得回来。</p>
       </div>
       <div class="card reveal" style="--d:.07s">
         <div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></div>
-        <h3>全文搜索</h3>
-        <p>用户、圈子、帖子三维一体搜索，Elasticsearch 驱动，关键词秒达目标内容。</p>
+        <h3 data-i18n="feat.c5t">全文搜索</h3>
+        <p data-i18n="feat.c5p">用户、圈子、帖子三维一体搜索，Elasticsearch 驱动，关键词秒达目标内容。</p>
       </div>
       <div class="card reveal" style="--d:.14s">
         <div class="card-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.4-3 7.4-7 9-4-1.6-7-4.6-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
-        <h3>账号与登录</h3>
-        <p>邮箱注册登录、找回密码，Google / GitHub / Azure AD OAuth 一键登录；游客模式先逛后注册，中英双语界面随心切换。</p>
+        <h3 data-i18n="feat.c6t">账号与登录</h3>
+        <p data-i18n="feat.c6p">邮箱注册登录、找回密码，Google / GitHub / Azure AD OAuth 一键登录；游客模式先逛后注册，中英双语界面随心切换。</p>
       </div>
     </div>
   </div>
@@ -345,25 +349,25 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
   <div class="container">
     <div class="split">
       <div class="split-copy reveal">
-        <span class="eyebrow">AI 社区机器人</span>
-        <h2>给圈子请一位<br>7×24 的 AI 伙伴</h2>
-        <p class="lead">每个圈子都可以接入自己的 LLM 机器人：它住在线的帖子里，被 @ 或命中关键词时出现，用你定义的口吻回答问题。</p>
+        <span class="eyebrow" data-i18n="agent.eyebrow">AI 社区机器人</span>
+        <h2 data-i18n="agent.title">给圈子请一位<br>7×24 的 AI 伙伴</h2>
+        <p class="lead" data-i18n="agent.lead">每个圈子都可以接入自己的 LLM 机器人：它住在线的帖子里，被 @ 或命中关键词时出现，用你定义的口吻回答问题。</p>
         <ul class="tick-list">
-          <li><b>可插拔 LLM 接入</b>：自定义协议、Base URL、API Key、模型与生成参数，兼容主流 OpenAI 风格服务。</li>
-          <li><b>提示词双保险</b>：System Prompt 塑造机器人人格，过滤提示词为发言内容把关。</li>
-          <li><b>关键词 / @ 双触发</b>：帖子命中关键词或被 @ 时自动回复，最大回复数与最小回复间隔双重频控。</li>
-          <li><b>圈级后台管理</b>：圈主在圈子内创建、编辑、删除机器人，名称与头像随心定制。</li>
+          <li data-i18n="agent.l1"><b>可插拔 LLM 接入</b>：自定义协议、Base URL、API Key、模型与生成参数，兼容主流 OpenAI 风格服务。</li>
+          <li data-i18n="agent.l2"><b>提示词双保险</b>：System Prompt 塑造机器人人格，过滤提示词为发言内容把关。</li>
+          <li data-i18n="agent.l3"><b>关键词 / @ 双触发</b>：帖子命中关键词或被 @ 时自动回复，最大回复数与最小回复间隔双重频控。</li>
+          <li data-i18n="agent.l4"><b>圈级后台管理</b>：圈主在圈子内创建、编辑、删除机器人，名称与头像随心定制。</li>
         </ul>
       </div>
       <div class="split-visual reveal" style="--d:.12s">
         <div class="mock">
-          <div class="mock-bar"><i></i><i></i><i></i><span class="mock-title">#Gopher 集结地 · 帖子详情</span></div>
+          <div class="mock-bar"><i></i><i></i><i></i><span class="mock-title" data-i18n="agent.mocktitle">#Gopher 集结地 · 帖子详情</span></div>
           <div class="chat-body" id="chatBody">
-            <div class="msg user"><span class="at">@小Q</span> 这篇帖子在讲什么？</div>
+            <div class="msg user" data-i18n="agent.usermsg"><span class="at">@小Q</span> 这篇帖子在讲什么？</div>
             <div class="typing" id="chatTyping"><i></i><i></i><i></i></div>
             <div class="msg bot">
-              <div class="who"><span class="who-avatar">Q</span>小Q · AI 机器人</div>
-              这篇帖子对比了「轮询」与「SSE」两种未读数推送方案：SSE 由服务端主动推送、自带断线重连，失败时再降级 30s 轮询兜底。需要我展开某一段吗？
+              <div class="who"><span class="who-avatar">Q</span><span data-i18n="agent.botwho">小Q · AI 机器人</span></div>
+              <span data-i18n="agent.botmsg">这篇帖子对比了「轮询」与「SSE」两种未读数推送方案：SSE 由服务端主动推送、自带断线重连，失败时再降级 30s 轮询兜底。需要我展开某一段吗？</span>
             </div>
           </div>
         </div>
@@ -378,7 +382,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
       <div class="split-visual reveal">
         <div class="mock">
           <div class="mock-bar">
-            <i></i><i></i><i></i><span class="mock-title">通知中心</span>
+            <i></i><i></i><i></i><span class="mock-title" data-i18n="rt.mocktitle">通知中心</span>
             <span class="bell-wrap">
               <svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 9a6 6 0 1 0-12 0c0 6-2.5 7-2.5 7h17S18 15 18 9z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg>
               <span class="badge" id="notifBadge">0</span>
@@ -386,40 +390,40 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
           </div>
           <div class="notif-body" id="notifBody">
             <div class="n-item">
-              <span class="n-avatar">茶</span>
-              <div class="n-text"><b>阿茶</b> 在《胶片扫街：初秋的胡同》中 <b>@提到了你</b>
-                <div class="n-meta"><span>刚刚</span><span class="n-tag">SSE 实时推送</span></div>
+              <span class="n-avatar" data-i18n="rt.a1">茶</span>
+              <div class="n-text"><span data-i18n="rt.n1"><b>阿茶</b> 在《胶片扫街：初秋的胡同》中 <b>@提到了你</b></span>
+                <div class="n-meta"><span data-i18n="rt.t1">刚刚</span><span class="n-tag" data-i18n="rt.tag">SSE 实时推送</span></div>
               </div>
             </div>
             <div class="n-item">
-              <span class="n-avatar v2">萌</span>
-              <div class="n-text"><b>momo</b> 赞了你的帖子《200 行 Go 手写一个 SSE 推送服务》
-                <div class="n-meta"><span>12 秒前</span><span class="n-tag">SSE 实时推送</span></div>
+              <span class="n-avatar v2" data-i18n="rt.a2">萌</span>
+              <div class="n-text"><span data-i18n="rt.n2"><b>momo</b> 赞了你的帖子《200 行 Go 手写一个 SSE 推送服务》</span>
+                <div class="n-meta"><span data-i18n="rt.t2">12 秒前</span><span class="n-tag" data-i18n="rt.tag">SSE 实时推送</span></div>
               </div>
             </div>
             <div class="n-item">
-              <span class="n-avatar v3">白</span>
-              <div class="n-text"><b>圈主 · 老白</b> 回复了你的评论：「这个思路可以再展开一点」
-                <div class="n-meta"><span>30 秒前</span><span class="n-tag">SSE 实时推送</span></div>
+              <span class="n-avatar v3" data-i18n="rt.a3">白</span>
+              <div class="n-text"><span data-i18n="rt.n3"><b>圈主 · 老白</b> 回复了你的评论：「这个思路可以再展开一点」</span>
+                <div class="n-meta"><span data-i18n="rt.t3">30 秒前</span><span class="n-tag" data-i18n="rt.tag">SSE 实时推送</span></div>
               </div>
             </div>
             <div class="n-item">
-              <span class="n-avatar v4">骑</span>
-              <div class="n-text">你的圈子 <b>「城市骑行」</b> 迎来了新成员
-                <div class="n-meta"><span>1 分钟前</span><span class="n-tag">SSE 实时推送</span></div>
+              <span class="n-avatar v4" data-i18n="rt.a4">骑</span>
+              <div class="n-text"><span data-i18n="rt.n4">你的圈子 <b>「城市骑行」</b> 迎来了新成员</span>
+                <div class="n-meta"><span data-i18n="rt.t4">1 分钟前</span><span class="n-tag" data-i18n="rt.tag">SSE 实时推送</span></div>
               </div>
             </div>
           </div>
         </div>
       </div>
       <div class="split-copy reveal" style="--d:.12s">
-        <span class="eyebrow">实时消息与互动</span>
-        <h2>新互动，<br>秒级落在你眼前</h2>
-        <p class="lead">未读通知从 30s 轮询升级为 SSE 服务端主动推送——全量事件、心跳保活、断线自动降级，多标签页之间也能保持一致。</p>
+        <span class="eyebrow" data-i18n="rt.eyebrow">实时消息与互动</span>
+        <h2 data-i18n="rt.title">新互动，<br>秒级落在你眼前</h2>
+        <p class="lead" data-i18n="rt.lead">未读通知从 30s 轮询升级为 SSE 服务端主动推送——全量事件、心跳保活、断线自动降级，多标签页之间也能保持一致。</p>
         <ul class="tick-list">
-          <li><b>SSE 单向推送</b>：基于普通 HTTP，自带重连与事件 ID，25s 心跳防止网关空闲断连。</li>
-          <li><b>全量语义</b>：每次推送完整未读数，与本地已读校正取最新值，不做增量累加。</li>
-          <li><b>优雅降级</b>：连接失败自动回落 30s 轮询，可用性不依赖推送通道是否在线。</li>
+          <li data-i18n="rt.l1"><b>SSE 单向推送</b>：基于普通 HTTP，自带重连与事件 ID，25s 心跳防止网关空闲断连。</li>
+          <li data-i18n="rt.l2"><b>全量语义</b>：每次推送完整未读数，与本地已读校正取最新值，不做增量累加。</li>
+          <li data-i18n="rt.l3"><b>优雅降级</b>：连接失败自动回落 30s 轮询，可用性不依赖推送通道是否在线。</li>
         </ul>
       </div>
     </div>
@@ -430,31 +434,31 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
 <section id="feed" class="sec-alt">
   <div class="container">
     <div class="sec-head reveal">
-      <span class="eyebrow">信息流三引擎</span>
-      <h2>推荐、热门、发现，各管一段好奇心</h2>
-      <p class="sec-sub">首页推荐流贴近你的圈子与足迹，热门榜沉淀全站高光，发现页负责把新圈子与新面孔推到你面前。</p>
+      <span class="eyebrow" data-i18n="feed.eyebrow">信息流三引擎</span>
+      <h2 data-i18n="feed.title">推荐、热门、发现，各管一段好奇心</h2>
+      <p class="sec-sub" data-i18n="feed.sub">首页推荐流贴近你的圈子与足迹，热门榜沉淀全站高光，发现页负责把新圈子与新面孔推到你面前。</p>
     </div>
     <div class="mock feed-panel reveal" id="feedPanel" style="--d:.1s">
       <div class="feed-tabs" role="tablist">
-        <button class="feed-tab active" data-tab="0" role="tab">推荐</button>
-        <button class="feed-tab" data-tab="1" role="tab">热门</button>
-        <button class="feed-tab" data-tab="2" role="tab">发现</button>
-        <span class="feed-hint">自动轮播中 · 点击可切换</span>
+        <button class="feed-tab active" data-tab="0" role="tab" data-i18n="feed.tab1">推荐</button>
+        <button class="feed-tab" data-tab="1" role="tab" data-i18n="feed.tab2">热门</button>
+        <button class="feed-tab" data-tab="2" role="tab" data-i18n="feed.tab3">发现</button>
+        <span class="feed-hint" data-i18n="feed.hint">自动轮播中 · 点击可切换</span>
       </div>
       <div class="feed-pane active" data-pane="0">
-        <div class="post-mini"><h4>深夜电台：最近单曲循环的是哪一首？</h4><div class="pm-meta"><span class="pm-circle">音乐漫游</span><span>赞 128</span><span>评 46</span></div></div>
-        <div class="post-mini"><h4>200 行 Go 手写一个 SSE 推送服务</h4><div class="pm-meta"><span class="pm-circle">Gopher 集结地</span><span>赞 342</span><span>评 87</span></div></div>
-        <div class="post-mini"><h4>胶片扫街：初秋的胡同光影</h4><div class="pm-meta"><span class="pm-circle">胶片摄影</span><span>赞 96</span><span>评 21</span></div></div>
+        <div class="post-mini"><h4 data-i18n="feed.r1t">深夜电台：最近单曲循环的是哪一首？</h4><div class="pm-meta"><span class="pm-circle" data-i18n="feed.r1c">音乐漫游</span><span data-i18n="feed.r1m1">赞 128</span><span data-i18n="feed.r1m2">评 46</span></div></div>
+        <div class="post-mini"><h4 data-i18n="feed.r2t">200 行 Go 手写一个 SSE 推送服务</h4><div class="pm-meta"><span class="pm-circle" data-i18n="feed.r2c">Gopher 集结地</span><span data-i18n="feed.r2m1">赞 342</span><span data-i18n="feed.r2m2">评 87</span></div></div>
+        <div class="post-mini"><h4 data-i18n="feed.r3t">胶片扫街：初秋的胡同光影</h4><div class="pm-meta"><span class="pm-circle" data-i18n="feed.r3c">胶片摄影</span><span data-i18n="feed.r3m1">赞 96</span><span data-i18n="feed.r3m2">评 21</span></div></div>
       </div>
       <div class="feed-pane" data-pane="1">
-        <div class="post-mini"><h4><span class="pm-hot">🔥 TOP 1</span>　从轮询到 SSE：实时通知演进全记录</h4><div class="pm-meta"><span class="pm-circle">Gopher 集结地</span><span>赞 876</span><span>评 154</span></div></div>
-        <div class="post-mini"><h4><span class="pm-hot">🔥 TOP 2</span>　晒出你的桌面 Setup（第十六期）</h4><div class="pm-meta"><span class="pm-circle">数码生活</span><span>赞 655</span><span>评 301</span></div></div>
-        <div class="post-mini"><h4><span class="pm-hot">🔥 TOP 3</span>　【公告】社区内容规范 2.0 上线</h4><div class="pm-meta"><span class="pm-circle">趣吧公告</span><span>赞 512</span><span>评 233</span></div></div>
+        <div class="post-mini"><h4 data-i18n="feed.h1t"><span class="pm-hot">🔥 TOP 1</span>　从轮询到 SSE：实时通知演进全记录</h4><div class="pm-meta"><span class="pm-circle" data-i18n="feed.h1c">Gopher 集结地</span><span data-i18n="feed.h1m1">赞 876</span><span data-i18n="feed.h1m2">评 154</span></div></div>
+        <div class="post-mini"><h4 data-i18n="feed.h2t"><span class="pm-hot">🔥 TOP 2</span>　晒出你的桌面 Setup（第十六期）</h4><div class="pm-meta"><span class="pm-circle" data-i18n="feed.h2c">数码生活</span><span data-i18n="feed.h2m1">赞 655</span><span data-i18n="feed.h2m2">评 301</span></div></div>
+        <div class="post-mini"><h4 data-i18n="feed.h3t"><span class="pm-hot">🔥 TOP 3</span>　【公告】社区内容规范 2.0 上线</h4><div class="pm-meta"><span class="pm-circle" data-i18n="feed.h3c">趣吧公告</span><span data-i18n="feed.h3m1">赞 512</span><span data-i18n="feed.h3m2">评 233</span></div></div>
       </div>
       <div class="feed-pane" data-pane="2">
-        <div class="post-mini"><h4>新圈推荐：「独立游戏开发」今日创建</h4><div class="pm-meta"><span class="pm-circle">新圈速递</span><span>成员 512</span><span>持续升温</span></div></div>
-        <div class="post-mini"><h4>新圈推荐：「城市骑行 CityRide」</h4><div class="pm-meta"><span class="pm-circle">新圈速递</span><span>成员 348</span><span>本周活跃</span></div></div>
-        <div class="post-mini"><h4>萌新求助：第一台咖啡机怎么选？</h4><div class="pm-meta"><span class="pm-circle">咖啡研究所</span><span>赞 74</span><span>评 59</span></div></div>
+        <div class="post-mini"><h4 data-i18n="feed.d1t">新圈推荐：「独立游戏开发」今日创建</h4><div class="pm-meta"><span class="pm-circle" data-i18n="feed.d1c">新圈速递</span><span data-i18n="feed.d1m1">成员 512</span><span data-i18n="feed.d1m2">持续升温</span></div></div>
+        <div class="post-mini"><h4 data-i18n="feed.d2t">新圈推荐：「城市骑行 CityRide」</h4><div class="pm-meta"><span class="pm-circle" data-i18n="feed.d2c">新圈速递</span><span data-i18n="feed.d2m1">成员 348</span><span data-i18n="feed.d2m2">本周活跃</span></div></div>
+        <div class="post-mini"><h4 data-i18n="feed.d3t">萌新求助：第一台咖啡机怎么选？</h4><div class="pm-meta"><span class="pm-circle" data-i18n="feed.d3c">咖啡研究所</span><span data-i18n="feed.d3m1">赞 74</span><span data-i18n="feed.d3m2">评 59</span></div></div>
       </div>
     </div>
   </div>
@@ -463,20 +467,20 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
 <section id="arch">
   <div class="container">
     <div class="sec-head reveal">
-      <span class="eyebrow">架构亮点</span>
-      <h2>模块化单体：简单部署，不简单设计</h2>
-      <p class="sec-sub">一个进程跑起来，一套 DDD 分层管清楚。依赖只能向下流动，领域之间互不越界。</p>
+      <span class="eyebrow" data-i18n="arch.eyebrow">架构亮点</span>
+      <h2 data-i18n="arch.title">模块化单体：简单部署，不简单设计</h2>
+      <p class="sec-sub" data-i18n="arch.sub">一个进程跑起来，一套 DDD 分层管清楚。依赖只能向下流动，领域之间互不越界。</p>
     </div>
     <div class="arch-layers reveal" style="--d:.08s">
       <div class="layer">
-        <div class="layer-name">编排层<br>Composition Root</div>
-        <div class="layer-desc">cmd 入口一处组装：依赖装配、路由注册、中间件挂载——所有 wiring 只发生在这里。</div>
+        <div class="layer-name" data-i18n="arch.l1n">编排层<br>Composition Root</div>
+        <div class="layer-desc" data-i18n="arch.l1d">cmd 入口一处组装：依赖装配、路由注册、中间件挂载——所有 wiring 只发生在这里。</div>
       </div>
       <div class="layer-arrow" aria-hidden="true">↓</div>
       <div class="layer">
-        <div class="layer-name">15 个自治领域<br>Domains</div>
+        <div class="layer-name" data-i18n="arch.l2n">15 个自治领域<br>Domains</div>
         <div>
-          <div class="layer-desc">每个领域自带 application / domain / infrastructure / interfaces 四层，独立演进、独立测试。</div>
+          <div class="layer-desc" data-i18n="arch.l2d">每个领域自带 application / domain / infrastructure / interfaces 四层，独立演进、独立测试。</div>
           <div class="domain-chips">
             <span class="dchip">auth</span><span class="dchip">user</span><span class="dchip">circle</span><span class="dchip">post</span><span class="dchip">comment</span><span class="dchip">like</span><span class="dchip">collect</span><span class="dchip">notice</span><span class="dchip">agent</span><span class="dchip">feed</span><span class="dchip">search</span><span class="dchip">history</span><span class="dchip">storage</span><span class="dchip">oauth</span><span class="dchip">stats</span>
           </div>
@@ -484,35 +488,35 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
       </div>
       <div class="layer-arrow" aria-hidden="true">↓</div>
       <div class="layer">
-        <div class="layer-name">共享内核<br>Shared Kernel</div>
-        <div class="layer-desc">通用类型、统一错误与工具函数：跨领域复用，不掺业务逻辑。</div>
+        <div class="layer-name" data-i18n="arch.l3n">共享内核<br>Shared Kernel</div>
+        <div class="layer-desc" data-i18n="arch.l3d">通用类型、统一错误与工具函数：跨领域复用，不掺业务逻辑。</div>
       </div>
       <div class="layer-arrow" aria-hidden="true">↓</div>
       <div class="layer">
-        <div class="layer-name">基础设施<br>Infrastructure</div>
+        <div class="layer-name" data-i18n="arch.l4n">基础设施<br>Infrastructure</div>
         <div class="layer-desc">PostgreSQL 18 · Redis 7 · Elasticsearch 8 · Redpanda · AWS S3 · Nacos 3</div>
       </div>
     </div>
     <div class="decisions">
       <div class="decision reveal" style="--d:0s">
         <div class="num">01</div>
-        <h3>模块化单体优先</h3>
-        <p>单进程一次部署，领域靠清晰边界自治；将来若要拆分为微服务，领域边界早已画好。</p>
+        <h3 data-i18n="arch.d1t">模块化单体优先</h3>
+        <p data-i18n="arch.d1p">单进程一次部署，领域靠清晰边界自治；将来若要拆分为微服务，领域边界早已画好。</p>
       </div>
       <div class="decision reveal" style="--d:.07s">
         <div class="num">02</div>
-        <h3>Write-Behind 异步统计</h3>
-        <p>点赞、浏览等高频计数先写缓存，再经 Redpanda 异步批量落库——热点写不再顶穿数据库。</p>
+        <h3 data-i18n="arch.d2t">Write-Behind 异步统计</h3>
+        <p data-i18n="arch.d2p">点赞、浏览等高频计数先写缓存，再经 Redpanda 异步批量落库——热点写不再顶穿数据库。</p>
       </div>
       <div class="decision reveal" style="--d:.14s">
         <div class="num">03</div>
-        <h3>SSE 优于 WebSocket</h3>
-        <p>未读数是服务端 → 客户端的单向语义：SSE 跑在普通 HTTP 上，自带重连与 Last-Event-ID 续传，免去双向心跳的复杂度。</p>
+        <h3 data-i18n="arch.d3t">SSE 优于 WebSocket</h3>
+        <p data-i18n="arch.d3p">未读数是服务端 → 客户端的单向语义：SSE 跑在普通 HTTP 上，自带重连与 Last-Event-ID 续传，免去双向心跳的复杂度。</p>
       </div>
       <div class="decision reveal" style="--d:.21s">
         <div class="num">04</div>
-        <h3>可插拔 LLM 机器人</h3>
-        <p>协议、端点、密钥、模型与提示词全部配置化——不改一行代码，即可切换任意兼容的模型服务。</p>
+        <h3 data-i18n="arch.d4t">可插拔 LLM 机器人</h3>
+        <p data-i18n="arch.d4p">协议、端点、密钥、模型与提示词全部配置化——不改一行代码，即可切换任意兼容的模型服务。</p>
       </div>
     </div>
   </div>
@@ -522,9 +526,9 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
 <section id="stack" class="sec-alt">
   <div class="container">
     <div class="sec-head reveal">
-      <span class="eyebrow">技术栈</span>
-      <h2>每一层，都选了趁手的工具</h2>
-      <p class="sec-sub">不追新、不堆砌——每个组件都为某个具体的架构决策服务。</p>
+      <span class="eyebrow" data-i18n="stack.eyebrow">技术栈</span>
+      <h2 data-i18n="stack.title">每一层，都选了趁手的工具</h2>
+      <p class="sec-sub" data-i18n="stack.sub">不追新、不堆砌——每个组件都为某个具体的架构决策服务。</p>
     </div>
   </div>
   <div class="marquee reveal" style="--d:.08s">
@@ -536,20 +540,20 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
   <div class="container">
     <div class="stack-groups">
       <div class="sg reveal" style="--d:0s">
-        <h3>语言与框架</h3>
+        <h3 data-i18n="stack.g1">语言与框架</h3>
         <ul><li>Go 1.25 · Hertz (CloudWeGo)</li><li>GORM · Sa-Token</li><li>Viper · Zap</li><li>Vue 3 · Vite · Naive UI</li></ul>
       </div>
       <div class="sg reveal" style="--d:.07s">
-        <h3>数据存储</h3>
-        <ul><li>PostgreSQL 18</li><li>Redis 7</li><li>AWS S3 对象存储</li></ul>
+        <h3 data-i18n="stack.g2">数据存储</h3>
+        <ul><li>PostgreSQL 18</li><li>Redis 7</li><li data-i18n="stack.g2l3">AWS S3 对象存储</li></ul>
       </div>
       <div class="sg reveal" style="--d:.14s">
-        <h3>消息与搜索</h3>
-        <ul><li>Redpanda（Kafka 兼容）</li><li>Elasticsearch 8</li><li>SSE 实时推送</li></ul>
+        <h3 data-i18n="stack.g3">消息与搜索</h3>
+        <ul><li data-i18n="stack.g3l1">Redpanda（Kafka 兼容）</li><li>Elasticsearch 8</li><li data-i18n="stack.g3l3">SSE 实时推送</li></ul>
       </div>
       <div class="sg reveal" style="--d:.21s">
-        <h3>平台设施</h3>
-        <ul><li>Nacos 3 配置中心</li><li>Mailtrap 邮件服务</li><li>OAuth · Google / GitHub / Azure AD</li><li>GitHub Pages 前端托管</li></ul>
+        <h3 data-i18n="stack.g4">平台设施</h3>
+        <ul><li data-i18n="stack.g4l1">Nacos 3 配置中心</li><li data-i18n="stack.g4l2">Mailtrap 邮件服务</li><li>OAuth · Google / GitHub / Azure AD</li><li data-i18n="stack.g4l4">GitHub Pages 前端托管</li></ul>
       </div>
     </div>
   </div>
@@ -558,14 +562,14 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
 <!-- ================= FINAL CTA ================= -->
 <section class="cta-final">
   <div class="container">
-    <h2 class="reveal">开源、可读、可自部署</h2>
-    <p class="reveal" style="--d:.1s">Qubar 以前后端双仓库完整开源。读代码、提 Issue、跑起来改一改——社区的下一步，由你参与。</p>
+    <h2 class="reveal" data-i18n="cta.title">开源、可读、可自部署</h2>
+    <p class="reveal" style="--d:.1s" data-i18n="cta.sub">Qubar 以前后端双仓库完整开源。读代码、提 Issue、跑起来改一改——社区的下一步，由你参与。</p>
     <div class="hero-ctas reveal" style="--d:.2s">
       <a class="btn btn-primary" href="https://github.com/l0sgAi/qubar" target="_blank" rel="noopener">
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
-        后端仓库
+        <span data-i18n="cta.b1">后端仓库</span>
       </a>
-      <a class="btn btn-ghost" href="https://github.com/l0sgAi/qubar-frontend" target="_blank" rel="noopener">前端仓库 qubar-frontend</a>
+      <a class="btn btn-ghost" href="https://github.com/l0sgAi/qubar-frontend" target="_blank" rel="noopener" data-i18n="cta.b2">前端仓库 qubar-frontend</a>
     </div>
   </div>
 </section>
@@ -575,17 +579,17 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
   <div class="container foot-inner">
     <div>
       <a class="logo" href="#hero" aria-label="回到顶部">
-        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="14" cy="14" r="9.5" stroke="#60F8BB" stroke-width="2.6"/><line x1="20.5" y1="20.5" x2="27" y2="27" stroke="#60F8BB" stroke-width="2.6" stroke-linecap="round"/></svg>
+        <img src="../favicon.svg" alt="" width="26" height="26" aria-hidden="true">
         <span>Qubar</span>
       </a>
-      <div class="foot-slogan">让每一份热爱都有回音。</div>
+      <div class="foot-slogan" data-i18n="foot.slogan">让每一份热爱都有回音。</div>
     </div>
     <nav class="foot-links" aria-label="页脚链接">
-      <a href="https://github.com/l0sgAi/qubar" target="_blank" rel="noopener">GitHub 后端</a>
-      <a href="https://github.com/l0sgAi/qubar-frontend" target="_blank" rel="noopener">GitHub 前端</a>
+      <a href="https://github.com/l0sgAi/qubar" target="_blank" rel="noopener" data-i18n="foot.l1">GitHub 后端</a>
+      <a href="https://github.com/l0sgAi/qubar-frontend" target="_blank" rel="noopener" data-i18n="foot.l2">GitHub 前端</a>
       <a href="https://github.com/l0sgAi/qubar/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
     </nav>
-    <div class="foot-copy">© 2026 Qubar · 以 MIT 协议开源（详见各仓库 LICENSE） · 本页面为零依赖静态页，可离线直接打开</div>
+    <div class="foot-copy" data-i18n="foot.copy">© 2026 Qubar · 以 MIT 协议开源（详见各仓库 LICENSE） · 本页面为零依赖静态页，可离线直接打开</div>
   </div>
 </footer>
 </main>
@@ -594,6 +598,189 @@ footer{border-top:1px solid var(--line);padding:44px 0 50px}
 (function(){
 "use strict";
 var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ==================== i18n：字典查表 + data-i18n 批量替换 ==================== */
+var I18N = {
+zh:{
+"meta.title":"Qubar 趣吧 · 让每一份热爱都有回音",
+"meta.desc":"Qubar（趣吧）—— 基于 Go + DDD 模块化单体的开源兴趣社区：兴趣圈子、图文帖子、AI 社区机器人、SSE 实时通知与三引擎信息流。",
+"nav.features":"核心功能","nav.agent":"AI 机器人","nav.realtime":"实时互动","nav.feed":"信息流","nav.arch":"架构","nav.stack":"技术栈",
+"hero.badge":"模块化单体","hero.titleA":"让每一份","hero.titleB":"<br>都有回音",
+"hero.words":["热爱","兴趣","灵感","好奇心"],
+"hero.sub":"Qubar（趣吧）是一套完整开源的现代兴趣社区：Go + DDD 模块化单体后端，Vue 3 前端。兴趣圈子、图文帖子、AI 社区机器人、SSE 实时通知与三引擎信息流——既是可用的产品，也是一份可读的工程范本。",
+"hero.cta1":"GitHub 仓库","hero.cta2":"了解功能",
+"hero.s1":"自治领域","hero.s2":"层领域分层","hero.s3":"信息流引擎","hero.s4":"代码开源",
+"feat.eyebrow":"核心功能","feat.title":"社区该有的样子，一次给齐","feat.sub":"从圈子到帖子，从互动到搜索，覆盖兴趣社区的完整闭环。",
+"feat.c1t":"兴趣圈子","feat.c1p":"创建并经营你的主题圈子：圈主 / 管理员 / 成员三级 RBAC 权限体系，圈子详情与圈内帖子流井然有序。",
+"feat.c2t":"图文帖子","feat.c2p":"Markdown 编辑器配合多图上传与裁剪，标题、正文、圈子归属一次搞定，发布即进入信息流。",
+"feat.c3t":"评论与互动","feat.c3p":"二级平铺评论，支持回复、点赞与 @提及；每一次互动，都会实时抵达对方的通知中心。",
+"feat.c4t":"点赞与收藏","feat.c4p":"点赞、收藏、浏览历史全量记录，喜欢的内容随时找得回来。",
+"feat.c5t":"全文搜索","feat.c5p":"用户、圈子、帖子三维一体搜索，Elasticsearch 驱动，关键词秒达目标内容。",
+"feat.c6t":"账号与登录","feat.c6p":"邮箱注册登录、找回密码，Google / GitHub / Azure AD OAuth 一键登录；游客模式先逛后注册，中英双语界面随心切换。",
+"agent.eyebrow":"AI 社区机器人","agent.title":"给圈子请一位<br>7×24 的 AI 伙伴",
+"agent.lead":"每个圈子都可以接入自己的 LLM 机器人：它住在线的帖子里，被 @ 或命中关键词时出现，用你定义的口吻回答问题。",
+"agent.l1":"<b>可插拔 LLM 接入</b>：自定义协议、Base URL、API Key、模型与生成参数，兼容主流 OpenAI 风格服务。",
+"agent.l2":"<b>提示词双保险</b>：System Prompt 塑造机器人人格，过滤提示词为发言内容把关。",
+"agent.l3":"<b>关键词 / @ 双触发</b>：帖子命中关键词或被 @ 时自动回复，最大回复数与最小回复间隔双重频控。",
+"agent.l4":"<b>圈级后台管理</b>：圈主在圈子内创建、编辑、删除机器人，名称与头像随心定制。",
+"agent.mocktitle":"#Gopher 集结地 · 帖子详情",
+"agent.usermsg":"<span class=\"at\">@小Q</span> 这篇帖子在讲什么？",
+"agent.botwho":"小Q · AI 机器人",
+"agent.botmsg":"这篇帖子对比了「轮询」与「SSE」两种未读数推送方案：SSE 由服务端主动推送、自带断线重连，失败时再降级 30s 轮询兜底。需要我展开某一段吗？",
+"rt.eyebrow":"实时消息与互动","rt.title":"新互动，<br>秒级落在你眼前",
+"rt.lead":"未读通知从 30s 轮询升级为 SSE 服务端主动推送——全量事件、心跳保活、断线自动降级，多标签页之间也能保持一致。",
+"rt.l1":"<b>SSE 单向推送</b>：基于普通 HTTP，自带重连与事件 ID，25s 心跳防止网关空闲断连。",
+"rt.l2":"<b>全量语义</b>：每次推送完整未读数，与本地已读校正取最新值，不做增量累加。",
+"rt.l3":"<b>优雅降级</b>：连接失败自动回落 30s 轮询，可用性不依赖推送通道是否在线。",
+"rt.mocktitle":"通知中心",
+"rt.a1":"茶","rt.a2":"萌","rt.a3":"白","rt.a4":"骑",
+"rt.n1":"<b>阿茶</b> 在《胶片扫街：初秋的胡同》中 <b>@提到了你</b>",
+"rt.n2":"<b>momo</b> 赞了你的帖子《200 行 Go 手写一个 SSE 推送服务》",
+"rt.n3":"<b>圈主 · 老白</b> 回复了你的评论：「这个思路可以再展开一点」",
+"rt.n4":"你的圈子 <b>「城市骑行」</b> 迎来了新成员",
+"rt.t1":"刚刚","rt.t2":"12 秒前","rt.t3":"30 秒前","rt.t4":"1 分钟前","rt.tag":"SSE 实时推送",
+"feed.eyebrow":"信息流三引擎","feed.title":"推荐、热门、发现，各管一段好奇心",
+"feed.sub":"首页推荐流贴近你的圈子与足迹，热门榜沉淀全站高光，发现页负责把新圈子与新面孔推到你面前。",
+"feed.tab1":"推荐","feed.tab2":"热门","feed.tab3":"发现","feed.hint":"自动轮播中 · 点击可切换",
+"feed.r1t":"深夜电台：最近单曲循环的是哪一首？","feed.r1c":"音乐漫游","feed.r1m1":"赞 128","feed.r1m2":"评 46",
+"feed.r2t":"200 行 Go 手写一个 SSE 推送服务","feed.r2c":"Gopher 集结地","feed.r2m1":"赞 342","feed.r2m2":"评 87",
+"feed.r3t":"胶片扫街：初秋的胡同光影","feed.r3c":"胶片摄影","feed.r3m1":"赞 96","feed.r3m2":"评 21",
+"feed.h1t":"<span class=\"pm-hot\">🔥 TOP 1</span>　从轮询到 SSE：实时通知演进全记录","feed.h1c":"Gopher 集结地","feed.h1m1":"赞 876","feed.h1m2":"评 154",
+"feed.h2t":"<span class=\"pm-hot\">🔥 TOP 2</span>　晒出你的桌面 Setup（第十六期）","feed.h2c":"数码生活","feed.h2m1":"赞 655","feed.h2m2":"评 301",
+"feed.h3t":"<span class=\"pm-hot\">🔥 TOP 3</span>　【公告】社区内容规范 2.0 上线","feed.h3c":"趣吧公告","feed.h3m1":"赞 512","feed.h3m2":"评 233",
+"feed.d1t":"新圈推荐：「独立游戏开发」今日创建","feed.d1c":"新圈速递","feed.d1m1":"成员 512","feed.d1m2":"持续升温",
+"feed.d2t":"新圈推荐：「城市骑行 CityRide」","feed.d2c":"新圈速递","feed.d2m1":"成员 348","feed.d2m2":"本周活跃",
+"feed.d3t":"萌新求助：第一台咖啡机怎么选？","feed.d3c":"咖啡研究所","feed.d3m1":"赞 74","feed.d3m2":"评 59",
+"arch.eyebrow":"架构亮点","arch.title":"模块化单体：简单部署，不简单设计",
+"arch.sub":"一个进程跑起来，一套 DDD 分层管清楚。依赖只能向下流动，领域之间互不越界。",
+"arch.l1n":"编排层<br>Composition Root","arch.l1d":"cmd 入口一处组装：依赖装配、路由注册、中间件挂载——所有 wiring 只发生在这里。",
+"arch.l2n":"15 个自治领域<br>Domains","arch.l2d":"每个领域自带 application / domain / infrastructure / interfaces 四层，独立演进、独立测试。",
+"arch.l3n":"共享内核<br>Shared Kernel","arch.l3d":"通用类型、统一错误与工具函数：跨领域复用，不掺业务逻辑。",
+"arch.l4n":"基础设施<br>Infrastructure",
+"arch.d1t":"模块化单体优先","arch.d1p":"单进程一次部署，领域靠清晰边界自治；将来若要拆分为微服务，领域边界早已画好。",
+"arch.d2t":"Write-Behind 异步统计","arch.d2p":"点赞、浏览等高频计数先写缓存，再经 Redpanda 异步批量落库——热点写不再顶穿数据库。",
+"arch.d3t":"SSE 优于 WebSocket","arch.d3p":"未读数是服务端 → 客户端的单向语义：SSE 跑在普通 HTTP 上，自带重连与 Last-Event-ID 续传，免去双向心跳的复杂度。",
+"arch.d4t":"可插拔 LLM 机器人","arch.d4p":"协议、端点、密钥、模型与提示词全部配置化——不改一行代码，即可切换任意兼容的模型服务。",
+"stack.eyebrow":"技术栈","stack.title":"每一层，都选了趁手的工具","stack.sub":"不追新、不堆砌——每个组件都为某个具体的架构决策服务。",
+"stack.g1":"语言与框架","stack.g2":"数据存储","stack.g3":"消息与搜索","stack.g4":"平台设施",
+"stack.g2l3":"AWS S3 对象存储","stack.g3l1":"Redpanda（Kafka 兼容）","stack.g3l3":"SSE 实时推送",
+"stack.g4l1":"Nacos 3 配置中心","stack.g4l2":"Mailtrap 邮件服务","stack.g4l4":"GitHub Pages 前端托管",
+"cta.title":"开源、可读、可自部署","cta.sub":"Qubar 以前后端双仓库完整开源。读代码、提 Issue、跑起来改一改——社区的下一步，由你参与。",
+"cta.b1":"后端仓库","cta.b2":"前端仓库 qubar-frontend",
+"foot.slogan":"让每一份热爱都有回音。","foot.l1":"GitHub 后端","foot.l2":"GitHub 前端",
+"foot.copy":"© 2026 Qubar · 以 MIT 协议开源（详见各仓库 LICENSE） · 本页面为零依赖静态页，可离线直接打开"
+},
+en:{
+"meta.title":"Qubar · Where Every Passion Finds Its Echo",
+"meta.desc":"Qubar — an open-source interest community built on a Go + DDD modular monolith: interest circles, rich posts, an AI community bot, SSE realtime notifications and a triple-engine feed.",
+"nav.features":"Features","nav.agent":"AI Bot","nav.realtime":"Realtime","nav.feed":"Feeds","nav.arch":"Architecture","nav.stack":"Tech Stack",
+"hero.badge":"Modular Monolith","hero.titleA":"Where every ","hero.titleB":"<br>finds its echo",
+"hero.words":["passion","interest","spark","curiosity"],
+"hero.sub":"Qubar is a fully open-source, modern interest community: a Go + DDD modular-monolith backend with a Vue 3 frontend. Interest circles, rich posts, an AI community bot, SSE realtime notifications and a triple-engine feed — a working product, and a readable engineering reference.",
+"hero.cta1":"GitHub Repo","hero.cta2":"Explore Features",
+"hero.s1":"Autonomous Domains","hero.s2":"Layers per Domain","hero.s3":"Feed Engines","hero.s4":"Open Source",
+"feat.eyebrow":"Core Features","feat.title":"Everything a community needs, out of the box","feat.sub":"From circles to posts, from interactions to search — the full loop of an interest community.",
+"feat.c1t":"Interest Circles","feat.c1p":"Create and run topic circles with a three-level RBAC of owner / admin / member — circle pages and in-circle post streams stay neatly organized.",
+"feat.c2t":"Rich Posts","feat.c2p":"A Markdown editor with multi-image upload and cropping. Title, body and circle in one go — publish straight into the feed.",
+"feat.c3t":"Comments & Interactions","feat.c3p":"Two-level flat comments with replies, likes and @mentions — every interaction lands in the notification center in real time.",
+"feat.c4t":"Likes & Favorites","feat.c4p":"Likes, favorites and browsing history are all recorded, so the content you love is always easy to find again.",
+"feat.c5t":"Full-Text Search","feat.c5p":"Search users, circles and posts in one box, powered by Elasticsearch — keywords reach the right content instantly.",
+"feat.c6t":"Accounts & Sign-in","feat.c6p":"Email sign-up, password recovery and one-click OAuth via Google / GitHub / Azure AD. Browse first in guest mode; UI available in Chinese and English.",
+"agent.eyebrow":"AI Community Bot","agent.title":"A 24/7 AI companion<br>for every circle",
+"agent.lead":"Each circle can plug in its own LLM bot: it lives inside the posts, shows up when @mentioned or keyword-triggered, and answers in the tone you define.",
+"agent.l1":"<b>Pluggable LLM access</b>: custom protocol, base URL, API key, model and sampling params — compatible with mainstream OpenAI-style APIs.",
+"agent.l2":"<b>Two-layer prompting</b>: a system prompt shapes the bot's persona, while a filter prompt guards what it may say.",
+"agent.l3":"<b>Keyword / @mention triggers</b>: auto-reply when a post hits keywords or mentions the bot, throttled by max replies and minimum interval.",
+"agent.l4":"<b>Circle-level management</b>: owners create, edit and delete bots within the circle, with custom names and avatars.",
+"agent.mocktitle":"#Gopher Hub · Post Detail",
+"agent.usermsg":"<span class=\"at\">@XiaoQ</span> What is this post about?",
+"agent.botwho":"XiaoQ · AI Bot",
+"agent.botmsg":"This post compares polling vs. SSE for unread-count delivery: SSE pushes from the server with built-in reconnect, falling back to 30s polling on failure. Want me to expand on any part?",
+"rt.eyebrow":"Realtime Messaging","rt.title":"New interactions,<br>before your eyes in a second",
+"rt.lead":"Unread notifications upgraded from 30s polling to server-pushed SSE — full-state events, heartbeat keep-alive, automatic fallback, and consistency across tabs.",
+"rt.l1":"<b>SSE one-way push</b>: plain HTTP with built-in reconnect and event IDs; a 25s heartbeat defeats idle gateway timeouts.",
+"rt.l2":"<b>Full-state semantics</b>: every push carries the complete unread count, reconciled with local read-corrections by latest-wins — no increment math.",
+"rt.l3":"<b>Graceful degradation</b>: on connection failure it falls back to 30s polling; availability never hinges on the push channel.",
+"rt.mocktitle":"Notifications",
+"rt.a1":"A","rt.a2":"M","rt.a3":"B","rt.a4":"C",
+"rt.n1":"<b>A-Cha</b> <b>@mentioned you</b> in \"Film Walk: Early-Autumn Hutongs\"",
+"rt.n2":"<b>momo</b> liked your post \"A 200-Line Go SSE Push Service\"",
+"rt.n3":"<b>Owner · LaoBai</b> replied to your comment: \"Worth expanding on this idea\"",
+"rt.n4":"Your circle <b>\"City Ride\"</b> has a new member",
+"rt.t1":"Just now","rt.t2":"12s ago","rt.t3":"30s ago","rt.t4":"1m ago","rt.tag":"SSE Realtime",
+"feed.eyebrow":"Triple-Engine Feed","feed.title":"For You, Trending, Discover — one for each kind of curiosity",
+"feed.sub":"Home recommendations follow your circles and footprints, Trending distills site-wide highlights, and Discover puts new circles and new faces in front of you.",
+"feed.tab1":"For You","feed.tab2":"Trending","feed.tab3":"Discover","feed.hint":"Auto-rotating · click to switch",
+"feed.r1t":"Late-night radio: which song is on repeat lately?","feed.r1c":"Music Lounge","feed.r1m1":"128 likes","feed.r1m2":"46 comments",
+"feed.r2t":"A 200-line Go SSE push service, handwritten","feed.r2c":"Gopher Hub","feed.r2m1":"342 likes","feed.r2m2":"87 comments",
+"feed.r3t":"Film walk: early-autumn hutong light","feed.r3c":"Film Photography","feed.r3m1":"96 likes","feed.r3m2":"21 comments",
+"feed.h1t":"<span class=\"pm-hot\">🔥 TOP 1</span>　From polling to SSE: the full evolution of realtime notifications","feed.h1c":"Gopher Hub","feed.h1m1":"876 likes","feed.h1m2":"154 comments",
+"feed.h2t":"<span class=\"pm-hot\">🔥 TOP 2</span>　Show your desk setup (Ep. 16)","feed.h2c":"Digital Life","feed.h2m1":"655 likes","feed.h2m2":"301 comments",
+"feed.h3t":"<span class=\"pm-hot\">🔥 TOP 3</span>　[Announcement] Community Guidelines 2.0","feed.h3c":"Qubar Announcements","feed.h3m1":"512 likes","feed.h3m2":"233 comments",
+"feed.d1t":"New circle: \"Indie Game Dev\", created today","feed.d1c":"Fresh Circles","feed.d1m1":"512 members","feed.d1m2":"Heating up",
+"feed.d2t":"New circle: \"City Ride\"","feed.d2c":"Fresh Circles","feed.d2m1":"348 members","feed.d2m2":"Active this week",
+"feed.d3t":"Newbie help: how to pick a first espresso machine?","feed.d3c":"Coffee Lab","feed.d3m1":"74 likes","feed.d3m2":"59 comments",
+"arch.eyebrow":"Architecture","arch.title":"Modular monolith: trivial to deploy, anything but trivial inside",
+"arch.sub":"One process to run, one DDD layering to keep it clear. Dependencies only flow downward; domains never cross boundaries.",
+"arch.l1n":"Composition Root","arch.l1d":"All wiring happens in one cmd entrypoint: dependency assembly, route registration and middleware mounting — nowhere else.",
+"arch.l2n":"15 Autonomous Domains","arch.l2d":"Each domain carries its own application / domain / infrastructure / interfaces layers — evolving and testing independently.",
+"arch.l3n":"Shared Kernel","arch.l3d":"Shared types, unified errors and utilities: reused across domains, free of business logic.",
+"arch.l4n":"Infrastructure",
+"arch.d1t":"Modular monolith first","arch.d1p":"One-process deployment with domains isolated by clear boundaries; if microservices are ever needed, the seams are already drawn.",
+"arch.d2t":"Write-Behind async stats","arch.d2p":"Hot counters like likes and views hit the cache first, then flush asynchronously in batches via Redpanda — hotspot writes never pierce the database.",
+"arch.d3t":"SSE over WebSocket","arch.d3p":"Unread counts are server → client one-way semantics: SSE rides plain HTTP with built-in reconnect and Last-Event-ID resume — no bidirectional heartbeat complexity.",
+"arch.d4t":"Pluggable LLM bots","arch.d4p":"Protocol, endpoint, key, model and prompts are all configuration — switch to any compatible model service without changing a line of code.",
+"stack.eyebrow":"Tech Stack","stack.title":"The right tool at every layer","stack.sub":"No hype, no bloat — every component serves a concrete architectural decision.",
+"stack.g1":"Languages & Frameworks","stack.g2":"Data Storage","stack.g3":"Messaging & Search","stack.g4":"Platform & Infra",
+"stack.g2l3":"AWS S3 Object Storage","stack.g3l1":"Redpanda (Kafka-compatible)","stack.g3l3":"SSE Realtime Push",
+"stack.g4l1":"Nacos 3 Config Center","stack.g4l2":"Mailtrap Email","stack.g4l4":"GitHub Pages Hosting",
+"cta.title":"Open source, readable, self-hostable","cta.sub":"Qubar ships as two fully open-source repos. Read the code, file an issue, run it and hack on it — the community's next step is yours.",
+"cta.b1":"Backend Repo","cta.b2":"Frontend Repo",
+"foot.slogan":"Where every passion finds its echo.","foot.l1":"Backend on GitHub","foot.l2":"Frontend on GitHub",
+"foot.copy":"© 2026 Qubar · Open sourced under MIT (see LICENSE in each repo) · This page is a zero-dependency static page and works fully offline"
+}
+};
+function readStoredLang(){
+  try{ return localStorage.getItem("qubar-landing-lang"); }catch(e){ return null; }
+}
+function storeLang(v){
+  try{ localStorage.setItem("qubar-landing-lang", v); }catch(e){ return; }
+}
+var LANG = (function(){
+  var s = readStoredLang();
+  if(s === "zh" || s === "en") return s;
+  return (navigator.language || "zh").toLowerCase().startsWith("zh") ? "zh" : "en";
+})();
+var rotEl = document.getElementById("rotator");
+function renderRotator(lang){
+  if(!rotEl) return;
+  var words = I18N[lang]["hero.words"];
+  rotEl.innerHTML = words.map(function(w){ return "<span>" + w + "</span>"; }).join("");
+  rotEl.style.transform = "translateY(0)";
+}
+function applyLang(lang){
+  var dict = I18N[lang];
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  document.title = dict["meta.title"];
+  var md = document.querySelector('meta[name="description"]');
+  if(md) md.setAttribute("content", dict["meta.desc"]);
+  document.querySelectorAll("[data-i18n]").forEach(function(el){
+    var v = dict[el.dataset.i18n];
+    if(typeof v !== "string") return;
+    if(v.includes("<")){ el.innerHTML = v; }else{ el.textContent = v; }
+  });
+  var tog = document.getElementById("langToggle");
+  if(tog) tog.textContent = lang === "zh" ? "EN" : "中文";
+  renderRotator(lang);
+}
+var langToggle = document.getElementById("langToggle");
+if(langToggle){
+  langToggle.addEventListener("click", function(){
+    LANG = LANG === "zh" ? "en" : "zh";
+    storeLang(LANG);
+    applyLang(LANG);
+  });
+}
 
 /* ---------- 阅读进度条 & 导航毛玻璃 ---------- */
 function initNavScroll(){
@@ -636,14 +823,15 @@ function initCounters(){
   document.querySelectorAll("[data-count]").forEach(function(el){ cio.observe(el); });
 }
 
-/* ---------- Hero 关键词纵向轮播 ---------- */
+/* ---------- Hero 关键词纵向轮播（随语言重建词表） ---------- */
 function initRotator(){
-  var rot = document.getElementById("rotator");
-  if(!rot || reduced) return;
-  var rn = rot.children.length, ri = 0;
+  if(!rotEl || reduced) return;
+  var ri = 0;
   setInterval(function(){
-    ri = (ri + 1) % rn;
-    rot.style.transform = "translateY(-" + (ri * 1.18) + "em)";
+    var n = rotEl.children.length;
+    if(!n) return;
+    ri = (ri + 1) % n;
+    rotEl.style.transform = "translateY(-" + (ri * 1.18) + "em)";
   }, 2600);
 }
 
@@ -758,6 +946,7 @@ function initFeedTabs(){
   start();
 }
 
+applyLang(LANG);
 initNavScroll();
 initReveal();
 initCounters();
