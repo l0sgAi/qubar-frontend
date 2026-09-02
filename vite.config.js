@@ -4,10 +4,31 @@ import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
 import { copyFileSync } from 'fs'
 
+// /landing 与 /landing/ 重定向到 public/landing/index.html（独立静态宣传页，避免被 SPA 回退接管）
+function landingRedirect(req, res, next) {
+  const path = (req.url || '').split('?')[0]
+  if (path === '/landing' || path === '/landing/') {
+    res.statusCode = 302
+    res.setHeader('Location', '/landing/index.html')
+    res.end()
+    return
+  }
+  next()
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
+    {
+      name: 'landing-redirect',
+      configureServer(server) {
+        server.middlewares.use(landingRedirect)
+      },
+      configurePreviewServer(server) {
+        server.middlewares.use(landingRedirect)
+      }
+    },
     // 构建完成后自动创建 404.html（GitHub Pages SPA 支持）
     {
       name: 'generate-404',
