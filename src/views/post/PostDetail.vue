@@ -36,6 +36,7 @@
               v-model:sort="commentSort"
               v-model:comment-count="commentCount"
               :language="language"
+              :locate-comment-id="route.query.comment_id || ''"
             />
           </PostHeaderAndContent>
         </div>

@@ -789,6 +789,7 @@ export default {
     readAllSuccess: '已全部标记为已读',
     readAllFailed: '操作失败，请重试',
     targetDeleted: '内容已被删除',
+    locateFailed: '评论定位失败，请稍后再试',
     someone: '有人',
     // 文案模板：{actor}=触发人，{snippet}=摘要快照
     templates: {

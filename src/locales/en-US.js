@@ -790,6 +790,7 @@ export default {
     readAllSuccess: 'All marked as read',
     readAllFailed: 'Operation failed, please retry',
     targetDeleted: 'Content has been deleted',
+    locateFailed: 'Failed to locate the comment, please retry later',
     someone: 'Someone',
     // Text templates: {actor}=trigger user, {snippet}=content snippet
     templates: {

@@ -10,7 +10,7 @@
     </div>
 
     <div class="comment-list">
-      <div v-for="comment in comments" :key="comment.id" class="comment-item">
+      <div v-for="comment in comments" :key="comment.id" :id="'comment-' + comment.id" class="comment-item" :class="{ 'comment-highlight': highlightCommentId === comment.id }">
         <div class="comment-avatar">
           <NAvatar round :size="36" :src="comment.author_avatar || undefined">
           <div v-if="!comment.author_avatar">{{ comment.author_name?.charAt(0) }}</div>
@@ -101,7 +101,7 @@
                 </span>
               </div>
             </div>
-            <div v-for="reply in getCurrentReplies(comment.id)" :key="reply.id" class="comment-item reply-item">
+            <div v-for="reply in getCurrentReplies(comment.id)" :key="reply.id" :id="'comment-' + reply.id" class="comment-item reply-item" :class="{ 'comment-highlight': highlightCommentId === reply.id }">
               <div class="comment-avatar">
                 <NAvatar round :size="28" :src="reply.author_avatar || undefined">
                   <div v-if="!reply.author_avatar">{{ reply.author_name?.charAt(0) }}</div>
@@ -240,12 +240,12 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-	import { NCard, NAvatar, NButton, NDivider, NIcon, NEmpty, NSpin } from 'naive-ui'
+	import { NCard, NAvatar, NButton, NDivider, NIcon, NEmpty, NSpin, useMessage } from 'naive-ui'
 import ImageCarousel from '@/components/common/ImageCarousel.vue'
 import { useI18n } from 'vue-i18n'
 import MentionPreview from '@/components/post/detail/MentionPreview.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
-import { getCommentList, getCommentReplies } from '@/api/comment'
+import { getCommentList, getCommentReplies, locateComment, COMMENT_NOT_FOUND_CODE } from '@/api/comment'
 import { seedContentMentions } from '@/utils/mentionResolve'
 import { toggleLike } from '@/api/like'
 import CommentReplyEditor from '@/components/post/detail/CommentReplyEditor.vue'
@@ -276,6 +276,11 @@ const props = defineProps({
   commentCount: {
     type: Number,
     default: 0
+  },
+  // 通知点击直达：目标评论ID（顶层或回复），空串 = 不定位
+  locateCommentId: {
+    type: String,
+    default: ''
   }
 })
 
@@ -284,6 +289,15 @@ const emit = defineEmits(['update:sort', 'update:commentCount'])
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
 const { formatNumber } = useFormatNumber()
+const message = useMessage()
+
+// 通知定位状态：高亮目标评论ID / 定位流程进行中（防重入）
+const highlightCommentId = ref('')
+const locating = ref(false)
+// 定位版本号：新目标到来即在飞流程失效（防旧流程完成后回灌/滚动到过期目标）
+let locateVersion = 0
+// 在飞期间到来的最新目标，流程结束后补跑（只保留最新一个）
+let pendingLocateId = ''
 
 // 获取用户ID（兼容多种字段名）；注意不能回退到 item.id——那是评论ID，
 // 作者信息缺失时会错误地链到 /user/<评论ID>
@@ -357,10 +371,10 @@ const hasNextPage = (commentId) => {
   return data.hasMoreMap[data.currentPage] || false
 }
 
-// 是否有上一页
+// 是否有上一页（定位加载时之前的页为 null 占位，不可回翻——单向翻页约定）
 const hasPrevPage = (commentId) => {
   const data = getRepliesData(commentId)
-  return data.currentPage > 0
+  return data.currentPage > 0 && !!data.pages[data.currentPage - 1]
 }
 
 // 展开的回复ID列表（用于控制显示）
@@ -605,6 +619,170 @@ const loadComments = async (isRefresh = false) => {
   }
 }
 
+// ============ 通知点击定位评论 ============
+
+// 定位加载顶层列表：以 locate 返回的游标拉一页作为评论流第 0 页
+// （之前的页不可达，只支持向后翻——对接文档约定）
+// sortValue 须用定位流程捕获的排序：list_cursor 仅在生成它的 sort 下有效
+const loadLocatedComments = async (cursor, sortValue, isStale) => {
+  loading.value = true
+  try {
+    const params = {
+      post_id: props.postId,
+      sort: sortValue
+    }
+    if (cursor) {
+      params.cursor = cursor
+    }
+
+    const res = await getCommentList(params)
+    // 流程已被更新的定位目标取代：丢弃结果，不回灌评论流
+    if (isStale?.()) return
+    if (res.data) {
+      seedContentMentions(res.data.items || [])
+      comments.value = res.data.items || []
+      hasMore.value = res.data.has_more
+      nextCursor.value = res.data.next_cursor || ''
+    }
+  } finally {
+    loading.value = false
+    initialized.value = true
+
+    if (hasMore.value) {
+      await nextTick()
+      setupInfiniteScrollObserver()
+    }
+  }
+}
+
+// 定位加载回复：以 locate 返回的游标拉一页，落到 reply_page 对应页码并展开
+const loadLocatedReplies = async (comment, cursor, replyPage) => {
+  const data = getRepliesData(comment.id)
+  loadingReplies.value[comment.id] = true
+
+  try {
+    const params = {
+      root_id: comment.id,
+      sort: getRepliesSortValue(comment.id)
+    }
+    if (cursor) {
+      params.cursor = cursor
+    }
+
+    const res = await getCommentReplies(params)
+    if (res.data) {
+      const items = res.data.items || []
+      seedContentMentions(items)
+
+      // 定位页直接落在 reply_page（从1开始）；之前的页不加载，prevPage 对空页有守卫
+      const pageIndex = Math.max(0, (replyPage || 1) - 1)
+      data.pages = new Array(pageIndex + 1).fill(null)
+      data.pages[pageIndex] = items
+      data.currentPage = pageIndex
+      data.cursors = new Array(pageIndex + 2).fill('')
+      data.cursors[pageIndex] = cursor || ''
+      data.cursors[pageIndex + 1] = res.data.next_cursor || ''
+      data.hasMoreMap = { [pageIndex]: res.data.has_more }
+
+      expandReplies(comment.id)
+    }
+  } catch (error) {
+    console.error('定位加载回复失败:', error)
+  } finally {
+    loadingReplies.value[comment.id] = false
+  }
+}
+
+// 回复定位：加载含目标的回复页 + 漂移兜底（当页没有则翻下一页再找一次）
+const locateReply = async (root, located) => {
+  await loadLocatedReplies(root, located.reply_cursor, located.reply_page)
+  if (getCurrentReplies(root.id).some(r => r.id === located.comment_id)) return true
+  if (!hasNextPage(root.id)) return false
+  await nextPage(root.id)
+  return getCurrentReplies(root.id).some(r => r.id === located.comment_id)
+}
+
+// 定位主流程：locate → 拉含根评论的页 →（回复时）展开回复 → 滚动 + 高亮
+const locateAndJump = async (commentId) => {
+  const version = ++locateVersion
+  if (locating.value) {
+    // 已有定位流程在飞：作废旧流程，记录最新目标，等其 settle 后补跑
+    pendingLocateId = commentId
+    return
+  }
+  locating.value = true
+  highlightCommentId.value = ''
+  const isStale = () => version !== locateVersion
+
+  try {
+    // 首个 await 前捕获排序：定位流程内所有请求（含 list_cursor 请求）复用同一 sort，
+    // 防止 props.sort 中途变化后与旧 sort 下算出的游标混用
+    const sortValue = getSortValue()
+    const res = await locateComment({
+      comment_id: commentId,
+      sort: sortValue,
+      reply_sort: 1 // 回复列表默认最新，与 getRepliesData().sort 初始值一致
+    })
+    if (isStale()) return
+    const d = res.data
+    if (!d) return
+
+    // 防串帖：目标评论不属于当前帖子
+    if (d.post_id && d.post_id !== props.postId) {
+      message.error(t('notice.locateFailed'))
+      return
+    }
+
+    await loadLocatedComments(d.list_cursor, sortValue, isStale)
+    if (isStale()) return
+
+    // 并发漂移兜底：目标根评论不在定位页则再向后拉一页（对接文档 §四-1）
+    let root = comments.value.find(c => c.id === d.root_id)
+    if (!root && hasMore.value) {
+      await loadComments()
+      if (isStale()) return
+      root = comments.value.find(c => c.id === d.root_id)
+    }
+    if (!root) {
+      message.error(t('notice.locateFailed'))
+      return
+    }
+
+    let targetId = d.root_id
+    if (!d.is_root) {
+      const found = await locateReply(root, d)
+      if (isStale()) return
+      if (!found) {
+        message.error(t('notice.locateFailed'))
+        return
+      }
+      targetId = d.comment_id
+    }
+
+    highlightCommentId.value = targetId
+    await nextTick()
+    if (isStale()) return
+    document.getElementById(`comment-${targetId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  } catch (error) {
+    if (isStale()) return // 过期目标的错误不提示，交由最新流程处理
+    // 业务码 40401 = 评论不存在、已删除或因审核不可见（对接文档 §3.2）
+    if (error.code === COMMENT_NOT_FOUND_CODE) {
+      message.info(t('notice.targetDeleted'))
+    } else {
+      console.error('定位评论失败:', error)
+      message.error(t('notice.locateFailed'))
+    }
+  } finally {
+    locating.value = false
+    // 在飞期间有新目标到来：settle 后补跑最新一个
+    if (pendingLocateId) {
+      const next = pendingLocateId
+      pendingLocateId = ''
+      locateAndJump(next)
+    }
+  }
+}
+
 // 加载子回复（游标分页）
 const loadReplies = async (comment) => {
   const data = getRepliesData(comment.id)
@@ -723,6 +901,7 @@ const refreshComments = () => {
   repliesData.value = {}
   expandedReplyIds.value = []
   commentsLoaded.value = false
+  highlightCommentId.value = ''
 
   // 重新设置懒加载（如果已经在视口内会立即触发）
   nextTick(() => {
@@ -801,7 +980,22 @@ const cleanupObserver = () => {
 }
 
 onMounted(() => {
-  setupLazyObserver()
+  // 带定位参数进帖：跳过懒加载直接定位（定位流程自己会拉评论流）
+  if (props.locateCommentId) {
+    commentsLoaded.value = true
+    locateAndJump(props.locateCommentId)
+  } else {
+    setupLazyObserver()
+  }
+})
+
+// 同帖内通知再点击（路由复用）：评论流重置后重新定位
+watch(() => props.locateCommentId, (id, oldId) => {
+  if (!id || id === oldId) return
+  refreshComments()
+  // refreshComments 会在 nextTick 重建懒加载 observer；抢先标记已加载使其空转
+  commentsLoaded.value = true
+  nextTick(() => locateAndJump(id))
 })
 
 onUnmounted(() => {
@@ -845,6 +1039,23 @@ defineExpose({ refreshComments, addComment })
   gap: 12px;
   padding: 16px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  /* 定位滚动居中时避开吸顶 header */
+  scroll-margin-top: calc(var(--header-height) + 12px);
+}
+
+/* 通知定位高亮：主题色呼吸背景，2s 淡出为透明 */
+.comment-highlight {
+  border-radius: 8px;
+  animation: comment-highlight-flash 2s ease-out;
+}
+
+@keyframes comment-highlight-flash {
+  0% {
+    background: rgba(102, 234, 194, 0.22);
+  }
+  100% {
+    background: transparent;
+  }
 }
 
 .comment-item:last-child {

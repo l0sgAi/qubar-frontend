@@ -1,5 +1,8 @@
 import request from '@/utils/request'
 
+// 业务码：评论不存在 / 已删除 / 因审核不可见（对接文档 §3.2，前后端共享约定）
+export const COMMENT_NOT_FOUND_CODE = 40401
+
 /**
  * 发表评论
  * @param {Object} data - 评论数据
@@ -12,6 +15,23 @@ export function createComment(data) {
     url: '/comment/create',
     method: 'post',
     data
+  })
+}
+
+/**
+ * 定位评论（通知点击直达评论用）
+ * @param {Object} params
+ * @param {string} params.comment_id - 目标评论ID(UUIDv7)，顶层评论或回复均可
+ * @param {number} [params.sort] - 顶层列表排序：0=按点赞倒序（默认），1=按时间倒序；返回的 list_cursor 仅在同 sort 下有效
+ * @param {number} [params.reply_sort] - 回复列表排序：0=最热，1=最新（默认，对齐回复列表用法）
+ * @returns {Promise} data: { comment_id, post_id, root_id, is_root, list_cursor, reply_cursor, reply_page }
+ *   目标不存在/已删除/不可见时 reject，error.code === COMMENT_NOT_FOUND_CODE
+ */
+export function locateComment(params) {
+  return request({
+    url: '/comment/locate',
+    method: 'get',
+    params
   })
 }
 
@@ -35,7 +55,7 @@ export function getCommentList(params) {
  * 加载子回复列表（页码分页）
  * @param {Object} params
  * @param {string} params.root_id - 根评论ID(UUIDv7)
- * @param {number} [params.sort] - 0=按时间倒序（默认），1=按点赞倒序
+ * @param {number} [params.sort] - 0=最热（点赞倒序），1=最新（时间倒序，默认）
  * @param {number} [params.page] - 页码，从1开始
  * @param {number} [params.page_size] - 每页数量，默认5
  * @returns {Promise}
