@@ -27,6 +27,8 @@ let activeLoaded = false
 let randomLoaded = false
 // 缓存归属的 token：与当前 token 不一致时登录态缓存整体作废
 let cacheToken = null
+// 拉取「我的圈子」期间又收到成员变更事件时置位，请求结束后补一次刷新
+let joinedRefreshPending = false
 
 const mapCircle = (c, fallbackName) => ({
   id: c.id,
@@ -47,32 +49,56 @@ const checkCacheOwner = () => {
 }
 
 export const fetchJoinedCircles = async (fallbackName) => {
-  if (joinedLoading.value) return
+  // 正在拉取时收到刷新请求：记录待刷新，当前请求结束后补一次
+  if (joinedLoading.value) {
+    joinedRefreshPending = true
+    return
+  }
   joinedLoading.value = true
+  // 请求前记录 token，响应返回时若登录态已变则丢弃，避免写入上个账号的数据
+  const requestToken = auth.getToken()
   try {
     const res = await getMyCircles({ size: 5 })
+    if (requestToken !== auth.getToken()) return
     joinedCircles.value = (res.data?.circles || []).map(c => mapCircle(c, fallbackName)).slice(0, 5)
     joinedLoaded = true
   } catch (e) {
     console.error('获取我加入的圈子失败:', e)
-    joinedCircles.value = []
+    // 保留上次成功的列表，仅复位 loaded 标记让 ensureSideNavData 可重试
+    joinedLoaded = false
   } finally {
     joinedLoading.value = false
+    if (requestToken !== auth.getToken()) {
+      // 请求期间登录态变化：结果已丢弃，为当前登录态重新拉取
+      joinedRefreshPending = false
+      if (auth.isAuthenticated()) fetchJoinedCircles(fallbackName)
+    } else if (joinedRefreshPending) {
+      joinedRefreshPending = false
+      fetchJoinedCircles(fallbackName)
+    }
   }
 }
 
 export const fetchActiveCircles = async (fallbackName) => {
   if (activeLoading.value) return
   activeLoading.value = true
+  // 请求前记录 token，响应返回时若登录态已变则丢弃，避免写入上个账号的数据
+  const requestToken = auth.getToken()
   try {
     const res = await getActiveCircles({ size: 5, offset: 0 })
+    if (requestToken !== auth.getToken()) return
     activeCircles.value = (res.data?.circles || []).map(c => mapCircle(c, fallbackName)).slice(0, 5)
     activeLoaded = true
   } catch (e) {
     console.error('获取近期活跃圈子失败:', e)
-    activeCircles.value = []
+    // 保留上次成功的列表，仅复位 loaded 标记让 ensureSideNavData 可重试
+    activeLoaded = false
   } finally {
     activeLoading.value = false
+    // 请求期间登录态变化：结果已丢弃，为当前登录态重新拉取
+    if (requestToken !== auth.getToken() && auth.isAuthenticated()) {
+      fetchActiveCircles(fallbackName)
+    }
   }
 }
 
@@ -85,7 +111,8 @@ export const fetchRandomCircles = async (fallbackName) => {
     randomLoaded = true
   } catch (e) {
     console.error('获取随机圈子失败:', e)
-    randomCircles.value = []
+    // 保留上次成功的列表，仅复位 loaded 标记让 ensureSideNavData 可重试
+    randomLoaded = false
   } finally {
     randomLoading.value = false
   }
