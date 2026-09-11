@@ -63,7 +63,15 @@ export default {
     circleMembersName: '成员管理：{name}',
     circleEditName: '编辑圈子资料：{name}',
     circleAgentsName: '机器人管理：{name}',
-    profileName: '个人中心：{name}'
+    profileName: '个人中心：{name}',
+    notFound: '页面不存在'
+  },
+
+  // 404 页面
+  notFound: {
+    title: '页面走丢了',
+    description: '你访问的页面不存在或已被移除，请检查地址是否正确。',
+    backHome: '返回主页'
   },
 
   // 时间相关

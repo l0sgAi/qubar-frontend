@@ -128,6 +128,13 @@ const router = createRouter({
       name: 'admin-agents',
       component: () => import('@/views/admin/AdminAgents.vue'),
       meta: { requiresAuth: true, titleKey: 'title.adminAgents' }
+    },
+    {
+      // 兜底路由：未匹配路径统一展示 404 页（访客可读，避免空白页）
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/views/NotFound.vue'),
+      meta: { titleKey: 'title.notFound' }
     }
   ]
 })

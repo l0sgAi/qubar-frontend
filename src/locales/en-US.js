@@ -63,7 +63,15 @@ export default {
     circleMembersName: 'Member Management: {name}',
     circleEditName: 'Edit Circle: {name}',
     circleAgentsName: 'Agent Management: {name}',
-    profileName: 'Profile: {name}'
+    profileName: 'Profile: {name}',
+    notFound: 'Page Not Found'
+  },
+
+  // 404 page
+  notFound: {
+    title: 'Page Not Found',
+    description: 'The page you are looking for does not exist or has been removed. Please check the address.',
+    backHome: 'Back to Home'
   },
 
   // 时间相关
