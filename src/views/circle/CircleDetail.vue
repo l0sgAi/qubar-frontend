@@ -313,6 +313,7 @@ import SideNav from '@/components/layout/SideNav.vue'
 import PostList from '@/components/post/PostList.vue'
 import PostListSkeleton from '@/components/post/PostListSkeleton.vue'
 import { getCircleDetail, joinCircle, leaveCircle, getCirclePosts, getCircleMembers } from '@/api/circle'
+import { MEMBERSHIP_CHANGED_EVENT } from '@/composables/useSideNavCircles'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
 import { useCircleMeta } from '@/composables/useCircleMeta'
@@ -575,6 +576,8 @@ const handleJoinCircle = async () => {
   try {
     await joinCircle({ circle_id: circleDetail.value.id })
     message.success(t('circle.joinSuccess'))
+    // 通知侧栏刷新「我的圈子」缓存（见 useSideNavCircles）
+    window.dispatchEvent(new CustomEvent(MEMBERSHIP_CHANGED_EVENT))
     // 重新获取圈子详情，同步刷新侧栏统计数据
     await fetchCircleDetail()
   } catch (error) {
@@ -596,6 +599,8 @@ const handleLeaveCircle = async () => {
   try {
     await leaveCircle({ circle_id: circleDetail.value.id })
     message.success(t('circle.leaveSuccess'))
+    // 通知侧栏刷新「我的圈子」缓存（见 useSideNavCircles）
+    window.dispatchEvent(new CustomEvent(MEMBERSHIP_CHANGED_EVENT))
     // 重新获取圈子详情，同步刷新侧栏统计数据
     await fetchCircleDetail()
   } catch (error) {

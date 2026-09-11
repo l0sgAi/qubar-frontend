@@ -44,8 +44,7 @@ import { Explore } from '@vicons/carbon'
 import { RobotOutlined } from '@vicons/antd'
 import { useI18n } from 'vue-i18n'
 import CreateCircleModal from '@/components/circle/CreateCircleModal.vue'
-import { getMyCircles, getActiveCircles, getRandomCircles } from '@/api/post'
-import { auth } from '@/utils/auth'
+import { useSideNavCircles } from '@/composables/useSideNavCircles'
 
 const router = useRouter()
 const route = useRoute()
@@ -104,41 +103,23 @@ const isCollapsed = ref(false)
 // 新建兴趣圈弹窗状态
 const showCreateModal = ref(false)
 
-// 我加入的兴趣圈（真实数据，取前 5 个）
-const joinedCircles = ref([])
-const circlesLoading = ref(false)
-
-const fetchJoinedCircles = async () => {
-  circlesLoading.value = true
-  try {
-    const res = await getMyCircles({ size: 5 })
-    const list = (res.data?.circles || []).map(c => ({
-      id: c.id,
-      name: c.name || t('circle.interestCircle'),
-      avatar: c.avatar_url || ''
-    }))
-    joinedCircles.value = list.slice(0, 5)
-  } catch (e) {
-    console.error('获取我加入的圈子失败:', e)
-    joinedCircles.value = []
-  } finally {
-    circlesLoading.value = false
-  }
-}
+// 我加入的 / 近期活跃 / 随机推荐圈子：数据缓存在模块级 composable 中（见
+// useSideNavCircles），路由切换重新挂载本组件时复用缓存，不再每次发 3 个请求；
+// 仅首次挂载、新建圈子成功、加入/退出圈子（广播事件）时才真正请求后端
+const {
+  joinedCircles,
+  activeCircles,
+  randomCircles,
+  circlesLoading,
+  activeCirclesLoading,
+  randomCirclesLoading,
+  ensureSideNavData,
+  refreshJoinedCircles
+} = useSideNavCircles()
 
 onMounted(() => {
-  // 匿名态（如发现页落地）不拉取登录态圈子，避免 /circle/my、/circle/active 触发 401 重定向
-  if (auth.isAuthenticated()) {
-    fetchJoinedCircles()
-    fetchActiveCircles()
-  }
-  // 随机圈子无需登录，访客也可展示
-  fetchRandomCircles()
+  ensureSideNavData(t('circle.interestCircle'))
 })
-
-// 近期活跃的兴趣圈（真实数据，取前 5 个）
-const activeCircles = ref([])
-const activeCirclesLoading = ref(false)
 
 // 机器人管理菜单项：对所有用户开放，后端做权限控制（避免异步角色判断导致菜单项跳动）
 const agentMenuItem = computed(() => ({
@@ -146,45 +127,6 @@ const agentMenuItem = computed(() => ({
   key: 'admin-agents',
   icon: () => h(NIcon, null, { default: () => h(RobotOutlined) })
 }))
-
-const fetchActiveCircles = async () => {
-  activeCirclesLoading.value = true
-  try {
-    const res = await getActiveCircles({ size: 5, offset: 0 })
-    const list = (res.data?.circles || []).map(c => ({
-      id: c.id,
-      name: c.name || t('circle.interestCircle'),
-      avatar: c.avatar_url || ''
-    }))
-    activeCircles.value = list.slice(0, 5)
-  } catch (e) {
-    console.error('获取近期活跃圈子失败:', e)
-    activeCircles.value = []
-  } finally {
-    activeCirclesLoading.value = false
-  }
-}
-
-// 随机推荐圈子（真实数据，展示 20 个，每次请求结果不同）
-const randomCircles = ref([])
-const randomCirclesLoading = ref(false)
-
-const fetchRandomCircles = async () => {
-  randomCirclesLoading.value = true
-  try {
-    const res = await getRandomCircles({ size: 20 })
-    randomCircles.value = (res.data?.circles || []).map(c => ({
-      id: c.id,
-      name: c.name || t('circle.interestCircle'),
-      avatar: c.avatar_url || ''
-    }))
-  } catch (e) {
-    console.error('获取随机圈子失败:', e)
-    randomCircles.value = []
-  } finally {
-    randomCirclesLoading.value = false
-  }
-}
 
 // 渲染兴趣圈图标：有头像显示头像，否则首字母 + 统一主题色背景
 const renderCircleIcon = (circle) => {
@@ -403,10 +345,10 @@ const handleMenuSelect = (key) => {
   }
 }
 
-// 创建成功回调
+// 创建成功回调：新圈子即「我加入的圈子」，显式刷新侧栏该分区后跳转详情页
 const handleCreateSuccess = (data) => {
   console.log('兴趣圈创建成功:', data)
-  // 如果返回的数据中包含圈子ID，跳转到圈子详情页
+  refreshJoinedCircles(t('circle.interestCircle'))
   if (data && data.id) {
     router.push(`/circle/${data.id}`)
   }
