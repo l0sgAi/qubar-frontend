@@ -72,7 +72,7 @@
                   :type="statusType(post.status)">
                   {{ statusText(post.status) }}
                 </NTag>
-                <NDropdown v-if="!readonly" :options="getPostMenuOptions()" @select="(key) => handleAction(key, post)">
+                <AppDropdown v-if="!readonly" :options="getPostMenuOptions()" @select="(key) => handleAction(key, post)">
                   <NButton quaternary circle size="small">
                     <template #icon>
                       <NIcon>
@@ -84,7 +84,7 @@
                       </NIcon>
                     </template>
                   </NButton>
-                </NDropdown>
+                </AppDropdown>
               </div>
             </div>
             <div class="post-title-row">
@@ -147,11 +147,12 @@
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { NCard, NAvatar, NIcon, NTag, NInput, NButton, NSpin, NDropdown, useMessage } from 'naive-ui'
+import { NCard, NAvatar, NIcon, NTag, NInput, NButton, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { getMyPosts, getUserPosts } from '@/api/post'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 import ImageCarousel from '@/components/common/ImageCarousel.vue'
+import AppDropdown from '@/components/common/AppDropdown.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
 
 const message = useMessage()

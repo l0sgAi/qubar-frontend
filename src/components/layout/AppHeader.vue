@@ -131,7 +131,7 @@
       </div>
 
       <!-- 用户信息下拉菜单 -->
-      <NDropdown :options="userMenuOptions" trigger="hover" placement="bottom-end" @select="handleMenuSelect">
+      <AppDropdown :options="userMenuOptions" @select="handleMenuSelect">
         <div class="user-info-trigger">
           <NAvatar
             round
@@ -141,7 +141,7 @@
             <div v-if="userAvatarUrl===undefined || userAvatarUrl==''" >{{ username.charAt(0) }}</div>
           </NAvatar>
         </div>
-      </NDropdown>
+      </AppDropdown>
       </template>
     </div>
   </div>
@@ -150,13 +150,14 @@
 <script setup>
 import { ref, computed, h, onMounted, onBeforeUnmount, watch, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { NButton, NIcon, NDropdown, NAvatar, NBadge, useMessage, useDialog } from 'naive-ui'
+import { NButton, NIcon, NAvatar, NBadge, useMessage, useDialog } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { auth } from '@/utils/auth'
 import { AddCircleOutlineFilled as AddIcon } from '@vicons/material'
 import { Bell } from '@vicons/tabler'
 import request from '@/utils/request'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
+import AppDropdown from '@/components/common/AppDropdown.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
 import { useNoticeStream } from '@/composables/useNoticeStream'
 

@@ -135,7 +135,7 @@
                           {{ t('circle.manage.actions.ban') }}
                         </NButton>
                       </template>
-                      <NDropdown
+                      <AppDropdown
                         v-if="isOwner(myRole) && canTarget(myRole, m.role)"
                         trigger="click"
                         :options="rowMenuOptions(m)"
@@ -152,7 +152,7 @@
                             </NIcon>
                           </template>
                         </NButton>
-                      </NDropdown>
+                      </AppDropdown>
                     </template>
 
                     <!-- 禁言中：解除禁言 / 拉黑 -->
@@ -270,11 +270,12 @@
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  NAvatar, NButton, NDropdown, NTag, NTabs, NTabPane, NSpin, NEmpty,
+  NAvatar, NButton, NTag, NTabs, NTabPane, NSpin, NEmpty,
   NModal, NInputNumber, NIcon, NInput, useMessage, useDialog
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { Search as SearchIcon } from '@vicons/tabler'
+import AppDropdown from '@/components/common/AppDropdown.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import SideNav from '@/components/layout/SideNav.vue'
 import SmartLink from '@/components/common/SmartLink.vue'

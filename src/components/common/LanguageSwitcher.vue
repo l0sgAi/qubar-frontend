@@ -1,9 +1,7 @@
 <template>
-  <NDropdown
+  <AppDropdown
     :options="languageOptions"
     :render-label="renderLabel"
-    trigger="hover"
-    placement="bottom-end"
     @select="handleLanguageChange"
   >
     <NButton quaternary circle size="small" class="lang-trigger">
@@ -17,13 +15,14 @@
         </NIcon>
       </template>
     </NButton>
-  </NDropdown>
+  </AppDropdown>
 </template>
 
 <script setup>
 import { computed, h } from 'vue'
-import { NButton, NDropdown, NIcon, useMessage } from 'naive-ui'
+import { NButton, NIcon, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
+import AppDropdown from '@/components/common/AppDropdown.vue'
 
 const { locale: currentLocale } = useI18n()
 const message = useMessage()

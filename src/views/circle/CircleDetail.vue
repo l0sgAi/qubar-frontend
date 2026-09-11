@@ -131,13 +131,13 @@
               </NButton>
 
               <!-- 更多选项下拉菜单 -->
-              <NDropdown :options="moreOptions" @select="handleMoreSelect">
+              <AppDropdown :options="moreOptions" @select="handleMoreSelect">
                 <NButton size="large" quaternary round>
                   <template #icon>
                     <NIcon><MoreIcon /></NIcon>
                   </template>
                 </NButton>
-              </NDropdown>
+              </AppDropdown>
             </div>
           </div>
         </div>
@@ -305,9 +305,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, inject, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { NTabs, NTabPane, NButton, NIcon, NDropdown, NTag, NSpin, useMessage } from 'naive-ui'
+import { NTabs, NTabPane, NButton, NIcon, NTag, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/layout/AppHeader.vue'
+import AppDropdown from '@/components/common/AppDropdown.vue'
 import SideNav from '@/components/layout/SideNav.vue'
 import PostList from '@/components/post/PostList.vue'
 import PostListSkeleton from '@/components/post/PostListSkeleton.vue'

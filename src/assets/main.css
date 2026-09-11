@@ -136,8 +136,8 @@ body {
  * 全局下拉菜单主题样式
  * 由于 NDropdown 默认 render-to-body=true，菜单被传送到 <body>，
  * 无法被组件 <style scoped> 的 :deep() 选中，必须写在全局样式表。
- * 覆盖 AppHeader 头像菜单、LanguageSwitcher 语言切换等所有下拉。
- * 设计：暗色玻璃拟态 + 大圆角 + 主题绿高亮 + 弹性进入动画。
+ * 覆盖所有经 AppDropdown（src/components/common/AppDropdown.vue）渲染的下拉。
+ * 设计：暗色玻璃拟态 + 大圆角 + 主题绿高亮 + 整行铺满 hover + 弹性进入动画。
  * ========================================================= */
 
 /* 菜单容器：暗色玻璃 + 圆角 + 阴影（组合按钮式）。
@@ -228,10 +228,12 @@ body {
   font-weight: 600;
 }
 
-/* 分隔线：横向铺满（容器 padding 为 0，与整行选项一致） */
+/* 分隔线：横向铺满（容器 padding 为 0，与整行选项一致）。
+ * margin 必须带 !important——Naive 运行时注入的 .n-dropdown-divider
+ * 自带 margin: 4px 0，注入顺序在全局样式表之后，不加会被覆盖。 */
 .n-dropdown-divider {
   background: rgba(255, 255, 255, 0.08) !important;
-  margin: 0;
+  margin: 0 !important;
   height: 1px;
 }
 
