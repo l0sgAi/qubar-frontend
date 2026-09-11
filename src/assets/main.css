@@ -140,14 +140,17 @@ body {
  * 设计：暗色玻璃拟态 + 大圆角 + 主题绿高亮 + 弹性进入动画。
  * ========================================================= */
 
-/* 菜单容器：暗色玻璃 + 圆角 + 阴影 */
+/* 菜单容器：暗色玻璃 + 圆角 + 阴影（组合按钮式）。
+ * padding 归零，选项高亮从首行顶到容器上缘、末行顶到下缘；
+ * overflow: hidden 让高亮层随容器 16px 圆角自动裁切，首尾选项圆角贴合。 */
 .n-dropdown-menu {
   background: rgba(22, 22, 38, 0.82) !important;
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 16px !important;
-  padding: 6px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
 }
 
@@ -164,19 +167,26 @@ body {
   transform: scale(0.92) translateY(-6px);
 }
 
-/* 菜单选项基础样式。
- * 注意：hover 高亮不要直接给 .n-dropdown-option-body 设 background——
- * Naive UI 自带的 .n-dropdown-option-body::before 是带 border-radius 的
- * 圆角高亮层（由 --n-option-color-hover 控制），若再给 body 设方形背景，
- * 两者色差 + 一圆一方会产生明显的"圆角处方角溢出"色差。
- * 正确做法：保持 body 透明，只通过下面的变量驱动原生圆角 ::before。 */
+/* 菜单选项基础样式：整行铺满（组合按钮式）。
+ * Naive UI 的 hover 高亮层是 .n-dropdown-option-body::before，
+ * 原生几何为 left/right: 4px + border-radius: var(--n-border-radius)（约 3px），
+ * 即"两侧留缝的小圆角条"，与容器 16px 大圆角视觉断裂。
+ * 这里把 body 与 ::before 的圆角都清零、::before 左右归零，
+ * 高亮变为铺满整行的矩形；首尾选项的圆角由容器 overflow: hidden 裁切贴合。
+ * 注意：仍不要直接给 body 设 background，保持由 ::before + CSS 变量驱动。 */
 .n-dropdown-option .n-dropdown-option-body {
-  border-radius: 10px !important;
+  border-radius: 0 !important;
   transition: color 0.18s ease;
 }
 
-/* 用 Naive UI 的 CSS 变量喂给原生圆角 ::before，保持一层圆角高亮。
- * 菜单/选项各设一组，覆盖默认的中性灰 hover。 */
+.n-dropdown-option .n-dropdown-option-body::before {
+  left: 0 !important;
+  right: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* 用 Naive UI 的 CSS 变量喂给整行 ::before 高亮，覆盖默认的中性灰 hover。
+ * 菜单/选项各设一组；颜色机制不变，仅几何改为铺满（见上方规则）。 */
 .n-dropdown-menu,
 .n-dropdown-option .n-dropdown-option-body {
   --n-option-color-hover: rgba(102, 234, 194, 0.14) !important;
@@ -193,7 +203,7 @@ body {
   color: rgba(255, 255, 255, 0.65) !important;
 }
 
-/* hover 文字色（由变量驱动的圆角高亮在上一条规则里） */
+/* hover 文字色（由变量驱动的整行高亮在上一条规则里） */
 .n-dropdown-option:hover .n-dropdown-option-body__label {
   color: #8af0d0 !important;
 }
@@ -203,7 +213,7 @@ body {
 }
 
 /* 已选中/禁用态（如当前语言）：以主题绿微底标识。
- * 这里同样走原生圆角 ::before，避免方形背景。 */
+ * 同样走整行 ::before，几何与 hover 高亮一致。 */
 .n-dropdown-option--disabled .n-dropdown-option-body {
   --n-option-color-hover: rgba(102, 234, 194, 0.08) !important;
   cursor: default;
@@ -218,10 +228,10 @@ body {
   font-weight: 600;
 }
 
-/* 分隔线 */
+/* 分隔线：横向铺满（容器 padding 为 0，与整行选项一致） */
 .n-dropdown-divider {
   background: rgba(255, 255, 255, 0.08) !important;
-  margin: 4px 8px;
+  margin: 0;
   height: 1px;
 }
 
