@@ -3,7 +3,7 @@
     v-model:show="visible"
     :mask-closable="false"
     preset="card"
-    :style="{ width: '640px', borderRadius: '24px' }"
+    :style="{ width: isMobile ? 'calc(100vw - 32px)' : '640px', borderRadius: '24px' }"
     :title="modalTitle"
     :segmented="{ content: 'soft' }"
     :bordered="false"
@@ -263,6 +263,7 @@ import { createAgent, updateAgent } from '@/api/agent'
 import { createCircleAgent, updateCircleAgent } from '@/api/circle'
 import ImageCropperModal from '@/components/common/ImageCropperModal.vue'
 import { useImageUpload } from '@/composables/useImageUpload'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 
 // llm_params 后端白名单键（值为数字，其余键一律 400）
 const LLM_PARAM_KEYS = [
@@ -286,6 +287,9 @@ const emit = defineEmits(['update:show', 'success'])
 
 const { t } = useI18n()
 const message = useMessage()
+
+// 移动端弹窗收窄至屏宽（≤768，断点约定见 useBreakpoint.js）
+const { isMobile } = useBreakpoint()
 
 const visible = computed({
   get: () => props.show,

@@ -471,7 +471,9 @@ export default {
     settings: '设置',
     profile: '个人中心',
     searchResults: '搜索结果',
-    keyword: '关键词'
+    keyword: '关键词',
+    openMenu: '打开导航菜单',
+    openSearch: '搜索'
   },
 
   // AI 回复机器人管理（/admin/agents；管理员见全局+圈子双 tab，普通用户仅见可管理圈子列表）

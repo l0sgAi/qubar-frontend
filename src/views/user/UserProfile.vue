@@ -1,14 +1,15 @@
 <template>
-  <NConfigProvider :theme="darkTheme" :theme-overrides="themeOverrides">
-    <div class="user-profile-page">
-      <!-- 顶栏 -->
-      <AppHeader />
+  <!-- 说明：App.vue 根部已有 NConfigProvider（darkTheme + locale），本页不再嵌套
+   * （原嵌套层引用了未定义的 themeOverrides，属遗留 bug，已随移动端适配移除） -->
+  <div class="user-profile-page">
+    <!-- 顶栏 -->
+    <AppHeader />
 
-      <!-- 侧边栏 -->
-      <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
+    <!-- 侧边栏 -->
+    <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
 
-      <!-- 主内容区域 -->
-      <div class="main-content" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+    <!-- 主内容区域 -->
+    <div class="main-content" :style="{ 'margin-left': `${contentOffset}px`, width: `calc(100% - ${contentOffset}px)` }">
         <!-- 左侧内容区域 -->
         <div class="content-area">
           <!-- 标签页内容 -->
@@ -79,7 +80,7 @@
             <!-- 用户头像和名称 -->
             <div class="sidebar-header">
               <NAvatar
-                :size="260"
+                :size="isMobile ? 120 : 260"
                 :src="userInfo.avatar_url"
                 round
                 class="sidebar-avatar">
@@ -110,31 +111,31 @@
               <!-- <NText depth="3" style="font-size: 12px; margin-bottom: 8px; display: block;">{{ t('user.basicInfo') }}</NText> -->
               <div class="info-list">
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.email') }}</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 12px;">{{ t('user.email') }}</NText>
                   <NText style="font-size: 15px;">{{ userInfo.email || t('user.notSet') }}</NText>
                 </div>
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.phone') }}</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 12px;">{{ t('user.phone') }}</NText>
                   <NText style="font-size: 15px;">{{ userInfo.phone || t('user.notBound') }}</NText>
                 </div>
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.gender') }}</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 12px;">{{ t('user.gender') }}</NText>
                   <NTag :type="getGenderType(userInfo.gender)" size="small" round>
                     {{ getGenderText(userInfo.gender) }}
                   </NTag>
                 </div>
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.birthday') }}</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 12px;">{{ t('user.birthday') }}</NText>
                   <NText style="font-size: 15px;">{{ formatDate(userInfo.birthdate) }}</NText>
                 </div>
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.role') }}</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 12px;">{{ t('user.role') }}</NText>
                   <NTag :type="getRoleType(userInfo.role)" size="small" round>
                     {{ getRoleText(userInfo.role) }}
                   </NTag>
                 </div>
                 <div class="info-row">
-                  <NText depth="3" style="font-size: 15px; margin-right: 1dvw;">{{ t('user.status') }}</NText>
+                  <NText depth="3" style="font-size: 15px; margin-right: 12px;">{{ t('user.status') }}</NText>
                   <NTag :type="userInfo.status === 1 ? 'success' : 'error'" size="small" round>
                     {{ userInfo.status === 1 ? t('user.normal') : t('user.disabled') }}
                   </NTag>
@@ -156,8 +157,8 @@
         :bordered="false"
         :segmented="{ content: 'soft' }"
         size="huge"
-        header-style="font-size: 26px;"
-        :style="{ width: '50dvw', borderRadius: '24px' }">
+        :header-style="isMobile ? 'font-size: 20px;' : 'font-size: 26px;'"
+        :style="{ width: isMobile ? 'calc(100vw - 32px)' : '50dvw', borderRadius: '24px' }">
         <NForm ref="formRef" :model="formData" :rules="rules" label-placement="top" size="large">
           <NFormItem :label="t('user.username')" path="username">
             <NInput
@@ -240,8 +241,8 @@
         :bordered="false"
         :segmented="{ content: 'soft' }"
         size="huge"
-        header-style="font-size: 26px;"
-        :style="{ width: '40dvw', borderRadius: '24px' }">
+        :header-style="isMobile ? 'font-size: 20px;' : 'font-size: 26px;'"
+        :style="{ width: isMobile ? 'calc(100vw - 32px)' : '40dvw', borderRadius: '24px' }">
         <NForm ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-placement="top" size="large">
           <NFormItem :label="t('user.passwordModal.newPassword')" path="password">
             <NInput
@@ -288,16 +289,14 @@
         :upload-handler="handleCropUpload"
         @confirm="handleCropConfirm"
         @cancel="handleCropCancel"
-      />
-    </div>
-  </NConfigProvider>
+    />
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
-  NConfigProvider,
   NCard,
   NAvatar,
   NIcon,
@@ -314,7 +313,6 @@ import {
   NSpace,
   NTag,
   NText,
-  darkTheme,
   useMessage
 } from 'naive-ui'
 import AppHeader from '@/components/layout/AppHeader.vue'
@@ -327,6 +325,7 @@ import ImageCropperModal from '@/components/common/ImageCropperModal.vue'
 import { auth } from '@/utils/auth'
 import request from '@/utils/request'
 import { usePageTitle } from '@/composables/usePageTitle'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import { updateUserInfo, resetPassword } from '@/api/user'
 import { useImageUpload } from '@/composables/useImageUpload'
 import { useI18n } from 'vue-i18n'
@@ -337,6 +336,10 @@ const message = useMessage()
 const { t } = useI18n()
 const { setTitleData } = usePageTitle()
 const offset = ref(260)
+
+// 移动端内容区不再给侧栏让位（SideNav 已转抽屉）；平板时 SideNav 会 emit collapsed 使 offset=64
+const { isMobile } = useBreakpoint()
+const contentOffset = computed(() => (isMobile.value ? 0 : offset.value))
 
 // 当前激活的标签页（支持 /profile?tab=groups 等定位）
 const VALID_TABS = ['posts', 'groups', 'favorites', 'history']
@@ -1008,8 +1011,23 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .main-content {
-    margin-left: 0;
+    /* margin-left 由 contentOffset（JS）与 main.css shim 归零，此处只管内边距 */
     padding: 16px;
+  }
+
+  /* 纵排后内容区占满宽度（桌面的 25/55dvw 在纵排下会出错） */
+  .content-area {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* 头像移动端缩到 120px（JS 绑定），首字母字号同步收敛（桌面为 10dvw） */
+  .avatar-font {
+    font-size: 48px;
+  }
+
+  .sidebar-username {
+    font-size: 1.4rem;
   }
 }
 </style>

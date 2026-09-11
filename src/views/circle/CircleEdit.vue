@@ -7,7 +7,7 @@
     <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
 
     <!-- 主内容区域 -->
-    <div class="main-content" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+    <div class="main-content" :style="{ 'margin-left': `${contentOffset}px`, width: `calc(100% - ${contentOffset}px)` }">
       <!-- 页面级加载骨架 -->
       <div v-if="pageLoading" class="page-skeleton">
         <div class="sk-line sk-line--title"></div>
@@ -223,6 +223,7 @@ import CircleAdminHeader from '@/components/circle/CircleAdminHeader.vue'
 import { getCircleDetail, getCategories, updateCircle } from '@/api/circle'
 import { useImageUpload } from '@/composables/useImageUpload'
 import { usePageTitle } from '@/composables/usePageTitle'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import { EMPTY_CATEGORY_ID, isManager, isOwner } from '@/constants/circle'
 
 const route = useRoute()
@@ -232,6 +233,11 @@ const { t } = useI18n()
 const { setTitleData } = usePageTitle()
 
 const offset = ref(260)
+
+// 移动端内容区不再给侧栏让位（SideNav 已转抽屉）；平板时 SideNav 会 emit collapsed 使 offset=64
+const { isMobile } = useBreakpoint()
+const contentOffset = computed(() => (isMobile.value ? 0 : offset.value))
+
 const circleId = computed(() => route.params.id)
 
 const circle = ref({})
@@ -726,7 +732,12 @@ watch(() => route.params.id, (newId, oldId) => {
   }
 }
 
-@media (max-width: 640px) {
+/* 断点统一为全站移动端断点 768（约定见 main.css 顶部注释 / useBreakpoint.js） */
+@media (max-width: 768px) {
+  .edit-section {
+    padding: 16px;
+  }
+
   .edit-footer {
     flex-direction: column;
     align-items: stretch;

@@ -196,9 +196,16 @@ defineExpose({ refreshPendingBadge })
   text-align: center;
 }
 
-@media (max-width: 640px) {
+/* 断点统一为全站移动端断点 768（约定见 main.css 顶部注释 / useBreakpoint.js） */
+@media (max-width: 768px) {
   .admin-brief {
     flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .brief-name {
+    font-size: 1.1rem;
   }
 
   .seg-nav {

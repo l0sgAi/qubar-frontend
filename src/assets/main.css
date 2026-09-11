@@ -1,3 +1,8 @@
+/* 断点约定（与 src/composables/useBreakpoint.js 的 BP_MOBILE/BP_TABLET 同步，改必须双改；
+ * CSS 变量无法用于 media query，故断点值只在此处注释与 JS 常量两处维护）：
+ *   ≤768px    移动端：SideNav 转 NDrawer 抽屉、内容区 margin-left 归零（见文末 shim）
+ *   769–1024  平板：SideNav 默认折叠为 64px
+ *   >1024     桌面                                                   */
 :root {
   /* 深色模式配色方案 */
   --bg-primary: #0a0e27;
@@ -730,4 +735,117 @@ body {
   to {
     opacity: 0;
   }
+}
+
+/* =========================================================
+ * 移动端内容区 shim（≤768px）
+ * SideNav 在移动端转为 NDrawer 抽屉、不再渲染 sider 也不 emit，
+ * 各页 offset 停在初始 260，内联 `margin-left:260px` 会把内容挤出屏。
+ * 内联样式只能 !important 覆盖；选择器加 [style*="margin-left"] 精确命中
+ * 带内联偏移的外层容器，不误伤同名的内层元素（如 feed 页内层 .main-content）。
+ * ========================================================= */
+@media (max-width: 768px) {
+  .content-wrapper[style*="margin-left"],
+  .main-content[style*="margin-left"] {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* =========================================================
+ * SideNav 移动端抽屉（NDrawer）
+ * NDrawer teleport 到 <body>，SideNav.vue 的 scoped 样式无法命中，
+ * 抽屉外壳与内部 NMenu 配色必须写在这里；menu 配色照搬 SideNav scoped 值。
+ * ========================================================= */
+.side-nav-drawer {
+  background: rgba(22, 22, 38, 0.92) !important;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.side-nav-drawer .n-drawer-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.side-nav-drawer .n-drawer-header__main {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.side-nav-drawer .n-menu {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  padding: 12px;
+}
+
+.side-nav-drawer .n-menu .n-menu-item {
+  border-radius: 12px !important;
+  margin: 4px 0 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* 选中态：喂主题绿变量给原生圆角高亮层（.n-menu-item-content::before），
+ * 与 SideNav scoped 内的处理一致，不自己叠方形背景。 */
+.side-nav-drawer .n-menu .n-menu-item-content {
+  --n-border-radius: 10px !important;
+  --n-item-color-hover: rgba(255, 255, 255, 0.06) !important;
+  --n-item-color-active: rgba(102, 234, 194, 0.16) !important;
+  --n-item-color-active-hover: rgba(102, 234, 194, 0.24) !important;
+  --n-item-text-color-hover: rgba(255, 255, 255, 0.92) !important;
+  --n-item-text-color-active: #8af0d0 !important;
+  --n-item-text-color-active-hover: #8af0d0 !important;
+  --n-item-icon-color-hover: rgba(255, 255, 255, 0.92) !important;
+  --n-item-icon-color-active: #8af0d0 !important;
+  --n-item-icon-color-active-hover: #8af0d0 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 12px !important;
+}
+
+.side-nav-drawer .n-menu .n-menu-item-content--selected {
+  font-weight: 600;
+}
+
+.side-nav-drawer .n-menu .n-menu-item-content__icon {
+  color: inherit !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.side-nav-drawer .n-menu .n-menu-item-content-header {
+  color: inherit !important;
+}
+
+/* RouterLink 渲染的菜单链接：跟随菜单配色，去掉默认下划线 */
+.side-nav-drawer .n-menu .n-menu-item-content-header a.nav-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.side-nav-drawer .n-menu .n-menu-group-title {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 12px 12px 8px 12px !important;
+}
+
+.side-nav-drawer .n-menu .n-divider {
+  background: rgba(255, 255, 255, 0.1) !important;
+  margin: 8px 0 !important;
+}
+
+/* 兴趣圈图标动画（与 sider 版一致） */
+.side-nav-drawer .n-menu .circle-icon {
+  transition: transform 0.2s ease;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.side-nav-drawer .n-menu .n-menu-item:hover .circle-icon {
+  transform: scale(1.1);
 }

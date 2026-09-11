@@ -7,7 +7,7 @@
     <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
 
     <!-- 主内容区域 -->
-    <div class="main-content" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+    <div class="main-content" :style="{ 'margin-left': `${contentOffset}px`, width: `calc(100% - ${contentOffset}px)` }">
       <!-- 页面级加载骨架 -->
       <div v-if="pageLoading" class="page-skeleton">
         <div class="sk-brief">
@@ -223,7 +223,7 @@
       v-model:show="muteModalVisible"
       preset="card"
       :title="t('circle.manage.muteTitle')"
-      :style="{ width: '420px' }"
+      :style="{ width: isMobile ? 'calc(100vw - 32px)' : '420px' }"
       :mask-closable="!muteSubmitting"
     >
       <div class="mute-body">
@@ -288,6 +288,7 @@ import { useFormatTime } from '@/utils/i18n'
 import { useDebounceFn } from '@/utils/throttle'
 import { useCircleMeta } from '@/composables/useCircleMeta'
 import { usePageTitle } from '@/composables/usePageTitle'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import {
   CIRCLE_ROLE, MEMBER_STATUS, MEMBER_PAGE_SIZE,
   MUTE_DURATION_MIN, MUTE_DURATION_MAX,
@@ -304,6 +305,11 @@ const { getRoleInfo } = useCircleMeta()
 const { setTitleData } = usePageTitle()
 
 const offset = ref(260)
+
+// 移动端内容区不再给侧栏让位（SideNav 已转抽屉）；平板时 SideNav 会 emit collapsed 使 offset=64
+const { isMobile } = useBreakpoint()
+const contentOffset = computed(() => (isMobile.value ? 0 : offset.value))
+
 const circleId = computed(() => route.params.id)
 
 // 圈子信息与我的角色（权限守卫依据）
@@ -782,9 +788,14 @@ onUnmounted(cleanupObservers)
   --n-caret-color: #66eac2 !important;
 }
 
-@media (max-width: 640px) {
+/* 断点统一为全站移动端断点 768（约定见 main.css 顶部注释 / useBreakpoint.js） */
+@media (max-width: 768px) {
   .member-search {
     width: 150px;
+  }
+
+  .members-panel {
+    padding: 4px 12px 16px;
   }
 }
 
@@ -991,7 +1002,7 @@ onUnmounted(cleanupObservers)
 }
 
 /* 移动端：行内操作过窄时换行 */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .member-row {
     flex-wrap: wrap;
   }

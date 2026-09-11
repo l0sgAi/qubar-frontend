@@ -1,6 +1,18 @@
 <template>
   <div class="app-header">
     <div class="header-left">
+      <!-- 移动端汉堡按钮：与 SideNav 抽屉通过 window 自定义事件联动 -->
+      <NButton
+        v-if="isMobile"
+        quaternary
+        circle
+        size="large"
+        class="hamburger-btn"
+        :aria-label="t('nav.openMenu')"
+        @click="toggleSideNav"
+      >
+        <NIcon size="20"><Menu2Icon /></NIcon>
+      </NButton>
       <SmartLink class="logo" :to="homeTarget">
         <img src="/favicon.svg" alt="logo" class="logo-icon" />
         <span class="logo-text">{{ t('common.appName') }}</span>
@@ -8,8 +20,24 @@
     </div>
 
     <div class="header-center">
+      <!-- 移动端：搜索框收缩为图标，点击展开全宽搜索条（v-show 复用同一份 DOM 与逻辑） -->
+      <NButton
+        v-if="isMobile && !searchExpanded"
+        quaternary
+        circle
+        size="large"
+        class="search-toggle-btn"
+        :aria-label="t('nav.openSearch')"
+        @click="openMobileSearch"
+      >
+        <NIcon size="20"><SearchIcon /></NIcon>
+      </NButton>
       <!-- 搜索栏 -->
-      <div class="search-wrapper">
+      <div
+        v-show="!isMobile || searchExpanded"
+        class="search-wrapper"
+        :class="{ 'search-expanded': isMobile && searchExpanded }"
+      >
         <div class="search-box">
           <!-- 圈子标签 -->
           <div v-if="circleSearch.id" class="circle-tag">
@@ -113,7 +141,7 @@
             <NIcon size="20">
             <AddIcon />
             </NIcon>
-        <div style="margin-left: 5px;">{{ t('post.createPost') }}</div>
+        <div class="create-post-label" style="margin-left: 5px;">{{ t('post.createPost') }}</div>
       </NButton>
 
         <NButton
@@ -148,18 +176,19 @@
 </template>
 
 <script setup>
-import { ref, computed, h, onMounted, onBeforeUnmount, watch, inject } from 'vue'
+import { ref, computed, h, onMounted, onBeforeUnmount, watch, inject, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { NButton, NIcon, NAvatar, NBadge, useMessage, useDialog } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { auth } from '@/utils/auth'
 import { AddCircleOutlineFilled as AddIcon } from '@vicons/material'
-import { Bell } from '@vicons/tabler'
+import { Bell, Menu2 as Menu2Icon, Search as SearchIcon } from '@vicons/tabler'
 import request from '@/utils/request'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import AppDropdown from '@/components/common/AppDropdown.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
 import { useNoticeStream } from '@/composables/useNoticeStream'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 
 const router = useRouter()
 const route = useRoute()
@@ -193,10 +222,30 @@ const searchKeyword = ref('')
 const showSuggestions = ref(false)
 const searchInputRef = ref(null)
 
-// 点击外部关闭建议菜单
+// 断点与移动端状态
+const { isMobile } = useBreakpoint()
+// 移动端全宽搜索条展开态
+const searchExpanded = ref(false)
+
+// 汉堡按钮 → SideNav 抽屉（window 自定义事件，与 notice-read 先例同构）
+const toggleSideNav = () => {
+  window.dispatchEvent(new CustomEvent('side-nav-toggle'))
+}
+
+// 移动端展开搜索条并聚焦输入框
+const openMobileSearch = async () => {
+  searchExpanded.value = true
+  await nextTick()
+  searchInputRef.value?.focus()
+}
+
+// 点击外部关闭建议菜单与移动端搜索条
 const handleClickOutside = (e) => {
   if (!e.target.closest('.search-wrapper')) {
     showSuggestions.value = false
+    if (isMobile.value && !e.target.closest('.search-toggle-btn')) {
+      searchExpanded.value = false
+    }
   }
 }
 
@@ -248,6 +297,10 @@ watch(() => route.query.q, (newQ) => {
     searchKeyword.value = newQ
   }
 })
+
+// 路由变化 / 离开移动态时收起移动端搜索条
+watch(() => route.fullPath, () => { searchExpanded.value = false })
+watch(isMobile, v => { if (!v) searchExpanded.value = false })
 
 // 用户下拉菜单选项
 const userMenuOptions = computed(() => [
@@ -361,6 +414,7 @@ const handleSearch = () => {
   const keyword = searchKeyword.value.trim()
   if (keyword) {
     showSuggestions.value = false
+    searchExpanded.value = false
     // 构建查询参数
     const query = { q: keyword }
 
@@ -762,5 +816,47 @@ const handleClearCircleSearch = () => {
 
 :deep(.n-badge) {
   --n-color: #f56c6c !important;
+}
+
+/* ===== 移动端响应式（断点约定见 main.css 顶部注释） ===== */
+.hamburger-btn,
+.search-toggle-btn {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: 0 12px;
+  }
+
+  .header-right {
+    gap: 8px;
+  }
+
+  /* 发帖按钮只留图标 */
+  .create-post-label {
+    display: none;
+  }
+
+  /* 展开的移动端全宽搜索条：fixed 于顶栏下方（顶栏高度是全局布局常量，不换行撑高） */
+  .search-wrapper.search-expanded {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    min-width: 0;
+    padding: 10px 12px;
+    background: rgba(16, 16, 28, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 999;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-text {
+    display: none;
+  }
 }
 </style>

@@ -7,7 +7,7 @@
     <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
 
     <!-- 主内容区域 -->
-    <div class="content-wrapper" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+    <div class="content-wrapper" :style="{ 'margin-left': `${contentOffset}px`, width: `calc(100% - ${contentOffset}px)` }">
       <div class="main-content">
         <div class="notice-container">
           <!-- 页头 -->
@@ -92,12 +92,17 @@ import SideNav from '@/components/layout/SideNav.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
 import { getNoticeList, markNoticesRead, markAllNoticesRead } from '@/api/notice'
 import { useFormatTime } from '@/utils/i18n'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 
 const message = useMessage()
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
 
 const offset = ref(260)
+
+// 移动端内容区不再给侧栏让位（SideNav 已转抽屉）；平板时 SideNav 会 emit collapsed 使 offset=64
+const { isMobile } = useBreakpoint()
+const contentOffset = computed(() => (isMobile.value ? 0 : offset.value))
 
 // 类型过滤 Tab：type 对应后端 notice_type，空/0=全部
 // 接口支持逗号分隔多值过滤（notice_type IN (...)），帖子被赞(1)与评论被赞(2)同属「点赞」tab
@@ -473,6 +478,18 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .main-content {
     padding: 12px;
+  }
+
+  .notice-container {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  /* tab 栏跟随容器内边距外扩，保持与列表对齐 */
+  .notice-tabs {
+    margin: 0 -16px 8px;
+    padding: 0 16px;
+    gap: 20px;
   }
 }
 </style>

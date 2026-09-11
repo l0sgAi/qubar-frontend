@@ -7,7 +7,7 @@
     <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
 
     <!-- 主内容区域 -->
-    <div class="content-wrapper" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+    <div class="content-wrapper" :style="{ 'margin-left': `${contentOffset}px`, width: `calc(100% - ${contentOffset}px)` }">
       <div class="main-content">
         <div class="circle-agents-container">
           <!-- 页头 -->
@@ -84,6 +84,7 @@
               :bordered="false"
               :theme-overrides="tableThemeOverrides"
               size="small"
+              :scroll-x="980"
               class="agents-table"
             />
 
@@ -136,6 +137,7 @@ import { getCircleDetail, getCircleAgentList, updateCircleAgent, deleteCircleAge
 import { isManager, isOwner } from '@/constants/circle'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useDebounceFn } from '@/utils/throttle'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 
 const { t } = useI18n()
 const message = useMessage()
@@ -143,6 +145,10 @@ const route = useRoute()
 const router = useRouter()
 const { setTitleData } = usePageTitle()
 const offset = ref(260)
+
+// 移动端内容区不再给侧栏让位（SideNav 已转抽屉）；平板时 SideNav 会 emit collapsed 使 offset=64
+const { isMobile } = useBreakpoint()
+const contentOffset = computed(() => (isMobile.value ? 0 : offset.value))
 
 const circleId = computed(() => route.params.id)
 
@@ -586,6 +592,24 @@ const goBack = () => router.push('/admin/agents')
 .pagination-row :deep(.n-pagination-item--active) {
   background: rgba(102, 234, 194, 0.16);
   color: #8af0d0;
+}
+
+/* 断点统一为全站移动端断点 768（约定见 main.css 顶部注释 / useBreakpoint.js） */
+@media (max-width: 768px) {
+  .circle-agents-container {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  /* 工具栏换行后搜索框独占一行 */
+  .search-input {
+    width: 100%;
+    flex: 1;
+  }
+
+  .pagination-row {
+    justify-content: center;
+  }
 }
 </style>
 

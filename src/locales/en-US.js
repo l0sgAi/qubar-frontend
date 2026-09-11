@@ -471,7 +471,9 @@ export default {
     settings: 'Settings',
     profile: 'Profile',
     searchResults: 'Search Results',
-    keyword: 'Keyword'
+    keyword: 'Keyword',
+    openMenu: 'Open navigation menu',
+    openSearch: 'Search'
   },
 
   // AI agent management (/admin/agents; admins see global+circles tabs, regular users see managed circles only)

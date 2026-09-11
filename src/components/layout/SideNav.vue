@@ -1,5 +1,6 @@
 <template>
-  <NLayout has-sider class="side-layout">
+  <!-- 桌面/平板：固定侧边栏 -->
+  <NLayout v-if="!isMobile" has-sider class="side-layout">
     <NLayoutSider
       bordered
       collapse-mode="width"
@@ -21,24 +22,44 @@
         @update:value="handleMenuSelect"
       />
     </NLayoutSider>
-
-    <!-- 新建兴趣圈弹窗 -->
-    <CreateCircleModal
-      v-model:show="showCreateModal"
-      @success="handleCreateSuccess"
-    />
   </NLayout>
+
+  <!-- 移动端：抽屉式导航（菜单强制展开态；样式在 main.css 的 .side-nav-drawer 全局段，
+   * 因 NDrawer teleport 到 body，scoped 无法命中） -->
+  <NDrawer
+    v-else
+    v-model:show="drawerVisible"
+    placement="left"
+    :width="280"
+    class="side-nav-drawer"
+  >
+    <NDrawerContent body-content-style="padding: 0;" closable>
+      <NMenu
+        :options="menuOptions"
+        :value="activeItem"
+        @update:value="handleMenuSelect"
+      />
+    </NDrawerContent>
+  </NDrawer>
+
+  <!-- 新建兴趣圈弹窗 -->
+  <CreateCircleModal
+    v-model:show="showCreateModal"
+    @success="handleCreateSuccess"
+  />
 </template>
 
 <script setup>
-import { ref, h, computed, onMounted } from 'vue'
+import { ref, h, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import {
   NLayout,
   NLayoutSider,
   NMenu,
   NIcon,
-  NAvatar
+  NAvatar,
+  NDrawer,
+  NDrawerContent
 } from 'naive-ui'
 import { Explore } from '@vicons/carbon'
 import { RobotOutlined } from '@vicons/antd'
@@ -46,6 +67,7 @@ import { useI18n } from 'vue-i18n'
 import CreateCircleModal from '@/components/circle/CreateCircleModal.vue'
 import { getMyCircles, getActiveCircles, getRandomCircles } from '@/api/post'
 import { auth } from '@/utils/auth'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 
 const router = useRouter()
 const route = useRoute()
@@ -101,6 +123,21 @@ const MoreDotsIcon = () => h('svg', {
 // 是否折叠
 const isCollapsed = ref(false)
 
+// 断点：≤768 移动端转抽屉；769–1024 平板默认折叠 64px
+const { isMobile, isTablet } = useBreakpoint()
+
+// 移动端抽屉开关：与 AppHeader 汉堡按钮通过 window 自定义事件联动
+// （两者在每个页面平级挂载、无父子关系；与现有 notice-read 事件先例同构）
+const drawerVisible = ref(false)
+const onToggleEvent = () => {
+  if (isMobile.value) drawerVisible.value = !drawerVisible.value
+}
+
+// 菜单项是 RouterLink/路由跳转，跳转后必须关抽屉
+watch(() => route.fullPath, () => { drawerVisible.value = false })
+// 跨断点（旋转屏/拖窗宽）离开移动态时收起抽屉
+watch(isMobile, v => { if (!v) drawerVisible.value = false })
+
 // 新建兴趣圈弹窗状态
 const showCreateModal = ref(false)
 
@@ -127,6 +164,13 @@ const fetchJoinedCircles = async () => {
 }
 
 onMounted(() => {
+  window.addEventListener('side-nav-toggle', onToggleEvent)
+  // 平板：默认折叠 64，通知页面 offset=64（页面已有 @collapsed 绑定）。
+  // 直设 ref，不要调 whenCollapsedCLick（那是 toggle 写法，会翻转两次）
+  if (isTablet.value) {
+    isCollapsed.value = true
+    emit('collapsed')
+  }
   // 匿名态（如发现页落地）不拉取登录态圈子，避免 /circle/my、/circle/active 触发 401 重定向
   if (auth.isAuthenticated()) {
     fetchJoinedCircles()
@@ -134,6 +178,10 @@ onMounted(() => {
   }
   // 随机圈子无需登录，访客也可展示
   fetchRandomCircles()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('side-nav-toggle', onToggleEvent)
 })
 
 // 近期活跃的兴趣圈（真实数据，取前 5 个）
@@ -258,8 +306,8 @@ const activeItem = computed(() => {
 
 // 菜单选项
 const menuOptions = computed(() => {
-  // 折叠时只显示主要菜单项
-  if (isCollapsed.value) {
+  // 折叠时只显示主要菜单项（移动端抽屉强制走完整菜单分支）
+  if (isCollapsed.value && !isMobile.value) {
     return [
       {
         label: linkLabel('/home', t('nav.home')),
@@ -376,6 +424,8 @@ const menuOptions = computed(() => {
 // 跳转，vue-router 对同地址重复 push 会静默去重，无副作用；保留此 handler 是为了
 // 让点击图标 / 空白区域（落在 <a> 外）仍能跳转
 const handleMenuSelect = (key) => {
+  // 移动端抽屉：任意菜单动作后关闭（跳转由 route watch 兜底，create 无跳转需在此关）
+  drawerVisible.value = false
   if (key === 'create') {
     showCreateModal.value = true
   } else if (key === 'home') {
