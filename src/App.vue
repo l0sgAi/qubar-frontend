@@ -3,19 +3,19 @@
     <NGlobalStyle />
     <NMessageProvider>
       <NDialogProvider>
-        <!-- meta.pageFade 的路由（圈子管理两页）用 out-in 过渡。
+        <!-- Transition 常驻，动画名/时长按路由 meta.pageFade 动态决定：
+             离开页或进入页任一为 pageFade 即用 out-in 淡入淡出（离开过渡页也有完整淡出），
+             其余路由间切换 duration=0 等同直切，行为与原生一致。
              duration 显式声明换场时机（根节点无过渡属性，Vue 无法自动探测），
              动画本体只作用于各页 .main-content，见 main.css 的 .page-fade-* -->
         <router-view v-slot="{ Component, route }">
           <Transition
-            v-if="route.meta.pageFade"
-            name="page-fade"
+            :name="shouldPageFade(route) ? 'page-fade' : undefined"
             mode="out-in"
-            :duration="{ enter: 220, leave: 160 }"
+            :duration="shouldPageFade(route) ? { enter: 220, leave: 160 } : 0"
           >
             <component :is="Component" :key="route.name" />
           </Transition>
-          <component v-else :is="Component" />
         </router-view>
         <!-- 全局访客操作登录引导（写操作前置拦截，避免触发 401 硬跳转） -->
         <LoginPromptModal />
@@ -65,6 +65,15 @@ const clearCircleSearch = () => {
 provide('circleSearchState', readonly(circleSearchState))
 provide('setCircleSearch', setCircleSearch)
 provide('clearCircleSearch', clearCircleSearch)
+
+// 记录上一个路由的 pageFade：动画决策看出、入两侧，
+// 使「离开过渡页 → 普通页」也播放淡出，而非生硬直切
+const prevRoutePageFade = ref(false)
+router.afterEach((_, from) => {
+  prevRoutePageFade.value = !!from.meta.pageFade
+})
+
+const shouldPageFade = (route) => !!route.meta.pageFade || prevRoutePageFade.value
 
 // 监听路由变化，在跳转到主页、热门、发现等页面时清除圈子搜索状态
 watch(() => router.currentRoute.value.name, (newRouteName) => {

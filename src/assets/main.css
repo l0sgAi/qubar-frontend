@@ -696,8 +696,9 @@ body {
 }
 
 /* =========================================================
- * 页面级路由过渡：圈子管理页（成员管理 ↔ 编辑资料）互切
- * 由路由 meta.pageFade 开启（App.vue 按需包 Transition）。
+ * 页面级路由过渡：由路由 meta.pageFade 标记的页面
+ * （圈子管理各页、帖子详情、发帖页）进出时淡入淡出。
+ * App.vue 常驻 Transition，按离开/进入页动态开启动画。
  * 关键点：只动画各页的 .main-content，页面根节点不做 opacity/transform——
  * 顶栏/侧栏是 fixed 定位的根子元素，动画根节点会把它们一并淡出，
  * 且 transform/opacity 会临时改变 fixed 后代的定位基准导致跳位。

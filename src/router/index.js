@@ -40,10 +40,11 @@ const router = createRouter({
       meta: { titleKey: 'title.discover' }
     },
     {
+      // 发帖页：需登录。pageFade：进出该页时启用页面级淡入淡出（见 App.vue）
       path: '/create-post',
       name: 'create-post',
       component: () => import('@/views/post/CreatePost.vue'),
-      meta: { requiresAuth: true, titleKey: 'title.createPost' }
+      meta: { requiresAuth: true, pageFade: true, titleKey: 'title.createPost' }
     },
     {
       path: '/profile',
@@ -109,10 +110,11 @@ const router = createRouter({
     },
     {
       // 帖子详情：访客可读（/post/detail/:id 已开放 anonymous）
+      // pageFade：进出该页时启用页面级淡入淡出（见 App.vue）
       path: '/post/:id',
       name: 'post-detail',
       component: () => import('@/views/post/PostDetail.vue'),
-      meta: { titleKey: 'title.postDetail' }
+      meta: { pageFade: true, titleKey: 'title.postDetail' }
     },
     {
       // 消息中心（站内通知）：需登录
