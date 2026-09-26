@@ -77,6 +77,7 @@ request.interceptors.response.use(
       // 创建自定义错误对象，保留完整的响应信息
       const error = new Error(res.message || '请求失败')
       error.code = res.code
+      error.status = response.status
       error.data = res.data
       return Promise.reject(error)
     }
@@ -101,6 +102,7 @@ request.interceptors.response.use(
       // 创建包含后端 message 的错误对象
       const errorObj = new Error(res.message || '请求失败')
       errorObj.code = res.code
+      errorObj.status = error.response.status
       errorObj.data = res.data
       return Promise.reject(errorObj)
     }

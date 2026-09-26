@@ -77,7 +77,8 @@ import { usePageTitle } from '@/composables/usePageTitle'
 import { toggleLike } from '@/api/like'
 import { toggleCollect } from '@/api/collect'
 import { getCircleDetail } from '@/api/circle'
-import { useThrottleFn, useDebounceFn } from '@/utils/throttle'
+import { useThrottleFn } from '@/utils/throttle'
+import { createReactionSync, reactionErrorMessage } from '@/utils/reaction'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
 import { seedContentMentions } from '@/utils/mentionResolve'
@@ -140,28 +141,10 @@ const loadPostDetail = async () => {
   }
 }
 
-// 点赞（乐观更新 + debounce 合并请求）
-const debouncedPostLike = useDebounceFn(async () => {
-  if (!post.value) return
-  try {
-    const res = await toggleLike({ type: 'post', target_id: post.value.id })
-    if (res.data) {
-      const serverLiked = res.data.is_liked
-      if (post.value.is_liked !== serverLiked) {
-        post.value.like_count = serverLiked
-          ? post.value.like_count + 1
-          : post.value.like_count - 1
-        post.value.is_liked = serverLiked
-      }
-    }
-  } catch (error) {
-    post.value.is_liked = !post.value.is_liked
-    post.value.like_count = post.value.is_liked
-      ? post.value.like_count + 1
-      : post.value.like_count - 1
-    message.error(t('messages.operationFailed', { error: error.message }))
-  }
-}, 600)
+// 点赞 / 收藏：乐观更新 + debounce 合并连击，请求带显式 action（幂等），失败回滚到点击前状态
+// 收藏数 collect_count 由后端异步聚合，前端不本地 ±1（对接文档约定）
+const toggleReaction = createReactionSync(600)
+const onReactionError = (error) => message.error(reactionErrorMessage(error, t))
 
 const handleLike = () => {
   if (!post.value) return
@@ -170,28 +153,21 @@ const handleLike = () => {
     requireLogin('like')
     return
   }
-  const newLiked = !post.value.is_liked
-  post.value.is_liked = newLiked
-  post.value.like_count = newLiked
-    ? post.value.like_count + 1
-    : post.value.like_count - 1
-  debouncedPostLike()
+  const target = post.value
+  toggleReaction(`like:post:${target.id}`, {
+    get: () => !!target.is_liked,
+    set: (liked) => {
+      if (!!target.is_liked === liked) return
+      target.like_count = Math.max(0, (target.like_count || 0) + (liked ? 1 : -1))
+      target.is_liked = liked
+    },
+    send: async (liked) => {
+      const res = await toggleLike({ type: 'post', target_id: target.id, action: liked ? 'like' : 'unlike' })
+      return !!res.data?.is_liked
+    },
+    onError: onReactionError
+  })
 }
-
-// 收藏（乐观更新 + debounce 合并请求）
-// 收藏数 collect_count 由后端异步聚合，前端不本地 ±1（对接文档约定）
-const debouncedPostCollect = useDebounceFn(async () => {
-  if (!post.value) return
-  try {
-    const res = await toggleCollect({ post_id: post.value.id })
-    if (res.data) {
-      post.value.is_collected = res.data.is_collected
-    }
-  } catch (error) {
-    post.value.is_collected = !post.value.is_collected
-    message.error(t('messages.operationFailed', { error: error.message }))
-  }
-}, 600)
 
 const handleCollect = () => {
   if (!post.value) return
@@ -200,8 +176,16 @@ const handleCollect = () => {
     requireLogin('collect')
     return
   }
-  post.value.is_collected = !post.value.is_collected
-  debouncedPostCollect()
+  const target = post.value
+  toggleReaction(`collect:${target.id}`, {
+    get: () => !!target.is_collected,
+    set: (collected) => { target.is_collected = collected },
+    send: async (collected) => {
+      const res = await toggleCollect({ post_id: target.id, action: collected ? 'collect' : 'uncollect' })
+      return !!res.data?.is_collected
+    },
+    onError: onReactionError
+  })
 }
 
 // ============ 评论区相关 ============

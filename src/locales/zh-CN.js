@@ -859,6 +859,8 @@ export default {
     loginRequired: '请先登录',
     pleaseLoginFirst: '请先登录',
     operationFailed: '操作失败：{error}',
+    actionBusy: '服务繁忙，请稍后重试',
+    contentRemoved: '内容已被删除',
     getDetailFailed: '获取详情失败：{error}',
     deleteSuccess: '删除成功',
     deleteFailed: '删除失败：{error}',

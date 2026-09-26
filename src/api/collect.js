@@ -1,12 +1,12 @@
 import request from '@/utils/request'
 
 /**
- * 收藏 / 取消收藏（幂等切换）
- * 同一帖子连续调用会在 收藏↔取消 间切换。
+ * 收藏 / 取消收藏
  * @param {Object} data
  * @param {string} data.post_id - 帖子ID(UUIDv7，必填)
+ * @param {'collect'|'uncollect'} [data.action] - 显式目标状态（幂等，可安全重试）；省略则按服务端当前状态切换，勿自动重试
  * @returns {Promise} data: { is_collected: boolean, post_id: string }
- *   —— is_collected 为「本次切换后」的状态，以服务端为准
+ *   —— is_collected 为请求后的状态，以服务端为准
  */
 export function toggleCollect(data) {
   return request({

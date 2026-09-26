@@ -860,6 +860,8 @@ export default {
     loginRequired: 'Please login first',
     pleaseLoginFirst: 'Please login first',
     operationFailed: 'Operation failed: {error}',
+    actionBusy: 'Server busy, please try again',
+    contentRemoved: 'This content has been removed',
     getDetailFailed: 'Failed to get details: {error}',
     deleteSuccess: 'Deleted successfully',
     deleteFailed: 'Delete failed: {error}',
