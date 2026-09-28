@@ -94,8 +94,6 @@
 import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue'
 import { NCard, NAvatar, NButton, NIcon, NTime, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import { toggleLike } from '@/api/like'
-import { useDebounceFn } from '@/utils/throttle'
 import ImageCarousel from '@/components/common/ImageCarousel.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
 import { useFormatNumber } from '@/utils/i18n'
@@ -185,8 +183,6 @@ const props = defineProps({
 })
 
 const message = useMessage()
-const isLiked = ref(false)
-const isCollected = ref(false)
 
 // 统一图片列表：有多图就用 images，否则回退到单张封面图。
 // 这样封面图与非封面图帖子都用同一个轮播组件展示，摘要截断策略也保持一致。
@@ -222,32 +218,8 @@ watch(() => props.content, () => {
   nextTick(checkTruncation)
 })
 
-const debouncedPostCardLike = useDebounceFn(async () => {
-  try {
-    const res = await toggleLike({ type: 'post', target_id: props.postId })
-    if (res.data) {
-      const serverLiked = res.data.is_liked
-      if (isLiked.value !== serverLiked) {
-        isLiked.value = serverLiked
-      }
-    }
-  } catch {
-    isLiked.value = !isLiked.value
-  }
-}, 600)
-
-const handleLike = () => {
-  isLiked.value = !isLiked.value
-  debouncedPostCardLike()
-}
-
 const handleComment = () => {
   message.info(t('common.featureInDevelopment'))
-}
-
-const handleCollect = () => {
-  isCollected.value = !isCollected.value
-  message.info(isCollected.value ? t('post.actions.favorite') : t('common.cancel'))
 }
 </script>
 
