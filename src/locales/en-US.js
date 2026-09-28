@@ -869,6 +869,8 @@ export default {
     copyFailed: 'Copy failed',
     likeFeaturePending: 'Like feature pending',
     favoriteFeaturePending: 'Favorite feature pending',
+    interactionRetryLater: "Action didn't go through, please try again later",
+    contentUnavailable: 'This content is no longer available',
     likeFailed: 'Like operation failed'
   },
 

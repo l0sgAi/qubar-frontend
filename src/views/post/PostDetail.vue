@@ -74,10 +74,10 @@ import CommentEditor from '@/components/post/detail/CommentEditor.vue'
 import CommentList from '@/components/post/detail/CommentList.vue'
 import { getPostDetail } from '@/api/post'
 import { usePageTitle } from '@/composables/usePageTitle'
+import { useInteractionToggle, interactionErrorMessage } from '@/composables/useInteractionToggle'
 import { toggleLike } from '@/api/like'
 import { toggleCollect } from '@/api/collect'
 import { getCircleDetail } from '@/api/circle'
-import { useThrottleFn, useDebounceFn } from '@/utils/throttle'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
 import { seedContentMentions } from '@/utils/mentionResolve'
@@ -140,28 +140,31 @@ const loadPostDetail = async () => {
   }
 }
 
-// 点赞（乐观更新 + debounce 合并请求）
-const debouncedPostLike = useDebounceFn(async () => {
-  if (!post.value) return
-  try {
-    const res = await toggleLike({ type: 'post', target_id: post.value.id })
-    if (res.data) {
-      const serverLiked = res.data.is_liked
-      if (post.value.is_liked !== serverLiked) {
-        post.value.like_count = serverLiked
-          ? post.value.like_count + 1
-          : post.value.like_count - 1
-        post.value.is_liked = serverLiked
-      }
-    }
-  } catch (error) {
-    post.value.is_liked = !post.value.is_liked
-    post.value.like_count = post.value.is_liked
-      ? post.value.like_count + 1
-      : post.value.like_count - 1
-    message.error(t('messages.operationFailed', { error: error.message }))
+// 点赞 / 收藏：乐观更新 UI，按帖子 id 防抖串行提交期望状态（显式 action，幂等可重试）
+// ctx 捕获点击时的帖子对象，避免防抖期间切换到其它帖子后打错目标
+const likeToggle = useInteractionToggle({
+  request: async (postId, desired) => {
+    const res = await toggleLike({ type: 'post', target_id: postId, action: desired ? 'like' : 'unlike' })
+    return res.data.is_liked
   }
-}, 600)
+})
+
+const collectToggle = useInteractionToggle({
+  request: async (postId, desired) => {
+    const res = await toggleCollect({ post_id: postId, action: desired ? 'collect' : 'uncollect' })
+    return res.data.is_collected
+  }
+})
+
+const notifyInteractionError = (error) => {
+  message.error(interactionErrorMessage(error, t))
+}
+
+const setPostLiked = (target, liked) => {
+  if (target.is_liked === liked) return
+  target.is_liked = liked
+  target.like_count = liked ? target.like_count + 1 : target.like_count - 1
+}
 
 const handleLike = () => {
   if (!post.value) return
@@ -170,29 +173,16 @@ const handleLike = () => {
     requireLogin('like')
     return
   }
-  const newLiked = !post.value.is_liked
-  post.value.is_liked = newLiked
-  post.value.like_count = newLiked
-    ? post.value.like_count + 1
-    : post.value.like_count - 1
-  debouncedPostLike()
+  const target = post.value
+  setPostLiked(target, !target.is_liked)
+  likeToggle.schedule(target.id, {
+    get: () => target.is_liked,
+    apply: (liked) => setPostLiked(target, liked),
+    onError: notifyInteractionError
+  })
 }
 
-// 收藏（乐观更新 + debounce 合并请求）
 // 收藏数 collect_count 由后端异步聚合，前端不本地 ±1（对接文档约定）
-const debouncedPostCollect = useDebounceFn(async () => {
-  if (!post.value) return
-  try {
-    const res = await toggleCollect({ post_id: post.value.id })
-    if (res.data) {
-      post.value.is_collected = res.data.is_collected
-    }
-  } catch (error) {
-    post.value.is_collected = !post.value.is_collected
-    message.error(t('messages.operationFailed', { error: error.message }))
-  }
-}, 600)
-
 const handleCollect = () => {
   if (!post.value) return
   // 访客收藏前置拦截
@@ -200,8 +190,13 @@ const handleCollect = () => {
     requireLogin('collect')
     return
   }
-  post.value.is_collected = !post.value.is_collected
-  debouncedPostCollect()
+  const target = post.value
+  target.is_collected = !target.is_collected
+  collectToggle.schedule(target.id, {
+    get: () => target.is_collected,
+    apply: (collected) => { target.is_collected = collected },
+    onError: notifyInteractionError
+  })
 }
 
 // ============ 评论区相关 ============

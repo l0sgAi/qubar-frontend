@@ -868,6 +868,8 @@ export default {
     copyFailed: '复制失败',
     likeFeaturePending: '点赞功能待实现',
     favoriteFeaturePending: '收藏功能待实现',
+    interactionRetryLater: '操作未生效，请稍后重试',
+    contentUnavailable: '内容已不存在',
     likeFailed: '点赞操作失败'
   },
 
