@@ -20,8 +20,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # 部署前先跑与 PR 相同的检查（单测 + 构建），任一失败则不部署；
+  # 即使绕过 PR 直接 push main 也会被拦下
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   build:
     runs-on: ubuntu-latest
+    needs: ci
     steps:
       - name: Checkout
         uses: actions/checkout@v4
