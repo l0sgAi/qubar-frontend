@@ -251,7 +251,7 @@ import { toggleLike } from '@/api/like'
 import CommentReplyEditor from '@/components/post/detail/CommentReplyEditor.vue'
 import {CommentRound} from '@vicons/material'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
-import { useThrottleFn, useDebounceFn } from '@/utils/throttle'
+import { useInteractionToggle, interactionErrorMessage } from '@/composables/useInteractionToggle'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
 
@@ -438,25 +438,21 @@ const openReply = (comment) => {
   activeReplyId.value = activeReplyId.value === comment.id ? null : comment.id
 }
 
-const debouncedLikeRequest = useDebounceFn(async (type, target) => {
-  try {
-    const res = await toggleLike({ type, target_id: target.id })
-    if (res.data) {
-      const serverLiked = res.data.is_liked
-      if (target.liked !== serverLiked) {
-        target.like_count = serverLiked
-          ? target.like_count + 1
-          : target.like_count - 1
-        target.liked = serverLiked
-      }
-    }
-  } catch {
-    target.liked = !target.liked
-    target.like_count = target.liked
-      ? target.like_count + 1
-      : target.like_count - 1
+// 评论 / 回复点赞：按评论 id 各自防抖串行提交期望状态（显式 action，幂等可重试），
+// 连续点赞多条评论互不覆盖
+const likeToggle = useInteractionToggle({
+  request: async (key, desired) => {
+    const [type, targetId] = key.split(':')
+    const res = await toggleLike({ type, target_id: targetId, action: desired ? 'like' : 'unlike' })
+    return res.data.is_liked
   }
-}, 600)
+})
+
+const setTargetLiked = (target, liked) => {
+  if (target.liked === liked) return
+  target.liked = liked
+  target.like_count = liked ? target.like_count + 1 : target.like_count - 1
+}
 
 const handleToggleLike = (type, target) => {
   // 访客点赞前置拦截：弹登录引导，不触发 401 硬跳转
@@ -464,12 +460,12 @@ const handleToggleLike = (type, target) => {
     requireLogin('like')
     return
   }
-  const newLiked = !target.liked
-  target.liked = newLiked
-  target.like_count = newLiked
-    ? target.like_count + 1
-    : target.like_count - 1
-  debouncedLikeRequest(type, target)
+  setTargetLiked(target, !target.liked)
+  likeToggle.schedule(`${type}:${target.id}`, {
+    get: () => target.liked,
+    apply: (liked) => setTargetLiked(target, liked),
+    onError: (error) => message.error(interactionErrorMessage(error, t))
+  })
 }
 
 const handleReplySubmit = async (parentComment, newReply) => {
