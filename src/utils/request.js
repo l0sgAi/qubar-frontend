@@ -99,9 +99,11 @@ request.interceptors.response.use(
       }
 
       // 创建包含后端 message 的错误对象
+      // status 为 HTTP 状态码，供调用方区分 503（可重试）/ 404 等；无响应的网络错误不带 status
       const errorObj = new Error(res.message || '请求失败')
       errorObj.code = res.code
       errorObj.data = res.data
+      errorObj.status = error.response.status
       return Promise.reject(errorObj)
     }
 
