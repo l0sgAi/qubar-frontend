@@ -58,7 +58,7 @@ issue 第一节列出的 `notice.templates.likePost` / `collectPost` 已在 l0sg
 | `vitest` | `^3.2` | 与 Vite 6 共用插件和别名；issue 指定 Vitest 3（Vitest 4 需要 Vite 7 生态，暂不升级） |
 | `@vitest/coverage-v8` | `^3.2`（与 vitest 同版本） | 覆盖率 |
 | `jsdom` | `^26.1` | DOM 环境。选 26 而非最新 30：jsdom 27+ 要求 Node ≥ 20.19、30 要求 Node ≥ 22.22，CI 用 Node 20，26 兼容面最宽 |
-| `@vue/test-utils` | `^2.4` | 组件挂载（P0 路由测试用来渲染 stub；为 P2 预备） |
+| `@vue/test-utils` | `^2.5` | 组件挂载（P0 路由测试用来渲染 stub；为 P2 预备） |
 | `axios-mock-adapter` | `^2.1` | 在**真实** axios 实例上 mock 响应，拦截器能完整跑到 |
 | `@intlify/message-compiler` | `^9.14.5` | 与 `vue-i18n@9.14.5` 同版本（已是其间接依赖，锁文件会复用同一份），用生产同款编译器校验文案 |
 
@@ -115,7 +115,8 @@ export default mergeConfig(viteConfig, defineConfig({
 }))
 ```
 
-- 复用 `vite.config.js`：`@` 别名、`plugin-vue` 自动生效。`generate-404` 插件只在 `closeBundle` 触发，测试时不会执行；`server.open: true` 对 vitest 无影响。
+- 复用 `vite.config.js`：`@` 别名、`plugin-vue` 自动生效。`server.open: true` 对 vitest 无影响。
+- `generate-404` 插件的 `closeBundle` 在 dev / vitest 服务器关闭时**也会触发**（此时没有 `dist/`，会打印 ENOENT 报错；若 `dist/` 已存在则会被改写），因此给该插件加上 `apply: 'build'`，只在生产构建时生效。这是本 PR 对 `vite.config.js` 的唯一改动，构建产物不变。
 - `import.meta.env.VITE_API_BASE`：vitest 以 `mode=test` 运行，不会读取 `.env.development`，值为 `undefined`；`request.js` 的 `baseURL` 为 `undefined` 时 axios 使用相对路径，axios-mock-adapter 按相对路径匹配即可，无需额外配置。
 - `restoreMocks` / `unstubGlobals`：每个用例后自动还原 `vi.spyOn` 和 `vi.stubGlobal`，防止用例间串扰。
 
@@ -242,8 +243,9 @@ export default router
 
 1. **key 集合一致**：两种语言的 key 差集都为空；失败信息列出缺失的 key。
 2. **生产编译器编译通过**：对每个字符串值调用 `baseCompile(msg, { onError })`（`@intlify/message-compiler`，与生产运行时同一编译器），收集所有错误，断言为空；失败信息列出 `locale.key: 错误信息`。
-3. **占位符一致**：用编译产物的 AST 提取命名插值（`{name}`）集合，同一 key 在两种语言中必须相同。基于 AST 而不是正则，避免把 `{'{'}` 这类字面量转义误判为占位符。
-4. 非字符串值（若将来出现函数 / 数组）单独断言类型，避免静默跳过。
+3. **占位符一致**：用编译产物的 AST 提取命名插值（`{name}`）和列表插值（`{0}`）集合，同一 key 在两种语言中必须相同。基于 AST 而不是正则，避免把 `{'{'}` 这类字面量转义误判为占位符。
+4. **链接消息**：`@:key` 引用的 key 必须存在。
+5. **数组文案**（`terms.sections`、`privacy.sections`、`privacy.summary`）：页面通过 `tm()` 取原始结构、以 `{{ }}` 直接渲染，**不经过消息编译器**，因此只参与 key 结构一致性（`a.b[0].c`）和「叶子均为字符串」校验，不做编译 / 占位符校验。
 
 ### 6.5 路由守卫 `tests/router/guard.spec.js`
 
@@ -341,6 +343,81 @@ Settings → Branches → `main` 添加规则（或 Rulesets）：
 
 ---
 
-## 九、实施记录
+## 九、实施记录（2026-09-28）
 
-（实施完成后补充：实际依赖版本、用例数、覆盖率基线、反向验证结果、耗时、与本文档的差异。）
+### 9.1 交付内容
+
+| 类别 | 文件 |
+|---|---|
+| 配置 | `vitest.config.js`、`tests/setup.js`、`package.json`（4 个 scripts + 6 个 devDependencies）、`.gitignore`（`coverage`） |
+| 用例 | `tests/composables/useInteractionToggle.spec.js`、`tests/utils/{request,sanitize,throttle,guest-access,mention,mentionResolve}.spec.js`、`tests/i18n.spec.js`、`tests/router/guard.spec.js` |
+| 源码 | `src/router/index.js`：导出 `routes` / `authGuard`（忽略空白后 +10 / −6，行为不变）；`vite.config.js`：`generate-404` 加 `apply: 'build'` |
+| CI | 新增 `.github/workflows/ci.yml`（`unit`、`build`）；`deploy.yml` 新增 `ci` job，`build` `needs: ci` |
+| 文档 | 本文、`README.md`「测试与 CI」、`DEPLOY.md`「CI 检查与分支保护」 |
+
+实际依赖版本：`vitest@3.2.7`、`@vitest/coverage-v8@3.2.7`、`jsdom@26.1.0`、`@vue/test-utils@2.5.1`、`axios-mock-adapter@2.1.0`、`@intlify/message-compiler@9.14.5`。
+`package-lock.json` 只新增 153 个包，**原有 package 的解析版本零变化**（脚本逐项比对）。
+
+### 9.2 用例统计
+
+9 个测试文件、188 个用例：
+
+| 文件 | 用例数 |
+|---|---|
+| `useInteractionToggle.spec.js` | 23（15 个时序场景 + 默认参数 + 7 个错误文案映射） |
+| `request.spec.js` | 21 |
+| `mention.spec.js` | 36 |
+| `guard.spec.js` | 33 |
+| `guest-access.spec.js` | 32 |
+| `sanitize.spec.js` | 16 |
+| `mentionResolve.spec.js` | 11 |
+| `i18n.spec.js` | 9（校验 698 条经 `t()` 编译的文案 + 3 组数组文案，合计即 issue 所述 701 个 key） |
+| `throttle.spec.js` | 7 |
+
+### 9.3 覆盖率基线
+
+统计范围 `src/utils/**`、`src/composables/**`、`src/router/**`：
+
+| 指标 | 实测 | 全局门槛 |
+|---|---|---|
+| lines / statements | 46.79% | 46 |
+| branches | 86.04% | 85 |
+| functions | 50% | 50 |
+
+P0 文件单独成组（`useInteractionToggle`、`request`、`sanitize`、`throttle`、`guest-access`、`mention`、`mentionResolve`、`router/**`）：lines 99.19%，门槛 lines / statements 95、branches 90。
+已验证门槛生效：临时把全局 lines 调到 47、P0 组 lines 调到 99.9，`test:coverage` 均以 exit 1 失败并给出 `ERROR: Coverage for lines ... does not meet ... threshold`。
+
+未覆盖的 P1 文件（`useNoticeStream`、`useSideNavCircles`、`useUserSearch`、`useMentions`、`useImageUpload`、`useCircleMeta`、`i18n.js`、`mentionDom.js`、`mentionHighlight.js`、`guest-action.js`）是全局 lines 偏低的原因，阶段 4 补齐后提到 80%。
+
+### 9.4 反向验证（改动均已还原，未提交）
+
+| 人为破坏 | 失败的用例 |
+|---|---|
+| en-US `likePost` 改回 `"{{snippet}}"` | `i18n 文案 > 所有文案都能通过生产编译器编译` |
+| 删除 zh-CN `title.slogan` | `i18n 文案 > zh-CN 与 en-US 的 key 集合完全一致` |
+| en-US `collectPost` 的 `{snippet}` 改为 `{title}` | `i18n 文案 > 同一 key 在两种语言中的插值占位符一致` |
+| 去掉 `useInteractionToggle` 的「desired === confirmed 不发请求」 | 场景 2、5、13、14、15 共 5 个 |
+| 去掉 `request.js` 业务码分支的 `isAuthRequest` 判断 | `认证请求 /auth/login|register|password/reset 的 401 不清 token、不跳转` 共 3 个 |
+| 删除 `router.beforeEach(authGuard)` | `默认导出的 router > 已注册 authGuard 与页面标题同步` |
+
+### 9.5 运行验证
+
+- `npm test`：Node 22 连续 3 次 188/188 通过，单次约 1.5–4 s（含覆盖率约 4 s）。
+- Node 20.20（与 CI 一致）下 `vitest run --coverage` 188/188 通过、门槛通过。
+- `npm run check`（覆盖率测试 + 生产构建）本地约 27 s，exit 0；`dist/404.html` 正常生成，产物中不含测试代码。
+- `actionlint 1.7.7` 校验 `ci.yml`、`deploy.yml` 无报错。
+- PR 上 `CI / unit`、`CI / build` 的运行结果以 GitHub Actions 为准；`deploy.yml` 的门禁效果需在合入 `main` 后观察（Actions 中应出现 `ci / unit`、`ci / build` → `build` → `deploy`）。
+
+### 9.6 与规划的差异
+
+- `vite.config.js`：新增 `apply: 'build'`（原计划认为无需改动，见 4.1）。
+- i18n 校验增加「链接消息引用存在」和「数组文案结构校验」两项（6.4 第 4、5 条）。
+- 路由测试额外通过**真实默认导出的 router** 验证守卫已注册（利用全局 `beforeEach` 先于懒加载组件解析执行，不会加载真实页面）。
+
+### 9.7 后续（按 issue 阶段）
+
+1. **管理员操作**：本 PR 合入后为 `main` 开启分支保护，必需检查 `unit`、`build`（见 7.3）。
+2. 阶段 2：ESLint（`lint` job）。
+3. 阶段 4：P1 用例 + `src/utils/**`、`src/composables/**` 80% 门槛。
+4. 阶段 5：P2 组件测试（`tests/utils/mount.js` 统一 Naive UI stub 与 i18n 插件）。
+5. 阶段 6：Playwright E2E（复用 `build` job 上传的 `dist/`）。
