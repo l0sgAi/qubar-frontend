@@ -48,9 +48,29 @@ git push origin main
 
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) 工作流会：
 
-1. **安装依赖**：使用 `npm ci` 安装项目依赖
-2. **构建项目**：运行 `npm run build` 生成生产环境构建
-3. **部署**：将构建产物部署到 GitHub Pages
+1. **CI 检查**：调用 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，运行单元测试（含覆盖率门槛）与生产构建；**任一失败则终止，不会部署**
+2. **安装依赖**：使用 `npm ci` 安装项目依赖
+3. **构建项目**：运行 `npm run build` 生成生产环境构建
+4. **部署**：将构建产物部署到 GitHub Pages
+
+## CI 检查与分支保护
+
+`ci.yml` 会在每个指向 `main` 的 PR 上自动运行，包含两个检查：
+
+| 检查 | 内容 |
+|---|---|
+| `unit` | `npm run test:coverage`：全部单元测试 + 覆盖率门槛 |
+| `build` | `npm run build`：生产构建 |
+
+GitHub Actions 无法自行开启分支保护，需要仓库管理员手动设置：
+
+1. 进入仓库 **Settings** → **Branches**（或 **Rules → Rulesets**），为 `main` 添加规则
+2. 勾选 **Require a pull request before merging**
+3. 勾选 **Require status checks to pass before merging**，搜索并添加 `unit`、`build`
+4. 勾选 **Require branches to be up to date before merging**
+5. （可选）勾选 **Do not allow bypassing the above settings**
+
+> 必须等 CI 在某个 PR 上至少运行过一次，`unit` / `build` 才会出现在可选列表中。
 
 ## 配置 Google OAuth 回调
 
@@ -80,6 +100,7 @@ npm run dev
 
 ### 构建失败
 
+- 若失败发生在 `ci / unit` 或 `ci / build`，说明检查未通过、未部署：本地运行 `npm run check` 复现
 - 检查 Node.js 版本是否匹配（当前使用 Node.js 20）
 - 确保 `package.json` 中的依赖版本正确
 - 查看 Actions 日志获取详细错误信息

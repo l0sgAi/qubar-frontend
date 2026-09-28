@@ -30,8 +30,10 @@ export default defineConfig({
       }
     },
     // 构建完成后自动创建 404.html（GitHub Pages SPA 支持）
+    // apply: 'build'：dev / vitest 的服务器关闭时同样会触发 closeBundle，此时没有 dist/，需排除
     {
       name: 'generate-404',
+      apply: 'build',
       closeBundle() {
         try {
           copyFileSync(

@@ -43,8 +43,10 @@ qubar-frontend/
 │   └── main.js          # 应用入口
 ├── public/              # 不经过构建的静态文件（CNAME、favicon 等）
 ├── scripts/             # 构建检查脚本
+├── tests/               # 单元测试（Vitest），目录结构与 src/ 对应
 ├── index.html           # HTML 模板
 ├── vite.config.js       # Vite 配置
+├── vitest.config.js     # 测试配置（复用 vite.config.js）
 └── package.json         # 项目配置
 ```
 
@@ -87,6 +89,32 @@ npm run preview
 ```
 
 项目部署于 GitHub Pages，线上地址为 <https://qubar.site>（域名配置见 `public/CNAME`），后端 API 地址为 `https://api.qubar.site`。
+
+## 测试与 CI
+
+### 本地运行
+
+```bash
+npm test               # 运行全部单元测试
+npm run test:watch     # 监听模式，改代码自动重跑
+npm run test:coverage  # 带覆盖率报告（coverage/index.html），低于门槛会失败
+npm run check          # 提交前一键自检：覆盖率测试 + 生产构建
+```
+
+### 编写测试
+
+- 测试放在 `tests/` 下，按 `src/` 的目录结构组织，文件名 `*.spec.js`；可直接用 `@/` 别名导入源码。
+- 运行环境为 jsdom；每个用例结束后自动清空 `localStorage` / `sessionStorage`、恢复真实定时器和 `vi.spyOn` / `vi.stubGlobal`（见 `tests/setup.js`）。
+- 涉及定时器（防抖、重试等）的用例一律使用 `vi.useFakeTimers()`，不要依赖真实时间。
+- HTTP：测试 `src/utils/request.js` 本身时用 `axios-mock-adapter` 挂在真实实例上；测试业务模块时直接 `vi.mock('@/api/xxx')`。
+- 修改 `src/locales/` 后务必跑 `npm test`：`tests/i18n.spec.js` 会用生产环境同款编译器编译全部文案，并校验中英文 key、插值占位符一致。vue-i18n 在 dev 模式下会吞掉编译错误，只有这里能提前发现。
+- 覆盖率门槛配置在 `vitest.config.js`，只升不降：新增用例使覆盖率提高后，请同步调高门槛。
+
+### CI
+
+- `.github/workflows/ci.yml`：每个指向 `main` 的 PR 自动运行 `unit`（单测 + 覆盖率门槛）和 `build`（生产构建）两个检查，覆盖率摘要显示在 Actions 运行页。
+- `.github/workflows/deploy.yml`：push `main` 时先调用同一套 CI，全部通过后才构建并部署 GitHub Pages。
+- 建议仓库管理员为 `main` 开启分支保护，并把 `unit`、`build` 设为必需检查（详见 [DEPLOY.md](DEPLOY.md#ci-检查与分支保护)）。
 
 ## 功能特性
 
