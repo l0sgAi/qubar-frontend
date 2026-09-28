@@ -22,6 +22,14 @@ const isRetryable = (err) => {
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
+// 最终失败时的提示文案：404 内容已删除；503 / 500 / 网络错误提示稍后重试；其它带上后端 message
+export const interactionErrorMessage = (err, t) => {
+  const status = err?.status ?? err?.response?.status
+  if (status === 404) return t('messages.contentUnavailable')
+  if (status === undefined || status >= 500) return t('messages.interactionRetryLater')
+  return t('messages.operationFailed', { error: err.message })
+}
+
 export const useInteractionToggle = ({ request, delay = 600, retryDelay = 800 }) => {
   // key → { confirmed, ctx, timer, inflight }；一轮操作结算后删除，下次点击以当时 UI 为基准重建
   const entries = new Map()
