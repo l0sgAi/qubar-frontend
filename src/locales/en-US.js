@@ -802,9 +802,9 @@ export default {
     someone: 'Someone',
     // Text templates: {actor}=trigger user, {snippet}=content snippet
     templates: {
-      likePost: '{actor} liked your post "{{snippet}}"',
+      likePost: '{actor} liked your post "{snippet}"',
       likeComment: '{actor} liked your comment "{snippet}"',
-      collectPost: '{actor} favorited your post "{{snippet}}"',
+      collectPost: '{actor} favorited your post "{snippet}"',
       commentPost: '{actor} commented on your post: {snippet}',
       replyComment: '{actor} replied to your comment: {snippet}',
       mention: '{actor} mentioned you: {snippet}'
