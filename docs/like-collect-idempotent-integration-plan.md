@@ -3,7 +3,7 @@
 > 版本：2026-09-28 · 分支：`claude/gallant-lovelace-jchxuz`
 > 对应后端：[l0sgAi/qubar#47](https://github.com/l0sgAi/qubar/pull/47)（修复 l0sgAi/qubar#46，head `e22a9ba`，基线 `develop@84b3a80`）
 > 后端对接文档：`docs/api/like-collect-toggle-api.md`（后端仓库）
-> 状态：**待 review**，未改任何业务代码。
+> 状态：**已实施**（后端 l0sgAi/qubar#47 已合并部署，`develop@d7be892`）。实施记录见第八节。
 
 ---
 
@@ -242,3 +242,19 @@ send 失败(err)
 2. 自动重试策略：仅超时 / 503、最多 1 次、间隔 800ms。是否需要调整（如 500 也重试）？
 3. `PostCard.vue` 死代码：删除，还是保留待后续加卡片点赞按钮？
 4. 评论点赞失败由「静默回滚」改为「回滚 + toast 提示」，是否接受？
+
+## 八、实施记录（2026-09-28）
+
+按 4.2 实施，第七节 4 个待确认点均按本文默认方案执行：先后端后前端、不加兼容开关；仅超时 / 503 自动重试 1 次（800ms）；删除 `PostCard.vue` 死代码；评论点赞失败改为回滚 + toast。
+
+与规划的差异：
+
+- `useInteractionToggle` 未提供 `dispose()`：一轮操作结算后条目即从 Map 删除，无需额外清理。
+- 新增 `interactionErrorMessage(err, t)`（同文件导出），PostDetail / CommentList 共用：404 → `contentUnavailable`；5xx / 网络错误 → `interactionRetryLater`；其它 → `operationFailed`。
+- `PostDetail.vue` / `CommentList.vue` 顺带移除了本就未使用的 `useThrottleFn` 导入。
+
+验证：
+
+- `vite build` 通过。
+- Node 临时脚本（未提交）覆盖状态机 15 个场景全部通过：单击、双击 no-op、三击、在途补发、在途双击不补发、超时重试成功、503 重试成功、重试仍失败回滚、404 / 500 / 业务码错误不重试、多 key 互不覆盖、结算后第二轮、重试等待期间再点以最新状态重试、服务端结果与期望不一致时对齐 UI。
+- 连真实后端的浏览器手测（第五节第 3 条）尚未执行，需在部署环境完成。
