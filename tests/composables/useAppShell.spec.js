@@ -14,6 +14,8 @@ const { useAppShell, useMobileShell, SIDENAV_WIDTH, SIDENAV_COLLAPSED_WIDTH } = 
 const { __resetBreakpoint } = await import('@/composables/useBreakpoint')
 const { setMatchMedia } = await import('../setup')
 
+const MOBILE_PADDING = 'calc(var(--tabbar-height) + var(--safe-bottom) + 16px)'
+
 describe('useAppShell', () => {
   beforeEach(() => {
     __resetBreakpoint()
@@ -33,18 +35,18 @@ describe('useAppShell', () => {
     expect(contentStyle.value).toEqual({ 'margin-left': '64px', width: 'calc(100% - 64px)' })
   })
 
-  it('移动端外框：不偏移', () => {
+  it('移动端外框：不偏移，底部让出 TabBar（组件外无路由，按默认 meta）', () => {
     setMatchMedia(true)
     const { mobileShell, contentStyle } = useAppShell()
     expect(mobileShell.value).toBe(true)
-    expect(contentStyle.value).toEqual({})
+    expect(contentStyle.value).toEqual({ 'padding-bottom': MOBILE_PADDING })
   })
 
   it('跨断点实时切换', () => {
     const { mobileShell, contentStyle } = useAppShell()
     setMatchMedia(true)
     expect(mobileShell.value).toBe(true)
-    expect(contentStyle.value).toEqual({})
+    expect(contentStyle.value).toEqual({ 'padding-bottom': MOBILE_PADDING })
     setMatchMedia(false)
     expect(mobileShell.value).toBe(false)
     expect(contentStyle.value).toEqual({ 'margin-left': '260px', width: 'calc(100% - 260px)' })

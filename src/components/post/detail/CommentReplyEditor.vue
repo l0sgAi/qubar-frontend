@@ -84,8 +84,7 @@ import { NButton, NIcon, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
-import { createComment } from '@/api/comment'
-import { getUserInfo } from '@/api/auth'
+import { useCommentSubmit } from '@/composables/useCommentSubmit'
 import { useImageUpload } from '@/composables/useImageUpload'
 import UploadImageWall from '@/components/post/detail/UploadImageWall.vue'
 import MentionPicker from '@/components/post/MentionPicker.vue'
@@ -95,7 +94,6 @@ import { ensureMentionHighlight } from '@/utils/mentionHighlight'
 import { auth } from '@/utils/auth'
 import { filterMentionedIds } from '@/utils/mention'
 import { requireLogin } from '@/utils/guest-action'
-import { seedContentMentions } from '@/utils/mentionResolve'
 
 const props = defineProps({
   postId: {
@@ -131,7 +129,8 @@ const emit = defineEmits(['submit', 'cancel'])
 const { t } = useI18n()
 const message = useMessage()
 const content = ref('')
-const submitting = ref(false)
+// 提交流程（接口 + 乐观渲染对象组装）与顶层评论 / 移动端纯文本输入共用
+const { submitting, submit: submitComment } = useCommentSubmit()
 const { uploading, uploadingCount, progress, uploadMany } = useImageUpload({ withProgress: true })
 const uploadedImages = ref([])
 const fileInputRef = ref(null)
@@ -170,49 +169,19 @@ const handleSubmit = async () => {
     return
   }
   if ((!content.value.trim() && !uploadedImages.value.length) || submitting.value) return
-  submitting.value = true
   try {
     const extraData = uploadedImages.value.length > 0 ? { images: [...uploadedImages.value] } : null
     // 正文里被删掉的 @ 不传；须为完整 @用户名 token（@alice 不命中 @alice2）；
     // 后端对重复/@自己/不存在用户会静默过滤
     const mentionIds = filterMentionedIds(content.value, mentionedUsers.value)
-    const res = await createComment({
-      post_id: props.postId,
-      root_id: props.rootId ?? props.replyToId,
-      reply_to_id: props.replyToId,
+    const newReply = await submitComment({
+      postId: props.postId,
       content: content.value,
-      extra_data: extraData,
-      mention_user_ids: mentionIds.length ? mentionIds : undefined
+      reply: { rootId: props.rootId, replyToId: props.replyToId, replyToName: props.replyToName },
+      extraData,
+      mentionIds
     })
     message.success(t('comment.reply.success'))
-
-    let userData = {}
-    try {
-      const userRes = await getUserInfo()
-      if (userRes.data) {
-        userData = userRes.data
-      }
-    } catch (err) {
-      console.error('获取用户信息失败:', err)
-    }
-
-    const newReply = typeof res.data === 'object' && res.data !== null
-      ? { ...res.data }
-      : { id: res.data }
-
-    newReply.author_name = userData.name || newReply.author_name || ''
-    newReply.author_id = userData.id || newReply.author_id
-    newReply.author_avatar = userData.avatar_url || newReply.author_avatar || null
-    newReply.content = newReply.content || content.value
-    newReply.like_count = newReply.like_count || 0
-    newReply.reply_to_name = newReply.reply_to_name || props.replyToName || null
-    newReply.create_time = newReply.create_time || new Date().toISOString()
-    if (extraData) {
-      newReply.extra_data = extraData
-    }
-
-    // 后端若回传 mentions，乐观渲染前回灌
-    seedContentMentions([newReply])
 
     content.value = ''
     uploadedImages.value = []
@@ -220,8 +189,6 @@ const handleSubmit = async () => {
     emit('submit', newReply)
   } catch (err) {
     message.error(err.message || t('comment.reply.failed'))
-  } finally {
-    submitting.value = false
   }
 }
 

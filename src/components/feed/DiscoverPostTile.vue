@@ -73,10 +73,12 @@ const coverImage = computed(() => {
   transition: all 0.2s ease;
 }
 
-.discover-post-tile:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(96, 248, 187, 0.3);
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .discover-post-tile:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(96, 248, 187, 0.3);
+    transform: translateY(-2px);
+  }
 }
 
 .tile-banner {

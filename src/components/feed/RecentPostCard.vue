@@ -118,10 +118,12 @@ const summary = computed(() => {
   margin-bottom: 12px;
 }
 
-.recent-post-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: translateX(4px);
+@media (hover: hover) {
+  .recent-post-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateX(4px);
+  }
 }
 
 /* 缩略图 */
@@ -141,8 +143,10 @@ const summary = computed(() => {
   transition: transform 0.3s ease;
 }
 
-.recent-post-card:hover .thumbnail-image {
-  transform: scale(1.05);
+@media (hover: hover) {
+  .recent-post-card:hover .thumbnail-image {
+    transform: scale(1.05);
+  }
 }
 
 /* 帖子信息 */

@@ -8,6 +8,7 @@
       <!-- 主内容区域 -->
       <div class="main-content">
         <div class="discover-container">
+          <MobileFeedSegment v-if="mobileShell" />
           <!-- 顶部：标题 + 视图模式切换 + 换一批 -->
           <div class="discover-header">
             <div class="header-left">
@@ -115,6 +116,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, h } from 'vue'
 import { NTabs, NTab, NButton, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import AppShell from '@/components/layout/AppShell.vue'
+import MobileFeedSegment from '@/components/layout/mobile/MobileFeedSegment.vue'
 import { useAppShell } from '@/composables/useAppShell'
 import RightSidebar from '@/components/layout/RightSidebar.vue'
 import PostCard from '@/components/post/PostCard.vue'
@@ -453,9 +455,11 @@ const RefreshIcon = svg('M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M
   background: rgba(96, 248, 187, 0.08) !important;
 }
 
-.header-right :deep(.refresh-btn:hover) {
-  background: rgba(96, 248, 187, 0.16) !important;
-  border-color: rgba(96, 248, 187, 0.55) !important;
+@media (hover: hover) {
+  .header-right :deep(.refresh-btn:hover) {
+    background: rgba(96, 248, 187, 0.16) !important;
+    border-color: rgba(96, 248, 187, 0.55) !important;
+  }
 }
 
 .header-right :deep(.refresh-btn .n-button__content) {

@@ -6,17 +6,33 @@
     <!-- 主内容区域 -->
     <div class="main-content" :style="contentStyle">
       <div class="search-container">
-          <div class="search-info">
+          <!-- 移动端：顶栏只有搜索图标，搜索输入放在页内（无联想下拉，见 docs/mobile-adaptation-plan.md 2.2） -->
+          <form v-if="mobileShell" class="mobile-search" action="" @submit.prevent="submitMobileSearch">
+            <NInput
+              ref="mobileSearchRef"
+              v-model:value="mobileKeyword"
+              round
+              clearable
+              size="large"
+              :placeholder="t('common.searchPlaceholder')"
+              :input-props="{ type: 'search', enterkeyhint: 'search' }"
+            >
+              <template #prefix>
+                <NIcon><SearchIcon /></NIcon>
+              </template>
+            </NInput>
+          </form>
+          <div v-if="!mobileShell || keyword" class="search-info">
             <h2 class="search-title">{{ t('nav.searchResults') }}</h2>
             <p class="search-keyword">
               {{ t('nav.keyword') }}: {{ keyword }}
               <!-- <span v-if="circleId" class="circle-search-info"> | 圈子: {{ circleName }}</span> -->
             </p>
           </div>
-          <NDivider/>
+          <NDivider v-if="!mobileShell || keyword"/>
 
         <!-- 搜索类型 Tabs -->
-        <NTabs animated v-model:value="activeTab" @update:value="handleTabChange">
+        <NTabs v-if="!mobileShell || keyword" animated v-model:value="activeTab" @update:value="handleTabChange">
           <NTabPane name="post" :tab="t('post.post')">
             <PostList
               v-if="posts.length > 0"
@@ -62,9 +78,9 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { NTabs,NDivider, NTabPane, NIcon, NSpin, useMessage } from 'naive-ui'
+import { NTabs,NDivider, NTabPane, NIcon, NSpin, NInput, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import { FileText as FileTextIcon } from '@vicons/tabler'
+import { FileText as FileTextIcon, Search as SearchIcon } from '@vicons/tabler'
 import AppShell from '@/components/layout/AppShell.vue'
 import { useAppShell } from '@/composables/useAppShell'
 import CircleList from '@/components/circle/CircleList.vue'
@@ -79,7 +95,18 @@ const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
 // 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
-const { offset, contentStyle } = useAppShell()
+const { offset, mobileShell, contentStyle } = useAppShell()
+
+// 移动端页内搜索框
+const mobileKeyword = ref(route.query.q || '')
+const mobileSearchRef = ref(null)
+const submitMobileSearch = () => {
+  const q = mobileKeyword.value.trim()
+  if (!q) return
+  // 收起软键盘
+  mobileSearchRef.value?.blur()
+  router.replace({ path: '/search', query: { q, tab: activeTab.value } })
+}
 
 // 注入圈子搜索状态
 const circleSearchState = inject('circleSearchState', ref({ id: null, name: '', avatarUrl: '' }))
@@ -123,6 +150,11 @@ onMounted(async () => {
   // 获取搜索关键词
   keyword.value = route.query.q || ''
   if (!keyword.value) {
+    // 移动端从顶栏搜索图标进入时没有关键词：停留本页，聚焦页内搜索框
+    if (mobileShell.value) {
+      mobileSearchRef.value?.focus()
+      return
+    }
     message.warning(t('search.emptyKeyword'))
     router.push('/home')
     return
@@ -609,5 +641,15 @@ const loadMoreUsers = () => {
 .sentinel {
   width: 100%;
   height: 1px;
+}
+
+/* 移动端页内搜索框 */
+.mobile-search {
+  margin-bottom: 12px;
+}
+
+.mobile-search :deep(.n-input__input-el) {
+  /* ≥ 16px：iOS 聚焦时不自动缩放页面 */
+  font-size: 16px;
 }
 </style>

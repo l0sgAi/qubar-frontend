@@ -19,11 +19,11 @@ export default mergeConfig(viteConfig, defineConfig({
       // - P0 文件：已有完整用例，单独设高门槛防止回退
       //   （router 的 functions 不设门槛：懒加载路由的 () => import() 在单测中不会执行）
       thresholds: {
-        lines: 52,
-        statements: 52,
-        branches: 89,
-        functions: 61,
-        '{src/composables/{useInteractionToggle,useBreakpoint,useAppShell,useUnreadNotice}.js,src/utils/{request,sanitize,throttle,guest-access,mention,mentionResolve}.js,src/router/**}': {
+        lines: 55,
+        statements: 55,
+        branches: 90,
+        functions: 66,
+        '{src/composables/{useInteractionToggle,useBreakpoint,useAppShell,useUnreadNotice,useCommentSubmit}.js,src/utils/{request,sanitize,throttle,guest-access,mention,mentionResolve,mobileNav,share}.js,src/router/**}': {
           lines: 95,
           statements: 95,
           branches: 90

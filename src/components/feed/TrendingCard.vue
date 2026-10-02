@@ -149,13 +149,15 @@ const rankStyle = computed(() => {
     box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.trending-card:hover {
-  background: rgba(102, 234, 194, 0.06);
-  border-color: rgba(102, 234, 194, 0.35);
-  transform: translateY(-2px);
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.35),
-    0 4px 18px rgba(102, 234, 194, 0.1);
+@media (hover: hover) {
+  .trending-card:hover {
+    background: rgba(102, 234, 194, 0.06);
+    border-color: rgba(102, 234, 194, 0.35);
+    transform: translateY(-2px);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.35),
+      0 4px 18px rgba(102, 234, 194, 0.1);
+  }
 }
 
 /* 排名：无底框纯数字，固定宽度保证标题纵向对齐 */
@@ -196,8 +198,10 @@ const rankStyle = computed(() => {
   transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.trending-card:hover .primary {
-  color: #8af0d0;
+@media (hover: hover) {
+  .trending-card:hover .primary {
+    color: #8af0d0;
+  }
 }
 
 .secondary {
@@ -228,9 +232,11 @@ const rankStyle = computed(() => {
     border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.trending-card:hover .hot-score {
-  background: rgba(251, 191, 36, 0.16);
-  border-color: rgba(251, 191, 36, 0.4);
+@media (hover: hover) {
+  .trending-card:hover .hot-score {
+    background: rgba(251, 191, 36, 0.16);
+    border-color: rgba(251, 191, 36, 0.4);
+  }
 }
 
 .flame-svg {
@@ -241,8 +247,10 @@ const rankStyle = computed(() => {
     filter 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.trending-card:hover .flame-svg {
-  transform: scale(1.15);
-  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.55));
+@media (hover: hover) {
+  .trending-card:hover .flame-svg {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.55));
+  }
 }
 </style>

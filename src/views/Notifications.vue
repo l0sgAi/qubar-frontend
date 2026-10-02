@@ -307,9 +307,11 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 }
 
-.read-all-btn:hover {
-  color: #8af0d0;
-  background: rgba(102, 234, 194, 0.14);
+@media (hover: hover) {
+  .read-all-btn:hover {
+    color: #8af0d0;
+    background: rgba(102, 234, 194, 0.14);
+  }
 }
 
 /* 类型过滤：顶栏 Tab，全宽下划线式，滚动吸顶 */
@@ -345,8 +347,10 @@ onUnmounted(() => {
   transition: color 0.2s ease;
 }
 
-.notice-tab:hover {
-  color: var(--text-primary);
+@media (hover: hover) {
+  .notice-tab:hover {
+    color: var(--text-primary);
+  }
 }
 
 .notice-tab.active {
@@ -393,8 +397,10 @@ onUnmounted(() => {
   transition: background 0.2s ease;
 }
 
-.notice-item:hover {
-  background: rgba(102, 234, 194, 0.08);
+@media (hover: hover) {
+  .notice-item:hover {
+    background: rgba(102, 234, 194, 0.08);
+  }
 }
 
 /* 键盘焦点可见指示：Tab 聚焦时清晰可辨，Enter/Space 触发点击 */
@@ -408,8 +414,10 @@ onUnmounted(() => {
   background: rgba(102, 234, 194, 0.06);
 }
 
-.notice-item.unread:hover {
-  background: rgba(102, 234, 194, 0.12);
+@media (hover: hover) {
+  .notice-item.unread:hover {
+    background: rgba(102, 234, 194, 0.12);
+  }
 }
 
 .notice-avatar {

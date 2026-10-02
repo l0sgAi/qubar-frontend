@@ -8,6 +8,7 @@
       <!-- 主内容区域 -->
       <div class="main-content">
         <div class="hot-container">
+          <MobileFeedSegment v-if="mobileShell" />
           <!-- 顶部：标题 + 时间窗切换 + 更新时间 -->
           <div class="hot-header">
             <div class="header-left">
@@ -82,6 +83,7 @@ import { useRouter } from 'vue-router'
 import { NButtonGroup, NButton, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import AppShell from '@/components/layout/AppShell.vue'
+import MobileFeedSegment from '@/components/layout/mobile/MobileFeedSegment.vue'
 import { useAppShell } from '@/composables/useAppShell'
 import RightSidebar from '@/components/layout/RightSidebar.vue'
 import TrendingCard from '@/components/feed/TrendingCard.vue'
@@ -281,17 +283,24 @@ onBeforeUnmount(() => {
 }
 
 /* 未选中 hover：白色微亮底（naive 默认类型各状态底色本就是透明，无冲突） */
-.window-switch :deep(.n-button:not(.is-active):hover) {
-  background-color: rgba(255, 255, 255, 0.06);
+@media (hover: hover) {
+  .window-switch :deep(.n-button:not(.is-active):hover) {
+    background-color: rgba(255, 255, 255, 0.06);
+  }
 }
 
 /* 选中：主题绿淡底；补齐 hover/focus/active 变体，
    避免交互瞬间被 naive 同优先级的透明底色规则顶掉 */
 .window-switch :deep(.n-button.is-active),
-.window-switch :deep(.n-button.is-active:hover),
 .window-switch :deep(.n-button.is-active:focus),
 .window-switch :deep(.n-button.is-active:active) {
   background-color: rgba(102, 234, 194, 0.16);
+}
+
+@media (hover: hover) {
+  .window-switch :deep(.n-button.is-active:hover) {
+    background-color: rgba(102, 234, 194, 0.16);
+  }
 }
 
 /* 文案色写在 __content 上：直接命中恒优先于 naive 设在按钮根上的 color 继承 */
@@ -301,8 +310,10 @@ onBeforeUnmount(() => {
   transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.window-switch :deep(.n-button:hover .n-button__content) {
-  color: rgba(255, 255, 255, 0.85);
+@media (hover: hover) {
+  .window-switch :deep(.n-button:hover .n-button__content) {
+    color: rgba(255, 255, 255, 0.85);
+  }
 }
 
 .window-switch :deep(.n-button.is-active .n-button__content) {

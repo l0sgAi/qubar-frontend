@@ -15,3 +15,8 @@ export const MOBILE_META_DEFAULTS = Object.freeze({
 export function getMobileMeta(route) {
   return { ...MOBILE_META_DEFAULTS, ...(route?.meta?.mobile || {}) }
 }
+
+/** 移动端外框下该路由是否改渲染「暂不支持页」（App.vue 使用）。 */
+export function isUnsupportedOnMobile(route, mobileShell) {
+  return Boolean(mobileShell) && getMobileMeta(route).supported === false
+}

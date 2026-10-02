@@ -393,9 +393,11 @@ defineExpose({
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.circle-avatar:hover {
-  transform: scale(1.05);
-  border-color: rgba(102, 234, 194, 0.6);
+@media (hover: hover) {
+  .circle-avatar:hover {
+    transform: scale(1.05);
+    border-color: rgba(102, 234, 194, 0.6);
+  }
 }
 
 .circle-avatar-placeholder {
@@ -435,9 +437,11 @@ defineExpose({
   transition: color 0.2s ease;
 }
 
-.circle-name-link:hover .circle-name {
-  color: rgba(255, 255, 255, 1);
-  text-decoration: underline;
+@media (hover: hover) {
+  .circle-name-link:hover .circle-name {
+    color: rgba(255, 255, 255, 1);
+    text-decoration: underline;
+  }
 }
 
 .circle-slug {
@@ -506,8 +510,10 @@ defineExpose({
   user-select: none;
 }
 
-.show-more-btn:hover {
-  color: #8af0d0;
+@media (hover: hover) {
+  .show-more-btn:hover {
+    color: #8af0d0;
+  }
 }
 
 .rules-section {

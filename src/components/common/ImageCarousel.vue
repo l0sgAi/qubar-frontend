@@ -1,5 +1,5 @@
 <template>
-  <div class="image-carousel" :style="{ marginTop: '25px' }">
+  <div ref="rootRef" class="image-carousel" :class="{ 'is-mobile': mobileShell }" :style="{ marginTop: '25px' }">
     <div
       class="carousel-viewport"
       :style="{ width: containerWidth + 'px', height: containerHeight + 'px' }"
@@ -71,8 +71,9 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import { NImage } from 'naive-ui'
+import { useMobileShell } from '@/composables/useAppShell'
 
 const props = defineProps({
   images: {
@@ -104,7 +105,30 @@ watch(() => props.images, () => {
 // 固定整体尺寸：宽度按父宽比例，高度按宽高比。
 // 轮播框大小恒定，不随图片内容变化，配合 object-fit:contain 完整展示图片，
 // 留白区域由渐变背景填充，从而清晰区分轮播区域。
-const containerWidth = computed(() => Math.round(props.parentWidth * props.widthRatio))
+// 移动端外框下再按容器实际可用宽度收窄（parentWidth 是按桌面布局写死的像素值，
+// 在手机上会超出屏幕被裁切）；桌面保持原逻辑不变
+const mobileShell = useMobileShell()
+const rootRef = ref(null)
+const availableWidth = ref(0)
+let resizeObserver = null
+
+onMounted(() => {
+  if (!rootRef.value || typeof ResizeObserver === 'undefined') return
+  resizeObserver = new ResizeObserver(([entry]) => {
+    availableWidth.value = entry.contentRect.width
+  })
+  resizeObserver.observe(rootRef.value)
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+})
+
+const containerWidth = computed(() => {
+  const desktopWidth = props.parentWidth * props.widthRatio
+  if (!mobileShell.value || !availableWidth.value) return Math.round(desktopWidth)
+  return Math.round(Math.min(desktopWidth, availableWidth.value))
+})
 const containerHeight = computed(() => Math.round(containerWidth.value * props.heightRatio))
 
 const iconSize = computed(() => Math.max(14, Math.round(containerWidth.value / 20)))
@@ -216,8 +240,10 @@ const goTo = (idx) => {
   z-index: 2;
 }
 
-.carousel-arrow:hover {
-  background: rgba(0, 0, 0, 0.65);
+@media (hover: hover) {
+  .carousel-arrow:hover {
+    background: rgba(0, 0, 0, 0.65);
+  }
 }
 
 .carousel-arrow.left {
@@ -228,7 +254,19 @@ const goTo = (idx) => {
   right: 6px;
 }
 
-.image-carousel:hover .carousel-arrow {
+@media (hover: hover) {
+  .image-carousel:hover .carousel-arrow {
+    opacity: 1;
+  }
+}
+
+/* 移动端：容器不被内容撑开（用于测量可用宽度）；触屏没有 hover，箭头常显 */
+.image-carousel.is-mobile {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.image-carousel.is-mobile .carousel-arrow {
   opacity: 1;
 }
 
@@ -256,7 +294,9 @@ const goTo = (idx) => {
   transform: scale(1.3);
 }
 
-.dot:hover {
-  background: rgba(255, 255, 255, 0.7);
+@media (hover: hover) {
+  .dot:hover {
+    background: rgba(255, 255, 255, 0.7);
+  }
 }
 </style>

@@ -21,7 +21,7 @@
 
   /* 移动端门户（断点 ≤ 768px，与 src/constants/breakpoints.js 一致；
    * 断点三档见 docs/mobile-adaptation-plan.md 5.1）。
-   * 手机断点下 --header-height 改为 --mobile-topbar-height 随 P1 移动端外框一起启用 */
+   * 移动端外框启用时 --header-height 的覆盖见下方 html.mobile-shell */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --mobile-topbar-height: 48px;
@@ -34,6 +34,23 @@
   --google-btn-bg: #1e2130;
   --google-btn-border: #2d3142;
   --google-btn-text: #e8eaed;
+}
+
+/* 移动端外框启用时（App.vue 同步的 html.mobile-shell）：顶栏换成移动顶栏高度（含刘海安全区），
+ * 各页 margin-top / calc(... var(--header-height) ...) 无需改动即可适配 */
+html.mobile-shell {
+  --header-height: calc(var(--mobile-topbar-height) + var(--safe-top));
+}
+
+/* 触屏：去掉点击高亮块；交互元素去掉双击缩放延迟 */
+html.mobile-shell body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.mobile-shell a,
+html.mobile-shell button,
+html.mobile-shell [role='button'] {
+  touch-action: manipulation;
 }
 
 * {
@@ -290,6 +307,15 @@ body {
   border-radius: 20px !important;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55) !important;
   overflow: hidden;
+}
+
+/* 移动端：对话框 / 卡片弹窗不超出屏幕（组件内联写死的 width 也需覆盖） */
+@media (max-width: 768px) {
+  .n-dialog.n-modal,
+  .n-card.n-modal {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+  }
 }
 
 /* 标题：白色高对比，稍大字重 */

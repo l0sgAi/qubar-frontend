@@ -223,11 +223,13 @@ watch([() => props.circles, () => props.hasMore, () => props.loading, loadMoreTr
   transition: all 0.3s ease;
 }
 
-.circle-item:hover {
-  background: rgba(40, 40, 60, 0.8);
-  border-color: rgba(72, 236, 143, 0.3);
-  transform: translateX(4px);
-  box-shadow: 0 4px 20px rgba(72, 236, 176, 0.15);
+@media (hover: hover) {
+  .circle-item:hover {
+    background: rgba(40, 40, 60, 0.8);
+    border-color: rgba(72, 236, 143, 0.3);
+    transform: translateX(4px);
+    box-shadow: 0 4px 20px rgba(72, 236, 176, 0.15);
+  }
 }
 
 .circle-avatar {

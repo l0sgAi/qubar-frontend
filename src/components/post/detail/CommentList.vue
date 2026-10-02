@@ -56,18 +56,29 @@
             </NButton>
           </div>
 
-          <!-- 内联回复编辑器 -->
-          <CommentReplyEditor
-            v-if="activeReplyId === comment.id"
-            :post-id="postId"
-            :circle-id="circleId"
-            :root-id="comment.id"
-            :reply-to-id="null"
-            :reply-to-name="comment.author_name"
-            :language="language"
-            @submit="handleReplySubmit(comment, $event)"
-            @cancel="activeReplyId = null"
-          />
+          <!-- 内联回复编辑器（移动端门户为纯文本输入，见 PlainCommentInput） -->
+          <template v-if="activeReplyId === comment.id">
+            <PlainCommentInput
+              v-if="mobileShell"
+              :post-id="postId"
+              :root-id="comment.id"
+              :reply-to-id="null"
+              :reply-to-name="comment.author_name"
+              @submit="handleReplySubmit(comment, $event)"
+              @cancel="activeReplyId = null"
+            />
+            <CommentReplyEditor
+              v-else
+              :post-id="postId"
+              :circle-id="circleId"
+              :root-id="comment.id"
+              :reply-to-id="null"
+              :reply-to-name="comment.author_name"
+              :language="language"
+              @submit="handleReplySubmit(comment, $event)"
+              @cancel="activeReplyId = null"
+            />
+          </template>
 
           <!-- 点击查看回复 -->
           <div
@@ -151,18 +162,29 @@
                   </NButton>
                 </div>
 
-                <!-- 内联回复编辑器（回复子评论） -->
-                <CommentReplyEditor
-                  v-if="activeReplyId === reply.id"
-                  :post-id="postId"
-                  :circle-id="circleId"
-                  :root-id="comment.id"
-                  :reply-to-id="reply.id"
-                  :reply-to-name="reply.author_name"
-                  :language="language"
-                  @submit="handleReplySubmit(comment, $event)"
-                  @cancel="activeReplyId = null"
-                />
+                <!-- 内联回复编辑器（回复子评论；移动端门户为纯文本输入） -->
+                <template v-if="activeReplyId === reply.id">
+                  <PlainCommentInput
+                    v-if="mobileShell"
+                    :post-id="postId"
+                    :root-id="comment.id"
+                    :reply-to-id="reply.id"
+                    :reply-to-name="reply.author_name"
+                    @submit="handleReplySubmit(comment, $event)"
+                    @cancel="activeReplyId = null"
+                  />
+                  <CommentReplyEditor
+                    v-else
+                    :post-id="postId"
+                    :circle-id="circleId"
+                    :root-id="comment.id"
+                    :reply-to-id="reply.id"
+                    :reply-to-name="reply.author_name"
+                    :language="language"
+                    @submit="handleReplySubmit(comment, $event)"
+                    @cancel="activeReplyId = null"
+                  />
+                </template>
               </div>
             </div>
 
@@ -249,11 +271,16 @@ import { getCommentList, getCommentReplies, locateComment, COMMENT_NOT_FOUND_COD
 import { seedContentMentions } from '@/utils/mentionResolve'
 import { toggleLike } from '@/api/like'
 import CommentReplyEditor from '@/components/post/detail/CommentReplyEditor.vue'
+import PlainCommentInput from '@/components/post/detail/PlainCommentInput.vue'
+import { useMobileShell } from '@/composables/useAppShell'
 import {CommentRound} from '@vicons/material'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 import { useInteractionToggle, interactionErrorMessage } from '@/composables/useInteractionToggle'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
+
+// 移动端门户：回复改用纯文本输入（docs/mobile-adaptation-plan.md 6.6）
+const mobileShell = useMobileShell()
 
 const props = defineProps({
   postId: {
@@ -1082,8 +1109,10 @@ defineExpose({ refreshComments, addComment })
   transition: color 0.2s;
 }
 
-.comment-author.clickable:hover {
-  color: #63e2b7;
+@media (hover: hover) {
+  .comment-author.clickable:hover {
+    color: #63e2b7;
+  }
 }
 .comment-time {
   font-size: 13px;
@@ -1121,16 +1150,20 @@ defineExpose({ refreshComments, addComment })
   font-size: 13px;
 }
 
-.comment-action-btn:hover {
-  color: rgba(255, 255, 255, 0.7) !important;
+@media (hover: hover) {
+  .comment-action-btn:hover {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
 }
 
 .comment-action-btn.liked-btn {
   color: #f472b6 !important;
 }
 
-.comment-action-btn.liked-btn:hover {
-  color: #ec4899 !important;
+@media (hover: hover) {
+  .comment-action-btn.liked-btn:hover {
+    color: #ec4899 !important;
+  }
 }
 
 /* 查看回复按钮 */
@@ -1146,8 +1179,10 @@ defineExpose({ refreshComments, addComment })
   user-select: none;
 }
 
-.load-replies-btn:hover {
-  color: #7fe7c4;
+@media (hover: hover) {
+  .load-replies-btn:hover {
+    color: #7fe7c4;
+  }
 }
 
 /* 子评论区 */
@@ -1231,8 +1266,10 @@ defineExpose({ refreshComments, addComment })
   transition: color 0.2s;
 }
 
-.sort-option:hover {
-  color: rgba(255, 255, 255, 0.6);
+@media (hover: hover) {
+  .sort-option:hover {
+    color: rgba(255, 255, 255, 0.6);
+  }
 }
 
 .sort-option.active {
@@ -1257,8 +1294,10 @@ defineExpose({ refreshComments, addComment })
   user-select: none;
 }
 
-.collapse-replies-btn:hover {
-  color: rgba(255, 255, 255, 0.6);
+@media (hover: hover) {
+  .collapse-replies-btn:hover {
+    color: rgba(255, 255, 255, 0.6);
+  }
 }
 
 /* 翻页箭头容器 */
@@ -1284,10 +1323,12 @@ defineExpose({ refreshComments, addComment })
   transition: all 0.2s;
 }
 
-.page-arrow-btn:hover:not(:disabled) {
-  background: rgba(99, 226, 183, 0.1);
-  border-color: rgba(99, 226, 183, 0.3);
-  color: #63e2b7;
+@media (hover: hover) {
+  .page-arrow-btn:hover:not(:disabled) {
+    background: rgba(99, 226, 183, 0.1);
+    border-color: rgba(99, 226, 183, 0.3);
+    color: #63e2b7;
+  }
 }
 
 .page-arrow-btn:disabled {

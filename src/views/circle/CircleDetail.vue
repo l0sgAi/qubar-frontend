@@ -52,9 +52,9 @@
 
             <!-- 操作按钮组 -->
             <div class="action-buttons">
-              <!-- 免打扰按钮 -->
+              <!-- 免打扰按钮（移动端门户不提供，见 docs/mobile-adaptation-plan.md 2.3） -->
               <NButton
-                v-if="circleDetail.is_joined"
+                v-if="circleDetail.is_joined && !mobileShell"
                 size="large"
                 quaternary
                 round
@@ -70,9 +70,9 @@
                 {{ circleDetail.member_is_disturb ? t('circle.disturbOn') : t('circle.disturbOff') }}
               </NButton>
 
-              <!-- 创建帖子按钮 -->
+              <!-- 创建帖子按钮（移动端不支持发帖） -->
               <NButton
-                v-if="circleDetail.is_joined"
+                v-if="circleDetail.is_joined && !mobileShell"
                 size="large"
                 type="primary"
                 round
@@ -84,9 +84,9 @@
                 {{t('post.createPost')}}
               </NButton>
 
-              <!-- 管理按钮（圈主/管理员可见），有待审核申请时显示数量角标 -->
+              <!-- 管理按钮（圈主/管理员可见），有待审核申请时显示数量角标；移动端不支持管理 -->
               <NButton
-                v-if="canManage"
+                v-if="canManage && !mobileShell"
                 size="large"
                 type="primary"
                 secondary
@@ -120,7 +120,7 @@
                 round
                 ghost
                 :loading="joinLoading"
-                @mouseenter="isButtonHovered = true"
+                @mouseenter="isButtonHovered = !mobileShell"
                 @mouseleave="isButtonHovered = false"
                 :type="isButtonHovered ? 'error' : 'primary'"
               >
@@ -302,11 +302,12 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, inject, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { NTabs, NTabPane, NButton, NIcon, NTag, NSpin, useMessage } from 'naive-ui'
+import { NTabs, NTabPane, NButton, NIcon, NTag, NSpin, useMessage, useDialog } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import AppShell from '@/components/layout/AppShell.vue'
 import AppDropdown from '@/components/common/AppDropdown.vue'
 import { useAppShell } from '@/composables/useAppShell'
+import { shareOrCopy } from '@/utils/share'
 import PostList from '@/components/post/PostList.vue'
 import PostListSkeleton from '@/components/post/PostListSkeleton.vue'
 import { getCircleDetail, joinCircle, leaveCircle, getCirclePosts, getCircleMembers } from '@/api/circle'
@@ -323,15 +324,16 @@ import { ShieldCheck as ShieldCheckIcon } from '@vicons/tabler'
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
+const dialog = useDialog()
 const { t } = useI18n()
 const { setTitleData } = usePageTitle()
 // 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
-const { offset, contentStyle } = useAppShell()
+const { offset, mobileShell, contentStyle } = useAppShell()
 
 // 注入圈子搜索状态设置方法
 const setCircleSearch = inject('setCircleSearch', () => {})
 
-// 更多选项下拉菜单
+// 更多选项下拉菜单（移动端只保留分享：举报尚在开发中，门户不展示）
 const moreOptions = computed(() => {
   const options = [
     {
@@ -344,7 +346,7 @@ const moreOptions = computed(() => {
     }
   ]
 
-  return options
+  return mobileShell.value ? options.filter(o => o.key === 'share') : options
 })
 
 // 圈子详情数据
@@ -585,13 +587,28 @@ const handleJoinCircle = async () => {
   }
 }
 
-// 退出圈子
-const handleLeaveCircle = async () => {
+// 退出圈子。桌面靠 hover 把按钮文案切成「退出圈子」作为提示；
+// 触屏没有 hover，点一下就会直接退出，故移动端加二次确认
+const handleLeaveCircle = () => {
   // 防御性检查：退出需登录（按钮本身只在已加入成员处显示）
   if (!auth.isAuthenticated()) {
     requireLogin('join')
     return
   }
+  if (!mobileShell.value) {
+    doLeaveCircle()
+    return
+  }
+  dialog.warning({
+    title: t('circle.leaveCircle'),
+    content: t('mobile.leaveConfirm', { name: circleDetail.value.name }),
+    positiveText: t('common.confirm'),
+    negativeText: t('common.cancel'),
+    onPositiveClick: doLeaveCircle
+  })
+}
+
+const doLeaveCircle = async () => {
   joinLoading.value = true
   isButtonHovered.value = false
   try {
@@ -629,12 +646,23 @@ const handleCreatePost = () => {
 const handleMoreSelect = (key) => {
   switch (key) {
     case 'share':
-      message.info(t('common.featureInDevelopment'))
+      if (mobileShell.value) {
+        handleMobileShare()
+      } else {
+        message.info(t('common.featureInDevelopment'))
+      }
       break
     case 'report':
       message.info(t('common.featureInDevelopment'))
       break
   }
+}
+
+// 移动端分享：系统分享面板，不支持时复制链接
+const handleMobileShare = async () => {
+  const result = await shareOrCopy({ title: circleDetail.value.name, url: window.location.href })
+  if (result === 'copied') message.success(t('mobile.linkCopied'))
+  else if (result === 'failed') message.error(t('mobile.copyFailed'))
 }
 
 // ---------- 管理入口（圈主/管理员） ----------
@@ -993,8 +1021,10 @@ onUnmounted(() => {
   user-select: none;
 }
 
-.show-more-btn:hover {
-  color: rgba(255, 255, 255, 0.9);
+@media (hover: hover) {
+  .show-more-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+  }
 }
 
 .description {
@@ -1088,11 +1118,17 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;
-    padding: 16px;
+    padding: 12px;
   }
 
   .content-container {
-    padding: 16px;
+    padding: 12px 0 0;
+  }
+
+  /* 桌面按 55dvw 定宽，手机上会压成窄条，移动端占满 */
+  .posts-section {
+    width: 100%;
+    min-width: 0;
   }
 
   .header-content {

@@ -18,7 +18,14 @@
               @like="handleLike"
               @collect="handleCollect"
             >
+            <!-- 移动端门户：纯文本评论（不带工具栏 / 配图 / @ 提及，见 docs/mobile-adaptation-plan.md 6.6） -->
+            <PlainCommentInput
+              v-if="mobileShell"
+              :post-id="route.params.id"
+              @submit="handleSubmitComment"
+            />
             <CommentEditor
+              v-else
               :post-id="route.params.id"
               :circle-id="post.circle_id"
               :language="language"
@@ -68,6 +75,7 @@ import { useAppShell } from '@/composables/useAppShell'
 import CircleInfoCard from '@/components/circle/CircleInfoCard.vue'
 import PostHeaderAndContent from '@/components/post/detail/PostHeaderAndContent.vue'
 import CommentEditor from '@/components/post/detail/CommentEditor.vue'
+import PlainCommentInput from '@/components/post/detail/PlainCommentInput.vue'
 import CommentList from '@/components/post/detail/CommentList.vue'
 import { getPostDetail } from '@/api/post'
 import { usePageTitle } from '@/composables/usePageTitle'
@@ -92,7 +100,7 @@ const loading = ref(true)
 const post = ref(null)
 const language = ref('zh-CN')
 // 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
-const { offset, contentStyle } = useAppShell()
+const { offset, mobileShell, contentStyle } = useAppShell()
 // 加载帖子详情
 const loadPostDetail = async () => {
   try {
@@ -307,11 +315,19 @@ onMounted(() => {
   .main-content {
     margin-left: 0;
     margin-right: 0;
-    padding: 16px;
+    padding: 12px;
   }
 
   .post-detail-container {
     max-width: 100%;
+  }
+
+  /* 桌面的 dvw 区间在手机上会把正文压成窄条，移动端占满 */
+  .post-main-column {
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+    gap: 12px;
   }
 }
 </style>

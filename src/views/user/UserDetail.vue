@@ -390,16 +390,20 @@ onMounted(() => {
   transition: all 0.2s;
 }
 
-.binding-row:hover {
-  background: rgba(255, 255, 255, 0.04);
+@media (hover: hover) {
+  .binding-row:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
 }
 
 .binding-row.bound {
   background: rgba(66, 184, 131, 0.05);
 }
 
-.binding-row.bound:hover {
-  background: rgba(66, 184, 131, 0.08);
+@media (hover: hover) {
+  .binding-row.bound:hover {
+    background: rgba(66, 184, 131, 0.08);
+  }
 }
 
 .binding-left {
@@ -447,7 +451,23 @@ onMounted(() => {
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;
-    padding: 16px;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  /* 桌面的 dvw 区间在手机上会把内容压成窄条，移动端占满 */
+  .content-area {
+    min-width: 0;
+    max-width: none;
+  }
+
+  /* 头像：桌面 260px 在手机上占满半屏，收小（NAvatar 尺寸走内联 CSS 变量，需 !important 覆盖） */
+  .sidebar-avatar {
+    --n-merged-size: 96px !important;
+  }
+
+  .avatar-font {
+    font-size: 40px;
   }
 }
 </style>

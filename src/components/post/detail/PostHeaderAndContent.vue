@@ -236,8 +236,10 @@ const getStatusTagType = (status) => {
   cursor: pointer;
 }
 
-.author-name.clickable:hover {
-  color: #63e2b7;
+@media (hover: hover) {
+  .author-name.clickable:hover {
+    color: #63e2b7;
+  }
 }
 
 .post-time {
@@ -309,11 +311,26 @@ const getStatusTagType = (status) => {
 
 @media (max-width: 768px) {
   :deep(.n-card__content) {
-    padding: 20px;
+    padding: 12px;
+  }
+
+  .post-header {
+    padding: 12px 12px 0;
+  }
+
+  .post-content {
+    padding: 12px;
+    padding-top: 0;
+  }
+
+  .post-actions .n-button {
+    min-width: 0;
+    flex: 1;
+    height: 44px;
   }
 
   .post-title {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .post-stats {

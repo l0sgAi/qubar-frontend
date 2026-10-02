@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { getMobileMeta, MOBILE_META_DEFAULTS, MOBILE_TOP_BAR } from '@/router/mobileMeta'
+import { getMobileMeta, isUnsupportedOnMobile, MOBILE_META_DEFAULTS, MOBILE_TOP_BAR } from '@/router/mobileMeta'
 
 // 登录页被路由表静态导入，这里替换为空组件，避免加载整页依赖
 vi.mock('@/views/auth/Login.vue', () => ({ default: { render: () => null } }))
@@ -51,5 +51,19 @@ describe('路由表 meta.mobile', () => {
   it('帖子详情：返回式顶栏、无 TabBar', () => {
     const route = routes.find(r => r.name === 'post-detail')
     expect(getMobileMeta(route)).toEqual({ supported: true, topBar: 'back', tabBar: false })
+  })
+})
+
+describe('isUnsupportedOnMobile', () => {
+  const unsupported = { meta: { mobile: { supported: false } } }
+  const supported = { meta: {} }
+
+  it.each([
+    [unsupported, true, true],
+    [unsupported, false, false],
+    [supported, true, false],
+    [supported, false, false]
+  ])('route=%o mobileShell=%s → %s', (route, mobileShell, expected) => {
+    expect(isUnsupportedOnMobile(route, mobileShell)).toBe(expected)
   })
 })

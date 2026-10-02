@@ -150,7 +150,7 @@
 <script setup>
 import { ref, computed, h, onMounted, onBeforeUnmount, watch, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { NButton, NIcon, NAvatar, NBadge, useMessage, useDialog } from 'naive-ui'
+import { NButton, NIcon, NAvatar, NBadge, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { auth } from '@/utils/auth'
 import { AddCircleOutlineFilled as AddIcon } from '@vicons/material'
@@ -159,12 +159,12 @@ import request from '@/utils/request'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import AppDropdown from '@/components/common/AppDropdown.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
-import { useUnreadNotice, stopUnreadNotice } from '@/composables/useUnreadNotice'
+import { useUnreadNotice } from '@/composables/useUnreadNotice'
+import { useLogout } from '@/composables/useLogout'
 
 const router = useRouter()
 const route = useRoute()
 const message = useMessage()
-const dialog = useDialog()
 const { t } = useI18n()
 
 // 注入圈子搜索状态
@@ -297,33 +297,8 @@ const handleProfile = () => {
   router.push('/profile')
 }
 
-// 退出登录
-const handleLogout = () => {
-  dialog.warning({
-    title: t('common.logout'),
-    content: t('common.logoutConfirm'),
-    positiveText: t('common.confirm'),
-    negativeText: t('common.cancel'),
-    onPositiveClick: async () => {
-      // 先断开未读数推送，避免登出后服务端推 auth-expired 再触发一次跳转提示
-      stopUnreadNotice()
-      try {
-        // 调用后端登出接口
-        await request.post('/auth/logout')
-
-        // 清除本地 token
-        auth.clearToken()
-        message.success(t('common.logoutSuccess'))
-        router.push('/')
-      } catch (error) {
-        // 即使接口调用失败，也清除本地 token
-        auth.clearToken()
-        message.warning(t('common.logout'))
-        router.push('/')
-      }
-    }
-  })
-}
+// 退出登录（确认 + 断开未读推送 + 清 token，逻辑见 useLogout，与移动端「我的」页共用）
+const { confirmLogout: handleLogout } = useLogout()
 
 // 发帖
 const handleCreatePost = () => {

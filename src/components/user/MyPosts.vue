@@ -7,7 +7,7 @@
         :placeholder="t('common.searchPosts')"
         clearable
         round
-        style="width: 280px;"
+        class="tab-search"
         @keyup.enter="handleSearch"
         @clear="handleSearchClear">
         <template #prefix>
@@ -72,7 +72,7 @@
                   :type="statusType(post.status)">
                   {{ statusText(post.status) }}
                 </NTag>
-                <AppDropdown v-if="!readonly" :options="getPostMenuOptions()" @select="(key) => handleAction(key, post)">
+                <AppDropdown v-if="!readonly && !mobileShell" :options="getPostMenuOptions()" @select="(key) => handleAction(key, post)">
                   <NButton quaternary circle size="small">
                     <template #icon>
                       <NIcon>
@@ -154,6 +154,7 @@ import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 import ImageCarousel from '@/components/common/ImageCarousel.vue'
 import AppDropdown from '@/components/common/AppDropdown.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
+import { useMobileShell } from '@/composables/useAppShell'
 
 const message = useMessage()
 const { t } = useI18n()
@@ -181,6 +182,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['edit', 'delete', 'total-change'])
+
+// 移动端门户不提供帖子编辑 / 删除（见 docs/mobile-adaptation-plan.md 2.3）
+const mobileShell = useMobileShell()
 
 const searchKey = ref('')
 const loading = ref(false)
@@ -403,10 +407,12 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.post-card:hover {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .post-card:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    transform: translateY(-2px);
+  }
 }
 
 /* 整卡封面链接（stretched-link）：铺满卡片让浏览器在任意位置识别出帖子链接 */
@@ -572,6 +578,17 @@ onBeforeUnmount(() => {
   .tab-header {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+/* 搜索框：桌面定宽，移动端占满整行（tab-header 在 768 以下纵向排列） */
+.tab-search {
+  width: 280px;
+}
+
+@media (max-width: 768px) {
+  .tab-search {
+    width: 100%;
   }
 }
 </style>
