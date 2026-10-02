@@ -170,6 +170,7 @@ onMounted(() => {
   top: calc(var(--header-height) + 16px);
   width: 22dvw;
   max-height: calc(100vh - var(--header-height) - 48px);
+  max-height: calc(100dvh - var(--header-height) - 48px);
   z-index: 100;
   flex-shrink: 0;
   align-self: flex-start;
@@ -182,6 +183,7 @@ onMounted(() => {
   border-radius: 16px;
   padding: 20px;
   max-height: calc(100vh - var(--header-height) - 48px);
+  max-height: calc(100dvh - var(--header-height) - 48px);
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   animation: slideInRight 0.5s ease;

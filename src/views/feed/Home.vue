@@ -1,13 +1,10 @@
 <template>
   <div class="home-page">
-    <!-- 顶栏 -->
-    <AppHeader />
-
-    <!-- 侧边栏 -->
-    <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
+    <!-- 顶栏 + 侧边栏（移动端外框切换见 AppShell） -->
+    <AppShell v-model:offset="offset" />
 
     <!-- 主内容区域和右侧栏的容器 -->
-    <div class="content-wrapper" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+    <div class="content-wrapper" :style="contentStyle">
       <!-- 主内容区域 -->
       <div class="main-content">
         <div class="home-container">
@@ -53,7 +50,7 @@
       </div>
 
       <!-- 右侧信息栏（匿名态隐藏，主内容自动占满；参考 Discover.vue） -->
-      <RightSidebar v-if="isLoggedIn" />
+      <RightSidebar v-if="isLoggedIn && !mobileShell" />
     </div>
   </div>
 </template>
@@ -63,8 +60,8 @@ import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { NTabs, NTab, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import AppHeader from '@/components/layout/AppHeader.vue'
-import SideNav from '@/components/layout/SideNav.vue'
+import AppShell from '@/components/layout/AppShell.vue'
+import { useAppShell } from '@/composables/useAppShell'
 import PostList from '@/components/post/PostList.vue'
 import PostListSkeleton from '@/components/post/PostListSkeleton.vue'
 import RightSidebar from '@/components/layout/RightSidebar.vue'
@@ -76,7 +73,8 @@ import request from '@/utils/request'
 const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
-const offset = ref(260)
+// 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
+const { offset, mobileShell, contentStyle } = useAppShell()
 
 const isLoggedIn = computed(() => auth.isAuthenticated())
 

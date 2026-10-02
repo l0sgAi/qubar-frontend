@@ -14,7 +14,11 @@
             mode="out-in"
             :duration="shouldPageFade(route) ? { enter: 220, leave: 160 } : 0"
           >
-            <component :is="Component" :key="route.name" />
+            <!-- 移动端外框下不支持的页面（meta.mobile.supported=false）改渲染「暂不支持页」，URL 不变 -->
+            <component
+              :is="isUnsupportedOnMobile(route, mobileShell) ? MobileUnsupported : Component"
+              :key="route.name"
+            />
           </Transition>
         </router-view>
         <!-- 全局访客操作登录引导（写操作前置拦截，避免触发 401 硬跳转） -->
@@ -25,16 +29,26 @@
 </template>
 
 <script setup>
-import { computed, ref, provide, readonly, watch } from 'vue'
+import { computed, ref, provide, readonly, watch, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { darkTheme, zhCN, enUS } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { NConfigProvider, NGlobalStyle, NMessageProvider, NDialogProvider } from 'naive-ui'
 import LoginPromptModal from '@/components/auth/LoginPromptModal.vue'
 import { applyPageTitle } from '@/utils/pageTitle'
+import MobileUnsupported from '@/views/MobileUnsupported.vue'
+import { useMobileShell } from '@/composables/useAppShell'
+import { isUnsupportedOnMobile } from '@/router/mobileMeta'
 
 const router = useRouter()
 const { locale } = useI18n()
+
+// 移动端外框开关同步到 <html class="mobile-shell">：
+// main.css 据此把 --header-height 换成移动顶栏高度（与 JS 外框严格同步，而非单纯按媒体查询）
+const mobileShell = useMobileShell()
+watchEffect(() => {
+  document.documentElement.classList.toggle('mobile-shell', mobileShell.value)
+})
 
 // 圈子搜索状态
 const circleSearchState = ref({

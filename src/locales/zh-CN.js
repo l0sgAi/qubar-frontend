@@ -34,6 +34,44 @@ export default {
     enabled: '已开启'
   },
 
+  // 移动端门户（≤ 768px，见 docs/mobile-adaptation-plan.md）
+  mobile: {
+    tab: {
+      home: '首页',
+      discover: '发现',
+      notice: '消息',
+      me: '我的',
+      login: '登录'
+    },
+    segment: {
+      discover: '发现',
+      hot: '热榜'
+    },
+    linkCopied: '链接已复制',
+    leaveConfirm: '确定退出「{name}」吗？',
+    copyFailed: '复制失败，请手动复制地址栏中的链接',
+    unsupported: {
+      title: '该功能暂未支持手机网页版',
+      desc: '发帖、编辑和管理类功能请在电脑上使用，App 版本正在路上。',
+      copyLink: '复制链接，在电脑上打开',
+      desktopHint: '也可以在浏览器菜单中选择「请求桌面网站」，临时切换到电脑版布局。',
+      downloadApp: '下载 App',
+      backHome: '回到首页'
+    },
+    comment: {
+      placeholder: '写下你的评论...',
+      replyPlaceholder: '回复 {name}',
+      send: '发送',
+      richHint: "图片和 {'@'} 提及请在电脑端使用"
+    },
+    me: {
+      settings: '设置',
+      language: '语言',
+      terms: '用户协议',
+      privacy: '隐私政策'
+    }
+  },
+
   // 浏览器标签页标题（document.title，见 router/index.js 的 applyPageTitle）
   title: {
     brand: '趣吧 Qubar',

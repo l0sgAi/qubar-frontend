@@ -3,6 +3,7 @@ import Login from '@/views/auth/Login.vue'
 import { auth } from '@/utils/auth'
 import { applyPageTitle } from '@/utils/pageTitle'
 
+// meta.mobile：移动端门户配置（supported / topBar / tabBar），缺省取默认值，见 ./mobileMeta.js
 export const routes = [
   {
     // 登录页：标签页标题展示品牌标语（见 utils/pageTitle.js）
@@ -42,7 +43,7 @@ export const routes = [
     path: '/create-post',
     name: 'create-post',
     component: () => import('@/views/post/CreatePost.vue'),
-    meta: { requiresAuth: true, pageFade: true, titleKey: 'title.createPost' }
+    meta: { requiresAuth: true, pageFade: true, titleKey: 'title.createPost', mobile: { supported: false } }
   },
   {
     path: '/profile',
@@ -55,7 +56,7 @@ export const routes = [
     path: '/user/:id',
     name: 'user-detail',
     component: () => import('@/views/user/UserDetail.vue'),
-    meta: { titleKey: 'title.userDetail' }
+    meta: { titleKey: 'title.userDetail', mobile: { topBar: 'back' } }
   },
   {
     path: '/terms',
@@ -74,14 +75,14 @@ export const routes = [
     path: '/search',
     name: 'search',
     component: () => import('@/views/feed/SearchResults.vue'),
-    meta: { titleKey: 'title.searchResults' }
+    meta: { titleKey: 'title.searchResults', mobile: { topBar: 'back' } }
   },
   {
     // 圈子详情：访客可读（/circle/detail/:id 已开放 anonymous）
     path: '/circle/:id',
     name: 'circle-detail',
     component: () => import('@/views/circle/CircleDetail.vue'),
-    meta: { titleKey: 'title.circleDetail' }
+    meta: { titleKey: 'title.circleDetail', mobile: { topBar: 'back' } }
   },
   {
     // 圈子成员管理：需登录；圈主/管理员（member_role>=20）校验在页面内自查（非管理角色 /circle/members 返回 403）
@@ -89,14 +90,14 @@ export const routes = [
     path: '/circle/:id/members',
     name: 'circle-members',
     component: () => import('@/views/circle/CircleMembers.vue'),
-    meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleMembers' }
+    meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleMembers', mobile: { supported: false } }
   },
   {
     // 圈子资料编辑：需登录；圈主可改全部字段、管理员仅部分字段（页面内按 member_role 自查并按角色渲染）
     path: '/circle/:id/edit',
     name: 'circle-edit',
     component: () => import('@/views/circle/CircleEdit.vue'),
-    meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleEdit' }
+    meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleEdit', mobile: { supported: false } }
   },
   {
     // 圈子机器人管理：需登录；圈主/管理员（member_role>=20）管理本圈机器人（每圈上限 5 个），
@@ -104,7 +105,7 @@ export const routes = [
     path: '/circle/:id/agents',
     name: 'circle-agents',
     component: () => import('@/views/circle/CircleAgents.vue'),
-    meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleAgents' }
+    meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleAgents', mobile: { supported: false } }
   },
   {
     // 帖子详情：访客可读（/post/detail/:id 已开放 anonymous）
@@ -112,7 +113,7 @@ export const routes = [
     path: '/post/:id',
     name: 'post-detail',
     component: () => import('@/views/post/PostDetail.vue'),
-    meta: { pageFade: true, titleKey: 'title.postDetail' }
+    meta: { pageFade: true, titleKey: 'title.postDetail', mobile: { topBar: 'back', tabBar: false } }
   },
   {
     // 消息中心（站内通知）：需登录
@@ -127,7 +128,7 @@ export const routes = [
     path: '/admin/agents',
     name: 'admin-agents',
     component: () => import('@/views/admin/AdminAgents.vue'),
-    meta: { requiresAuth: true, titleKey: 'title.adminAgents' }
+    meta: { requiresAuth: true, titleKey: 'title.adminAgents', mobile: { supported: false } }
   },
   {
     // 兜底路由：未匹配路径统一展示 404 页（访客可读，避免空白页）

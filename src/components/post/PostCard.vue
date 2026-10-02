@@ -234,11 +234,13 @@ const handleComment = () => {
   transition: all 0.3s ease;
 }
 
-.post-card:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  transform: translateY(-2px);
-  cursor: pointer;
+@media (hover: hover) {
+  .post-card:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    transform: translateY(-2px);
+    cursor: pointer;
+  }
 }
 
 /* 整卡封面链接（stretched-link）：铺满卡片让浏览器在任意位置识别出帖子链接
@@ -279,16 +281,20 @@ const handleComment = () => {
   color: rgba(255, 255, 255, 0.8);
 }
 
-.circle-info:hover .circle-name,
-.user-info:hover .user-name,
-.author-info:hover .user-name {
-  color: rgba(255, 255, 255, 1);
+@media (hover: hover) {
+  .circle-info:hover .circle-name,
+  .user-info:hover .user-name,
+  .author-info:hover .user-name {
+    color: rgba(255, 255, 255, 1);
+  }
 }
 
-.circle-info:hover {
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
+@media (hover: hover) {
+  .circle-info:hover {
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+  }
 }
 
 .user-info {
@@ -301,9 +307,11 @@ const handleComment = () => {
   border-radius: 8px;
 }
 
-.user-info:hover {
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.06);
+@media (hover: hover) {
+  .user-info:hover {
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.06);
+  }
 }
 
 .header-spacer {
@@ -326,9 +334,11 @@ const handleComment = () => {
   font-size: 1.2rem;
 }
 
-.author-info:hover {
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.06);
+@media (hover: hover) {
+  .author-info:hover {
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.06);
+  }
 }
 
 .user-meta {
@@ -389,8 +399,10 @@ const handleComment = () => {
   transition: opacity 0.2s ease;
 }
 
-.post-card:hover .view-detail {
-  opacity: 1;
+@media (hover: hover) {
+  .post-card:hover .view-detail {
+    opacity: 1;
+  }
 }
 
 /* 图片轮播（封面图/多图统一）：与摘要文本左对齐（16px）；
@@ -435,25 +447,31 @@ const handleComment = () => {
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-:deep(.n-button:hover) {
-  color: rgba(255, 255, 255, 0.9) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+@media (hover: hover) {
+  :deep(.n-button:hover) {
+    color: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+  }
 }
 
 :deep(.n-button.n-button--error-type) {
   color: #ec4899 !important;
 }
 
-:deep(.n-button.n-button--error-type:hover) {
-  background: rgba(236, 72, 153, 0.15) !important;
+@media (hover: hover) {
+  :deep(.n-button.n-button--error-type:hover) {
+    background: rgba(236, 72, 153, 0.15) !important;
+  }
 }
 
 :deep(.n-button.n-button--warning-type) {
   color: #f59e0b !important;
 }
 
-:deep(.n-button.n-button--warning-type:hover) {
-  background: rgba(245, 158, 11, 0.15) !important;
+@media (hover: hover) {
+  :deep(.n-button.n-button--warning-type:hover) {
+    background: rgba(245, 158, 11, 0.15) !important;
+  }
 }
 
 /* 响应式 */

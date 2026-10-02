@@ -1,14 +1,22 @@
 <template>
   <NConfigProvider :theme="darkTheme" :theme-overrides="themeOverrides">
     <div class="user-profile-page">
-      <!-- 顶栏 -->
-      <AppHeader />
-
-      <!-- 侧边栏 -->
-      <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
+      <!-- 顶栏 + 侧边栏（移动端外框切换见 AppShell） -->
+      <AppShell v-model:offset="offset" />
 
       <!-- 主内容区域 -->
-      <div class="main-content" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+      <div class="main-content" :style="contentStyle">
+        <!-- 移动端「我的」：只读资料卡（不提供编辑资料 / 改密码，见 docs/mobile-adaptation-plan.md 6.5） -->
+        <div v-if="mobileShell" class="mobile-profile-card">
+          <NAvatar :size="64" :src="userInfo.avatar_url || undefined" round>
+            <span v-if="!userInfo.avatar_url" class="mobile-avatar-font">{{ userInfo.username?.charAt(0) }}</span>
+          </NAvatar>
+          <div class="mobile-profile-text">
+            <h2 class="mobile-username">{{ userInfo.username || t('user.notSet') }}</h2>
+            <p v-if="userInfo.email" class="mobile-email">{{ userInfo.email }}</p>
+          </div>
+        </div>
+
         <!-- 左侧内容区域 -->
         <div class="content-area">
           <!-- 标签页内容 -->
@@ -73,8 +81,28 @@
         </NCard>
         </div>
 
-        <!-- 右侧用户信息栏 -->
-        <div class="sidebar-area">
+        <!-- 移动端设置列表：语言 / 协议 / 退出登录（原桌面头像下拉菜单的入口） -->
+        <div v-if="mobileShell" class="mobile-settings">
+          <div class="settings-title">{{ t('mobile.me.settings') }}</div>
+          <div class="settings-row">
+            <span>{{ t('mobile.me.language') }}</span>
+            <LanguageSwitcher />
+          </div>
+          <SmartLink class="settings-row" to="/terms">
+            <span>{{ t('mobile.me.terms') }}</span>
+            <NIcon size="18"><ChevronRight /></NIcon>
+          </SmartLink>
+          <SmartLink class="settings-row" to="/privacy">
+            <span>{{ t('mobile.me.privacy') }}</span>
+            <NIcon size="18"><ChevronRight /></NIcon>
+          </SmartLink>
+          <button type="button" class="settings-row logout-row" @click="confirmLogout">
+            {{ t('common.logout') }}
+          </button>
+        </div>
+
+        <!-- 右侧用户信息栏（移动端由上方只读资料卡替代） -->
+        <div v-if="!mobileShell" class="sidebar-area">
           <NCard class="profile-sidebar-card" :bordered="false">
             <!-- 用户头像和名称 -->
             <div class="sidebar-header">
@@ -85,7 +113,7 @@
                 class="sidebar-avatar">
                  <div class="avatar-font" 
                  v-if="!userInfo.avatar_url || userInfo.avatar_url == ''">
-                 {{ userInfo.username.charAt(0) }}
+                 {{ userInfo.username?.charAt(0) }}
                 </div>
               </NAvatar>
               <h2 class="sidebar-username">{{ userInfo.username || t('user.notSet') }}</h2>
@@ -317,8 +345,12 @@ import {
   darkTheme,
   useMessage
 } from 'naive-ui'
-import AppHeader from '@/components/layout/AppHeader.vue'
-import SideNav from '@/components/layout/SideNav.vue'
+import AppShell from '@/components/layout/AppShell.vue'
+import { useAppShell } from '@/composables/useAppShell'
+import { useLogout } from '@/composables/useLogout'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
+import SmartLink from '@/components/common/SmartLink.vue'
+import { ChevronRight } from '@vicons/tabler'
 import MyPosts from '@/components/user/MyPosts.vue'
 import MyGroups from '@/components/user/MyGroups.vue'
 import MyFavorites from '@/components/user/MyFavorites.vue'
@@ -336,7 +368,9 @@ const route = useRoute()
 const message = useMessage()
 const { t } = useI18n()
 const { setTitleData } = usePageTitle()
-const offset = ref(260)
+// 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
+const { offset, mobileShell, contentStyle } = useAppShell()
+const { confirmLogout } = useLogout()
 
 // 当前激活的标签页（支持 /profile?tab=groups 等定位）
 const VALID_TABS = ['posts', 'groups', 'favorites', 'history']
@@ -925,8 +959,10 @@ onMounted(() => {
   transition: background 0.2s;
 }
 
-.info-row:hover {
-  background: rgba(255, 255, 255, 0.04);
+@media (hover: hover) {
+  .info-row:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
 }
 
 /* 绑定列表 */
@@ -946,16 +982,20 @@ onMounted(() => {
   transition: all 0.2s;
 }
 
-.binding-row:hover {
-  background: rgba(255, 255, 255, 0.04);
+@media (hover: hover) {
+  .binding-row:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
 }
 
 .binding-row.bound {
   background: rgba(66, 184, 131, 0.05);
 }
 
-.binding-row.bound:hover {
-  background: rgba(66, 184, 131, 0.08);
+@media (hover: hover) {
+  .binding-row.bound:hover {
+    background: rgba(66, 184, 131, 0.08);
+  }
 }
 
 .binding-left {
@@ -1011,6 +1051,95 @@ onMounted(() => {
     margin-left: 0;
     padding: 16px;
   }
+}
+
+/* ===== 移动端「我的」 ===== */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .content-area {
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+.mobile-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+}
+
+.mobile-avatar-font {
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.mobile-profile-text {
+  min-width: 0;
+}
+
+.mobile-username {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-email {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-settings {
+  border-radius: 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  overflow: hidden;
+}
+
+.settings-title {
+  padding: 14px 16px 6px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.settings-row {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: none;
+  border-top: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.settings-row:active {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.logout-row {
+  justify-content: center;
+  color: #e5484d;
+  font-family: inherit;
 }
 </style>
 
@@ -1091,10 +1220,12 @@ onMounted(() => {
   font-weight: 600 !important;
 }
 
-.edit-modal .n-button--primary-type:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(34, 179, 106, 0.35);
-  opacity: 0.95;
+@media (hover: hover) {
+  .edit-modal .n-button--primary-type:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(34, 179, 106, 0.35);
+    opacity: 0.95;
+  }
 }
 
 /* ===== 图片上传卡片：圆润化 ===== */
@@ -1104,8 +1235,10 @@ onMounted(() => {
   transition: all 0.2s ease;
 }
 
-.edit-modal .n-upload-trigger--image-card:hover {
-  border-color: #18a058 !important;
-  color: #18a058 !important;
+@media (hover: hover) {
+  .edit-modal .n-upload-trigger--image-card:hover {
+    border-color: #18a058 !important;
+    color: #18a058 !important;
+  }
 }
 </style>

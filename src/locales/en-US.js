@@ -34,6 +34,44 @@ export default {
     enabled: 'Enabled'
   },
 
+  // Mobile web portal (≤ 768px, see docs/mobile-adaptation-plan.md)
+  mobile: {
+    tab: {
+      home: 'Home',
+      discover: 'Discover',
+      notice: 'Inbox',
+      me: 'Me',
+      login: 'Log in'
+    },
+    segment: {
+      discover: 'Discover',
+      hot: 'Trending'
+    },
+    linkCopied: 'Link copied',
+    leaveConfirm: 'Leave "{name}"?',
+    copyFailed: 'Copy failed, please copy the link from the address bar',
+    unsupported: {
+      title: 'Not available on mobile web yet',
+      desc: 'Posting, editing and management are available on desktop. A mobile app is on the way.',
+      copyLink: 'Copy link to open on a computer',
+      desktopHint: 'You can also choose "Request desktop site" in your browser menu to switch to the desktop layout.',
+      downloadApp: 'Get the app',
+      backHome: 'Back to home'
+    },
+    comment: {
+      placeholder: 'Write a comment...',
+      replyPlaceholder: 'Reply to {name}',
+      send: 'Send',
+      richHint: "Images and {'@'} mentions are available on desktop"
+    },
+    me: {
+      settings: 'Settings',
+      language: 'Language',
+      terms: 'Terms of Service',
+      privacy: 'Privacy Policy'
+    }
+  },
+
   // Browser tab titles (document.title, see applyPageTitle in router/index.js)
   title: {
     brand: 'Qubar',

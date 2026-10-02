@@ -371,6 +371,7 @@ const handleCreateSuccess = (data) => {
   -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
   height: calc(100vh - var(--header-height));
+  height: calc(100dvh - var(--header-height));
   overflow-y: auto;
 }
 

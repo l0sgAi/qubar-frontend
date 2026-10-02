@@ -1,16 +1,14 @@
 <template>
   <div class="hot-page">
-    <!-- 顶栏 -->
-    <AppHeader />
-
-    <!-- 侧边栏 -->
-    <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
+    <!-- 顶栏 + 侧边栏（移动端外框切换见 AppShell） -->
+    <AppShell v-model:offset="offset" />
 
     <!-- 主内容区域和右侧栏的容器 -->
-    <div class="content-wrapper" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+    <div class="content-wrapper" :style="contentStyle">
       <!-- 主内容区域 -->
       <div class="main-content">
         <div class="hot-container">
+          <MobileFeedSegment v-if="mobileShell" />
           <!-- 顶部：标题 + 时间窗切换 + 更新时间 -->
           <div class="hot-header">
             <div class="header-left">
@@ -74,7 +72,7 @@
       </div>
 
       <!-- 右侧信息栏 -->
-      <RightSidebar />
+      <RightSidebar v-if="!mobileShell" />
     </div>
   </div>
 </template>
@@ -84,8 +82,9 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButtonGroup, NButton, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import AppHeader from '@/components/layout/AppHeader.vue'
-import SideNav from '@/components/layout/SideNav.vue'
+import AppShell from '@/components/layout/AppShell.vue'
+import MobileFeedSegment from '@/components/layout/mobile/MobileFeedSegment.vue'
+import { useAppShell } from '@/composables/useAppShell'
 import RightSidebar from '@/components/layout/RightSidebar.vue'
 import TrendingCard from '@/components/feed/TrendingCard.vue'
 import { getTrending } from '@/api/trending'
@@ -93,7 +92,8 @@ import { getTrending } from '@/api/trending'
 const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
-const offset = ref(260)
+// 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
+const { offset, mobileShell, contentStyle } = useAppShell()
 
 // 首屏聚合：section=all，每类 size=10，不做翻页
 const SECTION_SIZE = 10
@@ -283,17 +283,24 @@ onBeforeUnmount(() => {
 }
 
 /* 未选中 hover：白色微亮底（naive 默认类型各状态底色本就是透明，无冲突） */
-.window-switch :deep(.n-button:not(.is-active):hover) {
-  background-color: rgba(255, 255, 255, 0.06);
+@media (hover: hover) {
+  .window-switch :deep(.n-button:not(.is-active):hover) {
+    background-color: rgba(255, 255, 255, 0.06);
+  }
 }
 
 /* 选中：主题绿淡底；补齐 hover/focus/active 变体，
    避免交互瞬间被 naive 同优先级的透明底色规则顶掉 */
 .window-switch :deep(.n-button.is-active),
-.window-switch :deep(.n-button.is-active:hover),
 .window-switch :deep(.n-button.is-active:focus),
 .window-switch :deep(.n-button.is-active:active) {
   background-color: rgba(102, 234, 194, 0.16);
+}
+
+@media (hover: hover) {
+  .window-switch :deep(.n-button.is-active:hover) {
+    background-color: rgba(102, 234, 194, 0.16);
+  }
 }
 
 /* 文案色写在 __content 上：直接命中恒优先于 naive 设在按钮根上的 color 继承 */
@@ -303,8 +310,10 @@ onBeforeUnmount(() => {
   transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.window-switch :deep(.n-button:hover .n-button__content) {
-  color: rgba(255, 255, 255, 0.85);
+@media (hover: hover) {
+  .window-switch :deep(.n-button:hover .n-button__content) {
+    color: rgba(255, 255, 255, 0.85);
+  }
 }
 
 .window-switch :deep(.n-button.is-active .n-button__content) {
