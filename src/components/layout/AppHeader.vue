@@ -159,7 +159,7 @@ import request from '@/utils/request'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import AppDropdown from '@/components/common/AppDropdown.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
-import { useNoticeStream } from '@/composables/useNoticeStream'
+import { useUnreadNotice, stopUnreadNotice } from '@/composables/useUnreadNotice'
 
 const router = useRouter()
 const route = useRoute()
@@ -175,9 +175,9 @@ const clearCircleSearch = inject('clearCircleSearch', () => {})
 const username = ref('User')
 const userAvatarUrl = ref('')
 
-// 未读数：SSE 实时推送为主、30s 轮询降级（连接管理在 useNoticeStream 内）。
-// 本地校正事件（notice-read/notice-read-all）仍直接改此 ref，SSE 随后推全量覆盖，语义一致。
-const { unreadCount: notificationCount, start: startNoticeStream, stop: stopNoticeStream } = useNoticeStream({
+// 未读数：SSE 实时推送为主、30s 轮询降级。连接与本地校正事件（notice-read/notice-read-all）
+// 由 useUnreadNotice 单例统一管理（挂载即 acquire、卸载即 release），移动端 TabBar 共用同一份
+const { unreadCount: notificationCount } = useUnreadNotice({
   onAuthExpired: () => {
     // 服务端检测到登出/过期/被踢下线（token 已在 composable 内清除）
     message.warning(t('common.logout'))
@@ -225,10 +225,7 @@ onMounted(() => {
 
   if (auth.isAuthenticated()) {
     fetchUserInfo()
-    startNoticeStream()
   }
-  window.addEventListener('notice-read', handleNoticeReadEvent)
-  window.addEventListener('notice-read-all', handleNoticeReadAllEvent)
   // 同步搜索框内容与当前路由
   if (route.name === 'search' && route.query.q) {
     searchKeyword.value = route.query.q
@@ -237,9 +234,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
-  window.removeEventListener('notice-read', handleNoticeReadEvent)
-  window.removeEventListener('notice-read-all', handleNoticeReadAllEvent)
-  stopNoticeStream()
 })
 
 // 监听路由变化，同步搜索框内容
@@ -311,6 +305,8 @@ const handleLogout = () => {
     positiveText: t('common.confirm'),
     negativeText: t('common.cancel'),
     onPositiveClick: async () => {
+      // 先断开未读数推送，避免登出后服务端推 auth-expired 再触发一次跳转提示
+      stopUnreadNotice()
       try {
         // 调用后端登出接口
         await request.post('/auth/logout')
@@ -337,14 +333,6 @@ const handleCreatePost = () => {
 // 消息中心
 const handleNotification = () => {
   router.push('/notifications')
-}
-
-// 通知页已读操作后的本地校正（read 按条数减、read-all 清零；SSE 全量推送随后覆盖校准）
-const handleNoticeReadEvent = (e) => {
-  notificationCount.value = Math.max(0, notificationCount.value - (e.detail?.count || 0))
-}
-const handleNoticeReadAllEvent = () => {
-  notificationCount.value = 0
 }
 
 // 返回主页（匿名态回到发现页，避免被 /home 的登录守卫弹走）。

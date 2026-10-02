@@ -1,14 +1,11 @@
 <template>
   <NConfigProvider :theme="darkTheme" :theme-overrides="themeOverrides">
     <div class="user-profile-page">
-      <!-- 顶栏 -->
-      <AppHeader />
-
-      <!-- 侧边栏 -->
-      <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
+      <!-- 顶栏 + 侧边栏（移动端外框切换见 AppShell） -->
+      <AppShell v-model:offset="offset" />
 
       <!-- 主内容区域 -->
-      <div class="main-content" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+      <div class="main-content" :style="contentStyle">
         <!-- 左侧内容区域 -->
         <div class="content-area">
           <!-- 标签页内容 -->
@@ -317,8 +314,8 @@ import {
   darkTheme,
   useMessage
 } from 'naive-ui'
-import AppHeader from '@/components/layout/AppHeader.vue'
-import SideNav from '@/components/layout/SideNav.vue'
+import AppShell from '@/components/layout/AppShell.vue'
+import { useAppShell } from '@/composables/useAppShell'
 import MyPosts from '@/components/user/MyPosts.vue'
 import MyGroups from '@/components/user/MyGroups.vue'
 import MyFavorites from '@/components/user/MyFavorites.vue'
@@ -336,7 +333,8 @@ const route = useRoute()
 const message = useMessage()
 const { t } = useI18n()
 const { setTitleData } = usePageTitle()
-const offset = ref(260)
+// 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
+const { offset, contentStyle } = useAppShell()
 
 // 当前激活的标签页（支持 /profile?tab=groups 等定位）
 const VALID_TABS = ['posts', 'groups', 'favorites', 'history']

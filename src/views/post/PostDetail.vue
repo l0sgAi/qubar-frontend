@@ -1,13 +1,10 @@
 <template>
   <div class="post-detail-page">
-    <!-- 顶栏 -->
-    <AppHeader />
-
-    <!-- 侧边栏 -->
-    <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
+    <!-- 顶栏 + 侧边栏（移动端外框切换见 AppShell） -->
+    <AppShell v-model:offset="offset" />
 
     <!-- 主内容区域 -->
-    <div class="main-content" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+    <div class="main-content" :style="contentStyle">
       <div v-if="loading" class="loading-container">
         <NSpin size="large" />
       </div>
@@ -66,8 +63,8 @@ import { ref, onMounted, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import { NSpin, NEmpty, useMessage, NIcon } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import AppHeader from '@/components/layout/AppHeader.vue'
-import SideNav from '@/components/layout/SideNav.vue'
+import AppShell from '@/components/layout/AppShell.vue'
+import { useAppShell } from '@/composables/useAppShell'
 import CircleInfoCard from '@/components/circle/CircleInfoCard.vue'
 import PostHeaderAndContent from '@/components/post/detail/PostHeaderAndContent.vue'
 import CommentEditor from '@/components/post/detail/CommentEditor.vue'
@@ -94,7 +91,8 @@ const setCircleSearch = inject('setCircleSearch', () => {})
 const loading = ref(true)
 const post = ref(null)
 const language = ref('zh-CN')
-const offset = ref(260);
+// 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
+const { offset, contentStyle } = useAppShell()
 // 加载帖子详情
 const loadPostDetail = async () => {
   try {
@@ -272,6 +270,7 @@ onMounted(() => {
   position: sticky;
   top: calc(var(--header-height) + 24px);
   max-height: calc(100vh - var(--header-height) - 24px);
+  max-height: calc(100dvh - var(--header-height) - 24px);
   overflow-y: auto;
   /* 隐藏滚动条 */
   scrollbar-width: none; /* Firefox */

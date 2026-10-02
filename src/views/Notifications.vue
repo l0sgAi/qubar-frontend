@@ -1,13 +1,10 @@
 <template>
   <div class="notifications-page">
-    <!-- 顶栏 -->
-    <AppHeader />
-
-    <!-- 侧边栏 -->
-    <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
+    <!-- 顶栏 + 侧边栏（移动端外框切换见 AppShell） -->
+    <AppShell v-model:offset="offset" />
 
     <!-- 主内容区域 -->
-    <div class="content-wrapper" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+    <div class="content-wrapper" :style="contentStyle">
       <div class="main-content">
         <div class="notice-container">
           <!-- 页头 -->
@@ -87,8 +84,8 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { NAvatar, NButton, NEmpty, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import AppHeader from '@/components/layout/AppHeader.vue'
-import SideNav from '@/components/layout/SideNav.vue'
+import AppShell from '@/components/layout/AppShell.vue'
+import { useAppShell } from '@/composables/useAppShell'
 import SmartLink from '@/components/common/SmartLink.vue'
 import { getNoticeList, markNoticesRead, markAllNoticesRead } from '@/api/notice'
 import { useFormatTime } from '@/utils/i18n'
@@ -97,7 +94,8 @@ const message = useMessage()
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
 
-const offset = ref(260)
+// 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
+const { offset, contentStyle } = useAppShell()
 
 // 类型过滤 Tab：type 对应后端 notice_type，空/0=全部
 // 接口支持逗号分隔多值过滤（notice_type IN (...)），帖子被赞(1)与评论被赞(2)同属「点赞」tab

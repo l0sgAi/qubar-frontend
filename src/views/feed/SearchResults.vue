@@ -1,13 +1,10 @@
 <template>
   <div class="search-page">
-    <!-- 顶栏 -->
-    <AppHeader />
-
-    <!-- 侧边栏 -->
-    <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
+    <!-- 顶栏 + 侧边栏（移动端外框切换见 AppShell） -->
+    <AppShell v-model:offset="offset" />
 
     <!-- 主内容区域 -->
-    <div class="main-content" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+    <div class="main-content" :style="contentStyle">
       <div class="search-container">
           <div class="search-info">
             <h2 class="search-title">{{ t('nav.searchResults') }}</h2>
@@ -68,8 +65,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { NTabs,NDivider, NTabPane, NIcon, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { FileText as FileTextIcon } from '@vicons/tabler'
-import AppHeader from '@/components/layout/AppHeader.vue'
-import SideNav from '@/components/layout/SideNav.vue'
+import AppShell from '@/components/layout/AppShell.vue'
+import { useAppShell } from '@/composables/useAppShell'
 import CircleList from '@/components/circle/CircleList.vue'
 import UserList from '@/components/user/UserList.vue'
 import { searchCircles, getCircleDetail } from '@/api/circle'
@@ -81,7 +78,8 @@ const route = useRoute()
 const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
-const offset = ref(260)
+// 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
+const { offset, contentStyle } = useAppShell()
 
 // 注入圈子搜索状态
 const circleSearchState = inject('circleSearchState', ref({ id: null, name: '', avatarUrl: '' }))

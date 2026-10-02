@@ -19,6 +19,14 @@
   /* 布局尺寸 */
   --header-height: 64px;
 
+  /* 移动端门户（断点 ≤ 768px，与 src/constants/breakpoints.js 一致；
+   * 断点三档见 docs/mobile-adaptation-plan.md 5.1）。
+   * 手机断点下 --header-height 改为 --mobile-topbar-height 随 P1 移动端外框一起启用 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --mobile-topbar-height: 48px;
+  --tabbar-height: 56px;
+
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);

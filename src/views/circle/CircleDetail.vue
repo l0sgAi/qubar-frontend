@@ -1,13 +1,10 @@
 <template>
   <div class="circle-detail-page">
-    <!-- 顶栏 -->
-    <AppHeader />
-
-    <!-- 侧边栏 -->
-    <SideNav @collapsed="offset = 64" @expanded="offset = 260" />
+    <!-- 顶栏 + 侧边栏（移动端外框切换见 AppShell） -->
+    <AppShell v-model:offset="offset" />
 
     <!-- 主内容区域 -->
-    <div class="main-content" :style="{ 'margin-left': `${offset}px`, width: `calc(100% - ${offset}px)` }">
+    <div class="main-content" :style="contentStyle">
       <!-- 加载骨架：切换圈子时显示，避免停留在上一个圈子的内容 -->
       <div v-if="loading" class="detail-skeleton">
         <!-- 头部 banner：全宽，对齐真实 .circle-header -->
@@ -307,9 +304,9 @@ import { ref, computed, onMounted, onUnmounted, watch, inject, nextTick } from '
 import { useRoute, useRouter } from 'vue-router'
 import { NTabs, NTabPane, NButton, NIcon, NTag, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import AppHeader from '@/components/layout/AppHeader.vue'
+import AppShell from '@/components/layout/AppShell.vue'
 import AppDropdown from '@/components/common/AppDropdown.vue'
-import SideNav from '@/components/layout/SideNav.vue'
+import { useAppShell } from '@/composables/useAppShell'
 import PostList from '@/components/post/PostList.vue'
 import PostListSkeleton from '@/components/post/PostListSkeleton.vue'
 import { getCircleDetail, joinCircle, leaveCircle, getCirclePosts, getCircleMembers } from '@/api/circle'
@@ -328,7 +325,8 @@ const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
 const { setTitleData } = usePageTitle()
-const offset = ref(260)
+// 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
+const { offset, contentStyle } = useAppShell()
 
 // 注入圈子搜索状态设置方法
 const setCircleSearch = inject('setCircleSearch', () => {})
@@ -886,6 +884,7 @@ onUnmounted(() => {
   position: sticky;
   top: calc(var(--header-height) + 24px);
   max-height: calc(100vh - var(--header-height) - 24px);
+  max-height: calc(100dvh - var(--header-height) - 24px);
   overflow-y: auto;
   /* 隐藏滚动条 */
   scrollbar-width: none; /* Firefox */
