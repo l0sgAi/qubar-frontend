@@ -9,7 +9,7 @@
         <!-- 移动端「我的」：只读资料卡（不提供编辑资料 / 改密码，见 docs/mobile-adaptation-plan.md 6.5） -->
         <div v-if="mobileShell" class="mobile-profile-card">
           <NAvatar :size="64" :src="userInfo.avatar_url || undefined" round>
-            <span v-if="!userInfo.avatar_url" class="mobile-avatar-font">{{ userInfo.username.charAt(0) }}</span>
+            <span v-if="!userInfo.avatar_url" class="mobile-avatar-font">{{ userInfo.username?.charAt(0) }}</span>
           </NAvatar>
           <div class="mobile-profile-text">
             <h2 class="mobile-username">{{ userInfo.username || t('user.notSet') }}</h2>
@@ -113,7 +113,7 @@
                 class="sidebar-avatar">
                  <div class="avatar-font" 
                  v-if="!userInfo.avatar_url || userInfo.avatar_url == ''">
-                 {{ userInfo.username.charAt(0) }}
+                 {{ userInfo.username?.charAt(0) }}
                 </div>
               </NAvatar>
               <h2 class="sidebar-username">{{ userInfo.username || t('user.notSet') }}</h2>

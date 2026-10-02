@@ -13,19 +13,20 @@ export async function copyText(text) {
   } catch {
     // 权限被拒 / 非安全上下文：走降级
   }
+  let el = null
   try {
-    const el = document.createElement('textarea')
+    el = document.createElement('textarea')
     el.value = text
     el.setAttribute('readonly', '')
     el.style.position = 'fixed'
     el.style.opacity = '0'
     document.body.appendChild(el)
     el.select()
-    const ok = document.execCommand('copy')
-    document.body.removeChild(el)
-    return ok
+    return document.execCommand('copy')
   } catch {
     return false
+  } finally {
+    el?.remove()
   }
 }
 

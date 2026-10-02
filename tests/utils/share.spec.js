@@ -32,6 +32,8 @@ describe('copyText', () => {
   it('都不可用时返回 false', async () => {
     document.execCommand = vi.fn(() => { throw new Error('unsupported') })
     expect(await copyText('x')).toBe(false)
+    // 复制抛错时临时 textarea 也要移除
+    expect(document.querySelector('textarea')).toBeNull()
   })
 })
 
