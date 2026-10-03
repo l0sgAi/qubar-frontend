@@ -1055,14 +1055,42 @@ onMounted(() => {
 
 /* ===== 移动端「我的」 ===== */
 @media (max-width: 768px) {
+  /* 帖子列表左右通栏：页面与标签页卡片都不留左右边距，资料卡 / 设置列表自留 12px */
   .main-content {
-    padding: 12px;
+    padding: 12px 0;
     gap: 12px;
   }
 
   .content-area {
     min-width: 0;
     max-width: none;
+  }
+
+  .mobile-profile-card,
+  .mobile-settings {
+    margin: 0 12px;
+  }
+
+  .tabs-card {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+
+  .tabs-card :deep(.n-card__content) {
+    padding: 0 0 8px;
+  }
+
+  .profile-tabs {
+    padding: 0;
+  }
+
+  .profile-tabs :deep(.n-tabs-nav) {
+    padding: 0 12px;
+  }
+
+  .profile-tabs :deep(.n-tab-pane) {
+    padding: 12px 0 0;
   }
 }
 

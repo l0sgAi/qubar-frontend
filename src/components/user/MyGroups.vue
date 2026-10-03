@@ -444,4 +444,31 @@ onBeforeUnmount(() => {
     width: 100%;
   }
 }
+
+/* 移动端：标题与 Tab 名重复，隐藏；搜索框与按钮同一行。
+   所在页面（我的 / 用户主页）在移动端左右通栏，这里自留 12px */
+@media (max-width: 768px) {
+  .tab-header {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 0 0;
+  }
+
+  .tab-title {
+    display: none;
+  }
+
+  .tab-search {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .my-groups-tab {
+    padding: 0 12px;
+  }
+}
 </style>

@@ -504,8 +504,15 @@ const RefreshIcon = svg('M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M
   gap: 14px;
 }
 
-.stream :deep(.post-card) {
+.stream :deep(.post-card),
+.stream :deep(.m-post-item) {
   margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .stream {
+    gap: 8px;
+  }
 }
 
 /* 分区模式 */
