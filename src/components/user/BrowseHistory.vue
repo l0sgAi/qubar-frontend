@@ -44,10 +44,31 @@
           </NIcon>
           <p class="empty-text">{{ t('common.noData') }}</p>
         </div>
-        <div v-else class="post-cards">
+        <div v-else class="post-cards" :class="{ 'is-mobile': mobileShell }">
+          <template v-for="post in posts" :key="post.id">
+            <!-- 移动端外框：紧凑通栏列表项；桌面保持原卡片 -->
+            <MobilePostItem
+              v-if="mobileShell"
+              :post-id="post.id"
+              :title="post.title"
+              :content="post.content"
+              :images="post.images"
+              :primary-name="post.authorName"
+              :primary-avatar="post.authorAvatar"
+              :secondary-name="post.circleName"
+              :time-text="post.timeText"
+              :pinned="!!post.isPinned"
+              :essence="!!post.isEssence"
+              :view-count="post.views"
+              :like-count="post.likes"
+              :comment-count="post.comments"
+              flush>
+              <template v-if="post.viewedText" #meta>
+                <span class="viewed-time">{{ post.viewedText }}</span>
+              </template>
+            </MobilePostItem>
           <NCard
-            v-for="post in posts"
-            :key="post.id"
+            v-else
             class="post-card"
             :bordered="false"
             hoverable>
@@ -129,6 +150,7 @@
               </div>
             </div>
           </NCard>
+          </template>
         </div>
 
         <!-- 无限滚动哨兵 -->
@@ -149,6 +171,8 @@ import { useI18n } from 'vue-i18n'
 import { getHistoryPosts } from '@/api/history'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 import ImageCarousel from '@/components/common/ImageCarousel.vue'
+import MobilePostItem from '@/components/post/MobilePostItem.vue'
+import { useMobileShell } from '@/composables/useAppShell'
 import SmartLink from '@/components/common/SmartLink.vue'
 
 const props = defineProps({
@@ -166,6 +190,7 @@ const message = useMessage()
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
 const { formatNumber } = useFormatNumber()
+const mobileShell = useMobileShell()
 
 const searchKey = ref('')
 const loading = ref(false)
@@ -365,6 +390,11 @@ onBeforeUnmount(() => {
   gap: 16px;
 }
 
+/* 移动端：通栏列表项自带分隔线，去掉卡片间距 */
+.post-cards.is-mobile {
+  gap: 0;
+}
+
 .post-card {
   position: relative;
   background: rgba(255, 255, 255, 0.02) !important;
@@ -556,6 +586,27 @@ onBeforeUnmount(() => {
 @media (max-width: 768px) {
   .tab-search {
     width: 100%;
+  }
+}
+
+/* 移动端：标题与 Tab 名重复，隐藏；搜索框与按钮同一行。
+   所在页面（我的 / 用户主页）在移动端左右通栏，这里自留 12px */
+@media (max-width: 768px) {
+  .tab-header {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 0 12px;
+  }
+
+  .tab-title {
+    display: none;
+  }
+
+  .tab-search {
+    flex: 1;
+    min-width: 0;
   }
 }
 </style>

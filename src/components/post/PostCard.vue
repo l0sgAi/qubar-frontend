@@ -1,5 +1,21 @@
 <template>
-  <NCard class="post-card" :bordered="false">
+  <MobilePostItem
+    v-if="mobileShell"
+    :post-id="postId"
+    :title="title"
+    :content="content"
+    :images="displayImages"
+    :primary-name="showCircle ? circleName : userName"
+    :primary-avatar="showCircle ? circleAvatar : userAvatar"
+    :primary-to="showCircle ? (circleId ? `/circle/${circleId}` : null) : (userId ? `/user/${userId}` : null)"
+    :secondary-name="showCircle ? userName : ''"
+    :secondary-to="userId ? `/user/${userId}` : null"
+    :time-text="formatTime(postTime)"
+    :view-count="viewCount"
+    :like-count="likeCount"
+    :comment-count="commentCount"
+  />
+  <NCard v-else class="post-card" :bordered="false">
     <!-- 整卡封面链接（stretched-link）：铺满卡片承担帖子跳转，hover 任意位置显示
          /post/:id、右键/中键可新标签页打开；圈子/用户/轮播等交互区抬 z-index 各自响应 -->
     <SmartLink class="post-cover-link" :to="`/post/${postId}`" :aria-label="title" />
@@ -91,15 +107,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue'
+import { ref, onBeforeUnmount, watch, nextTick, computed } from 'vue'
 import { NCard, NAvatar, NButton, NIcon, NTime, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import ImageCarousel from '@/components/common/ImageCarousel.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
-import { useFormatNumber } from '@/utils/i18n'
+import MobilePostItem from '@/components/post/MobilePostItem.vue'
+import { useMobileShell } from '@/composables/useAppShell'
+import { useFormatNumber, useFormatTime } from '@/utils/i18n'
 
 const { t } = useI18n()
 const { formatNumber } = useFormatNumber()
+const { formatTime } = useFormatTime()
+// 移动端外框：渲染紧凑列表项（一屏多条）；桌面保持原卡片
+const mobileShell = useMobileShell()
 
 const STATS_COUNT_CAP = 100_000_000
 
@@ -202,13 +223,17 @@ const checkTruncation = () => {
   isTruncated.value = !!el && el.scrollHeight - el.clientHeight > 1
 }
 
-onMounted(() => {
+// 摘要节点随断点切换（移动端紧凑项 ↔ 桌面卡片）出现 / 消失，按节点挂载 / 卸载观察器
+watch(textRef, (el) => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+  if (!el) return
   nextTick(checkTruncation)
-  if (textRef.value && typeof ResizeObserver !== 'undefined') {
+  if (typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(checkTruncation)
-    resizeObserver.observe(textRef.value)
+    resizeObserver.observe(el)
   }
-})
+}, { flush: 'post' })
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()

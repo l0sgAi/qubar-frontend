@@ -449,16 +449,43 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  /* 帖子列表左右通栏：页面与标签页卡片都不留左右边距，资料栏自留 12px */
   .main-content {
     margin-left: 0;
-    padding: 12px;
+    padding: 12px 0;
     gap: 12px;
+  }
+
+  .sidebar-area {
+    padding: 0 12px;
   }
 
   /* 桌面的 dvw 区间在手机上会把内容压成窄条，移动端占满 */
   .content-area {
     min-width: 0;
     max-width: none;
+  }
+
+  .tabs-card {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+
+  .tabs-card :deep(.n-card__content) {
+    padding: 0 0 8px;
+  }
+
+  .profile-tabs {
+    padding: 0;
+  }
+
+  .profile-tabs :deep(.n-tabs-nav) {
+    padding: 0 12px;
+  }
+
+  .profile-tabs :deep(.n-tab-pane) {
+    padding: 12px 0 0;
   }
 
   /* 头像：桌面 260px 在手机上占满半屏，收小（NAvatar 尺寸走内联 CSS 变量，需 !important 覆盖） */

@@ -186,6 +186,60 @@ const hasImage = (n) => n % 2 === 0
   border-radius: 999px;
 }
 
+/* 移动端：对应 MobilePostItem 的紧凑列表项（单行小头部、无大图、小统计栏） */
+@media (max-width: 768px) {
+  .skeleton-card {
+    margin-bottom: 8px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .sk-header {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .sk-avatar {
+    width: 22px;
+    height: 22px;
+  }
+
+  .sk-circle-name {
+    width: 80px;
+    height: 12px;
+  }
+
+  .sk-user-meta,
+  .sk-image {
+    display: none;
+  }
+
+  .sk-content {
+    margin: 0 0 10px;
+  }
+
+  .sk-title {
+    height: 14px;
+    margin-bottom: 8px;
+  }
+
+  .sk-text {
+    height: 10px;
+    margin-bottom: 8px;
+  }
+
+  .sk-stats {
+    gap: 18px;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .sk-stat-icon {
+    width: 14px;
+    height: 14px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sk {
     animation: none;
