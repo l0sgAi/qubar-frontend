@@ -71,8 +71,8 @@
         </div>
       </div>
 
-      <!-- 右侧信息栏 -->
-      <RightSidebar v-if="!mobileShell" />
+      <!-- 右侧信息栏（匿名态隐藏，主内容自动占满；与 Home.vue / Discover.vue 一致） -->
+      <RightSidebar v-if="isLoggedIn && !mobileShell" />
     </div>
   </div>
 </template>
@@ -88,12 +88,15 @@ import { useAppShell } from '@/composables/useAppShell'
 import RightSidebar from '@/components/layout/RightSidebar.vue'
 import TrendingCard from '@/components/feed/TrendingCard.vue'
 import { getTrending } from '@/api/trending'
+import { auth } from '@/utils/auth'
 
 const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
 // 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
 const { offset, mobileShell, contentStyle } = useAppShell()
+
+const isLoggedIn = computed(() => auth.isAuthenticated())
 
 // 首屏聚合：section=all，每类 size=10，不做翻页
 const SECTION_SIZE = 10
@@ -198,21 +201,24 @@ onBeforeUnmount(() => {
 
 .content-wrapper {
   display: flex;
-  gap: 20px;
-  padding: 20px;
-  box-sizing: border-box;
+  justify-content: center;
+  gap: 24px;
+  margin-top: var(--header-height);
+  min-height: calc(100vh - var(--header-height));
   transition: margin-left 0.3s ease, width 0.3s ease;
 }
 
 .main-content {
-  flex: 1;
-  min-width: 0;
-  max-width: 720px;
-  margin-right: 5dvw;
+  padding: 24px;
+  min-height: calc(100vh - var(--header-height));
+  max-width: 780px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hot-container {
-  margin-top: 70px;
+  width: 100%;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -467,6 +473,24 @@ onBeforeUnmount(() => {
 .skel-line { height: 12px; width: 60%; }
 .skel-line.short { width: 35%; }
 .skel-hot { width: 48px; height: 16px; flex-shrink: 0; }
+
+/* 响应式（与 Home.vue / Discover.vue 保持一致） */
+@media (max-width: 1200px) {
+  .content-wrapper {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-wrapper {
+    margin-left: 0;
+    padding: 0;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+}
 </style>
 
 <!-- 骨架 shimmer 关键帧（全局：骨架元素 class 无 scoped data-v） -->
