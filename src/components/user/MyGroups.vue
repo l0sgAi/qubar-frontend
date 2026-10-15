@@ -57,19 +57,22 @@
                右键/中键可新标签页打开 -->
           <SmartLink class="post-cover-link" :to="`/circle/${group.id}`" :aria-label="group.name" />
           <div class="group-info">
-            <NAvatar round :size="60" :src="group.avatar">
+            <NAvatar round :size="avatarSize" :src="group.avatar">
               <div v-if="!group.avatar">{{ (group.name || '').charAt(0) }}</div>
             </NAvatar>
-            <h3 class="group-name">{{ group.name }}</h3>
-            <span class="group-stat">
-              <NIcon size="14">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                </svg>
-              </NIcon>
-              {{ formatNumber(group.members) }}
-            </span>
+            <!-- 名称 + 成员数：移动端横排时作为右侧文字列（min-width:0 让省略号生效）-->
+            <div class="group-meta">
+              <h3 class="group-name">{{ group.name }}</h3>
+              <span class="group-stat">
+                <NIcon size="14">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                  </svg>
+                </NIcon>
+                {{ formatNumber(group.members) }}
+              </span>
+            </div>
           </div>
         </NCard>
         <!-- 无限滚动哨兵：仅在拉取模式下生效 -->
@@ -90,10 +93,15 @@ import { useI18n } from 'vue-i18n'
 import { useFormatNumber } from '@/utils/i18n'
 import { getMyCircles, getUserCircles } from '@/api/post'
 import SmartLink from '@/components/common/SmartLink.vue'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 
 const message = useMessage()
 const { t } = useI18n()
 const { formatNumber } = useFormatNumber()
+const { isMobile } = useBreakpoint()
+
+// 头像尺寸用 prop 切换：NAvatar 以内联 CSS 变量定尺寸，CSS 覆盖需 !important
+const avatarSize = computed(() => (isMobile.value ? 40 : 60))
 
 const props = defineProps({
   // 外部注入的圈子数据（兜底/无接口场景）
@@ -362,6 +370,15 @@ onBeforeUnmount(() => {
   transform: translate(-50%, -50%) !important;
 }
 
+/* 桌面端与原布局等价：名称、成员数纵向居中，间距同 .group-info 的 10px */
+.group-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+}
+
 .group-name {
   font-size: 1rem;
   font-weight: 600;
@@ -469,6 +486,53 @@ onBeforeUnmount(() => {
 @media (max-width: 768px) {
   .my-groups-tab {
     padding: 0 12px;
+  }
+}
+
+/* 移动端单列：卡片改横向紧凑行（头像左、名称+成员数右），单卡约 66px */
+@media (max-width: 768px) {
+  .groups-grid {
+    gap: 8px;
+  }
+
+  .group-card {
+    border-radius: 12px !important;
+  }
+
+  /* 多一层 .groups-grid 提高优先级：所在页 .tabs-card :deep(.n-card__content)
+     的移动端 padding（0 0 8px）会穿透到嵌套的圈子卡片 */
+  .groups-grid .group-card :deep(.n-card__content) {
+    padding: 0;
+  }
+
+  .group-info {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    text-align: left;
+  }
+
+  .group-meta {
+    flex: 1;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .group-name,
+  .group-stat {
+    line-height: 1.3;
+  }
+
+  .group-name {
+    font-size: 0.95rem;
+  }
+
+  .group-info :deep(.n-avatar) {
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 }
 </style>
