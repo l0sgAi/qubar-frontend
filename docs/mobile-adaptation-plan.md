@@ -59,7 +59,7 @@
 | 热榜 | Hot | 单列 |
 | 发现 | Discover | 网格改 2 列 |
 | 帖子阅读（正文、图片、徽章） | PostDetail、`PostHeaderAndContent`、`MentionPreview` | 排版适配；Markdown 溢出处理 |
-| 评论阅读（排序、展开回复、通知跳转定位） | `CommentList` | 定位时考虑顶栏偏移 |
+| 评论阅读（排序、展开回复、通知跳转定位） | `CommentList` | 定位时考虑顶栏偏移；查看回复改为底部抽屉（`CommentReplies` sheet 变体，开合跟随 `?replies=`，返回手势关闭，见 issue #22） |
 | 点赞 / 收藏 | `useInteractionToggle` | 原样复用，只放大触控区域 |
 | 圈子主页阅读 + 加入 / 退出 | CircleDetail、`CircleInfoCard` | 「加入」放进顶栏右侧 |
 | 用户主页阅读 | UserDetail | 信息纵向排列 |

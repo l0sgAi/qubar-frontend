@@ -766,3 +766,35 @@ body {
     opacity: 0;
   }
 }
+
+/* =========================================================
+ * 移动端回复抽屉（CommentList 的 NDrawer.reply-sheet）
+ * NDrawer 传送到 body，容器样式只能写在全局。
+ * ========================================================= */
+.n-drawer-container:has(.reply-sheet) > .n-drawer-mask {
+  background: rgba(8, 8, 18, 0.6);
+}
+
+.n-drawer.reply-sheet {
+  background: rgba(22, 22, 38, 0.92);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.n-drawer.reply-sheet .n-drawer-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.n-drawer.reply-sheet .n-drawer-header__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.n-drawer.reply-sheet .reply-sheet-body {
+  padding: 0 16px calc(var(--safe-bottom) + 16px);
+}

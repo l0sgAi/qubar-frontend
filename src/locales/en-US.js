@@ -796,6 +796,9 @@ export default {
       viewReplies: 'View {count} replies',
       collapseReplies: 'Collapse replies',
       loadMoreReplies: 'Load more replies',
+      repliesTitle: 'Replies ({count})',
+      closeReplies: 'Close replies',
+      retryLoadReplies: 'Failed to load. Tap to retry',
       noMore: 'No more comments',
       empty: 'No comments yet. Be the first to comment!',
       pagination: {

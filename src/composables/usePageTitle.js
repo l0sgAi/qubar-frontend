@@ -8,7 +8,7 @@ export const usePageTitle = () => {
   const route = useRoute()
 
   const setTitleData = (key, params) => {
-    setDynamicTitleData(route.name, route.fullPath, key, params)
+    setDynamicTitleData(route.name, route.path, key, params)
     applyPageTitle(route)
   }
 
