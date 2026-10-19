@@ -795,6 +795,9 @@ export default {
       viewReplies: '点击查看 {count} 条回复',
       collapseReplies: '收起回复',
       loadMoreReplies: '加载更多回复',
+      repliesTitle: '{count} 条回复',
+      closeReplies: '关闭回复',
+      retryLoadReplies: '加载失败，点击重试',
       noMore: '没有更多评论了',
       empty: '暂无评论，快来发表第一条评论吧',
       pagination: {

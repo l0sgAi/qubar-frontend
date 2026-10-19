@@ -10,231 +10,70 @@
     </div>
 
     <div class="comment-list">
-      <div v-for="comment in comments" :key="comment.id" :id="'comment-' + comment.id" class="comment-item" :class="{ 'comment-highlight': highlightCommentId === comment.id }">
-        <div class="comment-avatar">
-          <NAvatar round :size="36" :src="comment.author_avatar || undefined">
-          <div v-if="!comment.author_avatar">{{ comment.author_name?.charAt(0) }}</div>
-          </NAvatar>
-        </div>
-        <div class="comment-body">
-          <div class="comment-author-row">
-            <SmartLink class="comment-author" :class="{ clickable: getUserId(comment) }" :to="userUrl(getUserId(comment))">{{ comment.author_name }}</SmartLink>
-            <span class="comment-time">{{ formatTime(comment.create_time) }}</span>
-          </div>
-          <ImageCarousel
-            v-if="getCommentImages(comment).length"
-            :images="getCommentImages(comment)"
-            :parent-width="800"
+      <CommentItem
+        v-for="comment in comments"
+        :key="comment.id"
+        :comment="comment"
+        :highlighted="highlightCommentId === comment.id"
+        :language="language"
+        @like="handleToggleLike('comment', $event)"
+        @reply="openReply"
+      >
+        <!-- 内联回复编辑器（移动端门户为纯文本输入，见 PlainCommentInput）；
+             抽屉开着该根评论时输入框只在抽屉里出现 -->
+        <template v-if="activeReplyId === comment.id && sheetCommentId !== comment.id">
+          <PlainCommentInput
+            v-if="mobileShell"
+            :post-id="postId"
+            :root-id="comment.id"
+            :reply-to-id="null"
+            :reply-to-name="comment.author_name"
+            @submit="handleReplySubmit(comment, $event)"
+            @cancel="activeReplyId = null"
           />
-          <div class="comment-content">
-            <MentionPreview
-              :content="comment.content"
-              :mentions="comment.mentions"
-              :language="language"
-            />
-          </div>
-          <div class="comment-actions">
-            <NButton text size="small" class="comment-action-btn" :class="{ 'liked-btn': comment.liked }" @click="handleToggleLike('comment', comment)">
-              <template #icon>
-                <NIcon size="16">
-                  <svg viewBox="0 0 24 24" :fill="comment.liked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                  </svg>
-                </NIcon>
-              </template>
-              {{ formatNumber(comment.like_count) }}
-            </NButton>
-            <NButton text size="small" class="comment-action-btn" @click="openReply(comment)">
-              <template #icon>
-                <NIcon size="16">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                  </svg>
-                </NIcon>
-              </template>
-              {{ t('comment.actions.reply') }}
-            </NButton>
-          </div>
+          <CommentReplyEditor
+            v-else
+            :post-id="postId"
+            :circle-id="circleId"
+            :root-id="comment.id"
+            :reply-to-id="null"
+            :reply-to-name="comment.author_name"
+            :language="language"
+            @submit="handleReplySubmit(comment, $event)"
+            @cancel="activeReplyId = null"
+          />
+        </template>
 
-          <!-- 内联回复编辑器（移动端门户为纯文本输入，见 PlainCommentInput） -->
-          <template v-if="activeReplyId === comment.id">
-            <PlainCommentInput
-              v-if="mobileShell"
-              :post-id="postId"
-              :root-id="comment.id"
-              :reply-to-id="null"
-              :reply-to-name="comment.author_name"
-              @submit="handleReplySubmit(comment, $event)"
-              @cancel="activeReplyId = null"
-            />
-            <CommentReplyEditor
-              v-else
-              :post-id="postId"
-              :circle-id="circleId"
-              :root-id="comment.id"
-              :reply-to-id="null"
-              :reply-to-name="comment.author_name"
-              :language="language"
-              @submit="handleReplySubmit(comment, $event)"
-              @cancel="activeReplyId = null"
-            />
-          </template>
-
-          <!-- 点击查看回复 -->
-          <div
-            v-if="comment.reply_count > 0 && !isRepliesExpanded(comment.id)"
-            class="load-replies-btn"
-            @click="loadReplies(comment)"
-          >
-            <NSpin v-if="loadingReplies[comment.id]" :size="14" />
-            <span v-else>{{ t('comment.list.viewReplies', { count: comment.reply_count }) }}</span>
-          </div>
-
-          <!-- 子评论 -->
-          <div v-if="isRepliesExpanded(comment.id)" class="comment-replies" :class="{ 'replies-loading': getRepliesData(comment.id).pageLoading || getRepliesData(comment.id).sortLoading }">
-            <!-- 回复列表头部：排序切换 -->
-            <div class="comment-replies-header">
-              <div class="replies-sort-toggle">
-                <span
-                  class="sort-option"
-                  :class="{ active: getRepliesData(comment.id).sort === 1, disabled: getRepliesData(comment.id).sortLoading }"
-                  @click="getRepliesData(comment.id).sort !== 1 && !getRepliesData(comment.id).sortLoading && toggleRepliesSort(comment.id)"
-                >
-                  {{ t('comment.sort.newest') }}
-                </span>
-                <span class="sort-divider">/</span>
-                <span
-                  class="sort-option"
-                  :class="{ active: getRepliesData(comment.id).sort === 0, disabled: getRepliesData(comment.id).sortLoading }"
-                  @click="getRepliesData(comment.id).sort !== 0 && !getRepliesData(comment.id).sortLoading && toggleRepliesSort(comment.id)"
-                >
-                  {{ t('comment.sort.hottest') }}
-                </span>
-              </div>
-            </div>
-            <div v-for="reply in getCurrentReplies(comment.id)" :key="reply.id" :id="'comment-' + reply.id" class="comment-item reply-item" :class="{ 'comment-highlight': highlightCommentId === reply.id }">
-              <div class="comment-avatar">
-                <NAvatar round :size="28" :src="reply.author_avatar || undefined">
-                  <div v-if="!reply.author_avatar">{{ reply.author_name?.charAt(0) }}</div>
-                </NAvatar>
-              </div>
-              <div class="comment-body">
-                <div class="comment-author-row">
-                  <SmartLink class="comment-author" :class="{ clickable: getUserId(reply) }" :to="userUrl(getUserId(reply))">{{ reply.author_name }}</SmartLink>
-                  <template v-if="getReplyToName(reply, getCurrentReplies(comment.id))">
-                    <span class="reply-arrow">{{ t('comment.actions.reply') }}</span>
-                    <SmartLink class="comment-author reply-to-name" :class="{ clickable: getReplyToUserId(reply, getCurrentReplies(comment.id)) }" :to="userUrl(getReplyToUserId(reply, getCurrentReplies(comment.id)))">@{{ getReplyToName(reply, getCurrentReplies(comment.id)) }}</SmartLink>
-                  </template>
-                  <span class="comment-time">{{ formatTime(reply.create_time) }}</span>
-                </div>
-                <ImageCarousel
-                  v-if="getCommentImages(reply).length"
-                  :images="getCommentImages(reply)"
-                  :parent-width="670"
-                />
-                <div class="comment-content">
-                  <MentionPreview
-                    :content="reply.content"
-                    :mentions="reply.mentions"
-                    :language="language"
-                  />
-                </div>
-                <div class="comment-actions">
-                  <NButton text size="small" class="comment-action-btn" :class="{ 'liked-btn': reply.liked }" @click="handleToggleLike('comment', reply)">
-                    <template #icon>
-                      <NIcon size="16">
-                        <svg viewBox="0 0 24 24" :fill="reply.liked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                        </svg>
-                      </NIcon>
-                    </template>
-                    {{ formatNumber(reply.like_count) }}
-                  </NButton>
-                  <NButton text size="small" class="comment-action-btn" @click="openReply(reply, comment)">
-                    <template #icon>
-                      <NIcon size="16">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                        </svg>
-                      </NIcon>
-                    </template>
-                    {{ t('comment.actions.reply') }}
-                  </NButton>
-                </div>
-
-                <!-- 内联回复编辑器（回复子评论；移动端门户为纯文本输入） -->
-                <template v-if="activeReplyId === reply.id">
-                  <PlainCommentInput
-                    v-if="mobileShell"
-                    :post-id="postId"
-                    :root-id="comment.id"
-                    :reply-to-id="reply.id"
-                    :reply-to-name="reply.author_name"
-                    @submit="handleReplySubmit(comment, $event)"
-                    @cancel="activeReplyId = null"
-                  />
-                  <CommentReplyEditor
-                    v-else
-                    :post-id="postId"
-                    :circle-id="circleId"
-                    :root-id="comment.id"
-                    :reply-to-id="reply.id"
-                    :reply-to-name="reply.author_name"
-                    :language="language"
-                    @submit="handleReplySubmit(comment, $event)"
-                    @cancel="activeReplyId = null"
-                  />
-                </template>
-              </div>
-            </div>
-
-            <!-- 收起回复和翻页 -->
-            <div class="replies-footer">
-              <div class="collapse-replies-btn" @click="collapseReplies(comment.id)">
-                {{ t('comment.list.collapseReplies') }}
-              </div>
-              <div v-if="getTotalPages(comment.id) > 1 || hasNextPage(comment.id)" class="replies-pagination-arrows">
-                <NSpin v-if="getRepliesData(comment.id).pageLoading" :size="14" />
-                <template v-else>
-                  <!-- 上一页 -->
-                  <button
-                    class="page-arrow-btn"
-                    :disabled="!hasPrevPage(comment.id)"
-                    @click="prevPage(comment.id)"
-                  >
-                    <NIcon size="14">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                      </svg>
-                    </NIcon>
-                  </button>
-                  <!-- 页码显示 -->
-                  <span class="page-number">
-                    {{ getCurrentPageNumber(comment.id) }} / {{ Math.max(1, Math.ceil(comment.reply_count / 10)) }}
-                  </span>
-                  <!-- 下一页 -->
-                  <button
-                    class="page-arrow-btn"
-                    :disabled="!hasNextPage(comment.id)"
-                    @click="nextPage(comment.id)"
-                  >
-                    <NIcon size="14">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                      </svg>
-                    </NIcon>
-                  </button>
-                </template>
-              </div>
-            </div>
-
-            <!-- 加载遮罩 -->
-            <div v-if="getRepliesData(comment.id).pageLoading || getRepliesData(comment.id).sortLoading" class="replies-loading-overlay">
-              <NSpin :size="24" />
-            </div>
-          </div>
+        <!-- 点击查看回复：桌面内联展开；移动端打开底部抽屉 -->
+        <div
+          v-if="comment.reply_count > 0 && (mobileShell || !isRepliesExpanded(comment.id))"
+          class="load-replies-btn"
+          @click="mobileShell ? openReplySheet(comment) : loadReplies(comment)"
+        >
+          <NSpin v-if="!mobileShell && loadingReplies[comment.id]" :size="14" />
+          <span v-else>{{ t('comment.list.viewReplies', { count: comment.reply_count }) }}</span>
         </div>
-      </div>
+
+        <!-- 子评论（桌面内联） -->
+        <CommentReplies
+          v-if="!mobileShell && isRepliesExpanded(comment.id)"
+          :root="comment"
+          :data="getRepliesData(comment.id)"
+          :post-id="postId"
+          :circle-id="circleId"
+          :language="language"
+          :highlight-comment-id="highlightCommentId"
+          :active-reply-id="activeReplyId"
+          @toggle-sort="toggleRepliesSort(comment.id)"
+          @prev-page="prevPage(comment.id)"
+          @next-page="nextPage(comment.id)"
+          @collapse="collapseReplies(comment.id)"
+          @like="handleToggleLike('comment', $event)"
+          @open-reply="openReply"
+          @reply-submit="handleReplySubmit(comment, $event)"
+          @reply-cancel="activeReplyId = null"
+        />
+      </CommentItem>
 
       <!-- 无限滚动触发器 -->
       <div v-if="hasMore && !loading" class="load-more-trigger" ref="loadMoreTrigger"></div>
@@ -257,16 +96,83 @@
         </template>
       </NEmpty> 
     </div>
+
+    <!-- 移动端：一条评论的全部回复在底部抽屉中查看（开合跟随路由 query，返回手势即关闭） -->
+    <NDrawer
+      v-if="mobileShell"
+      :show="!!sheetComment"
+      placement="bottom"
+      height="82%"
+      class="reply-sheet"
+      :auto-focus="false"
+      @update:show="(show) => !show && closeReplySheet()"
+      @after-enter="handleSheetAfterEnter"
+      @after-leave="handleSheetAfterLeave"
+    >
+      <NDrawerContent v-if="sheetDisplayComment" :native-scrollbar="true" body-content-class="reply-sheet-body">
+        <template #header>
+          <div class="reply-sheet-header">
+            <span class="reply-sheet-title">{{ t('comment.list.repliesTitle', { count: sheetDisplayComment.reply_count }) }}</span>
+            <button type="button" class="reply-sheet-close" :aria-label="t('comment.list.closeReplies')" @click="closeReplySheet">
+              <NIcon size="20">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </NIcon>
+            </button>
+          </div>
+        </template>
+
+        <!-- 根评论作为上下文；锚点留给主列表那一份 -->
+        <CommentItem
+          :comment="sheetDisplayComment"
+          :anchor="false"
+          :language="language"
+          class="reply-sheet-root"
+          @like="handleToggleLike('comment', $event)"
+          @reply="openReply"
+        >
+          <PlainCommentInput
+            v-if="activeReplyId === sheetDisplayComment.id"
+            :post-id="postId"
+            :root-id="sheetDisplayComment.id"
+            :reply-to-id="null"
+            :reply-to-name="sheetDisplayComment.author_name"
+            @submit="handleReplySubmit(sheetDisplayComment, $event)"
+            @cancel="activeReplyId = null"
+          />
+        </CommentItem>
+
+        <CommentReplies
+          variant="sheet"
+          :root="sheetDisplayComment"
+          :data="getRepliesData(sheetDisplayComment.id)"
+          :post-id="postId"
+          :circle-id="circleId"
+          :language="language"
+          :highlight-comment-id="highlightCommentId"
+          :active-reply-id="activeReplyId"
+          @toggle-sort="toggleRepliesSort(sheetDisplayComment.id)"
+          @load-more="loadMoreReplies(sheetDisplayComment.id)"
+          @retry="loadReplies(sheetDisplayComment)"
+          @like="handleToggleLike('comment', $event)"
+          @open-reply="openReply"
+          @reply-submit="handleReplySubmit(sheetDisplayComment, $event)"
+          @reply-cancel="activeReplyId = null"
+        />
+      </NDrawerContent>
+    </NDrawer>
   </NCard>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-	import { NCard, NAvatar, NButton, NDivider, NIcon, NEmpty, NSpin, useMessage } from 'naive-ui'
-import ImageCarousel from '@/components/common/ImageCarousel.vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { NCard, NButton, NDivider, NIcon, NEmpty, NSpin, NDrawer, NDrawerContent, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import MentionPreview from '@/components/post/detail/MentionPreview.vue'
-import SmartLink from '@/components/common/SmartLink.vue'
+import { useRoute, useRouter } from 'vue-router'
+import CommentItem from '@/components/post/detail/CommentItem.vue'
+import CommentReplies from '@/components/post/detail/CommentReplies.vue'
 import { getCommentList, getCommentReplies, locateComment, COMMENT_NOT_FOUND_CODE } from '@/api/comment'
 import { seedContentMentions } from '@/utils/mentionResolve'
 import { toggleLike } from '@/api/like'
@@ -274,7 +180,6 @@ import CommentReplyEditor from '@/components/post/detail/CommentReplyEditor.vue'
 import PlainCommentInput from '@/components/post/detail/PlainCommentInput.vue'
 import { useMobileShell } from '@/composables/useAppShell'
 import {CommentRound} from '@vicons/material'
-import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 import { useInteractionToggle, interactionErrorMessage } from '@/composables/useInteractionToggle'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
@@ -314,9 +219,9 @@ const props = defineProps({
 const emit = defineEmits(['update:sort', 'update:commentCount'])
 
 const { t } = useI18n()
-const { formatTime } = useFormatTime()
-const { formatNumber } = useFormatNumber()
 const message = useMessage()
+const route = useRoute()
+const router = useRouter()
 
 // 通知定位状态：高亮目标评论ID / 定位流程进行中（防重入）
 const highlightCommentId = ref('')
@@ -325,25 +230,6 @@ const locating = ref(false)
 let locateVersion = 0
 // 在飞期间到来的最新目标，流程结束后补跑（只保留最新一个）
 let pendingLocateId = ''
-
-// 获取用户ID（兼容多种字段名）；注意不能回退到 item.id——那是评论ID，
-// 作者信息缺失时会错误地链到 /user/<评论ID>
-const getUserId = (item) => {
-  return item.author_id || item.user_id || item.userId || item.authorId || null
-}
-
-// 作者名统一用 SmartLink 渲染为真实链接；无 id 时降级为纯文本块
-const userUrl = (userId) => (userId ? `/user/${userId}` : null)
-
-const getCommentImages = (item) => {
-  if (!item.extra_data) return []
-  try {
-    const data = typeof item.extra_data === 'string' ? JSON.parse(item.extra_data) : item.extra_data
-    return data?.images || []
-  } catch {
-    return []
-  }
-}
 
 // 数据状态
 const comments = ref([])
@@ -380,28 +266,10 @@ const getCurrentReplies = (commentId) => {
   return data.pages[data.currentPage] || []
 }
 
-// 获取总页数
-const getTotalPages = (commentId) => {
-  const data = getRepliesData(commentId)
-  return data.pages.length
-}
-
-// 获取当前页码（显示用，从1开始）
-const getCurrentPageNumber = (commentId) => {
-  const data = getRepliesData(commentId)
-  return data.currentPage + 1
-}
-
 // 是否有下一页
 const hasNextPage = (commentId) => {
   const data = getRepliesData(commentId)
   return data.hasMoreMap[data.currentPage] || false
-}
-
-// 是否有上一页（定位加载时之前的页为 null 占位，不可回翻——单向翻页约定）
-const hasPrevPage = (commentId) => {
-  const data = getRepliesData(commentId)
-  return data.currentPage > 0 && !!data.pages[data.currentPage - 1]
 }
 
 // 展开的回复ID列表（用于控制显示）
@@ -434,35 +302,126 @@ const resetRepliesData = (commentId) => {
 // 内联回复编辑器
 const activeReplyId = ref(null)
 
-// 获取被回复用户的名称
-const getReplyToName = (reply, replies) => {
-  // 如果后端已经返回 reply_to_name，直接使用
-  if (reply.reply_to_name) {
-    return reply.reply_to_name
-  }
-  // 如果有 reply_to_id 且非0，从回复列表中查找对应的用户名
-  if (reply.reply_to_id && replies) {
-    const targetReply = replies.find(r => r.id === reply.reply_to_id)
-    return targetReply?.author_name
-  }
-  return null
-}
-// 获取被回复用户的ID
-const getReplyToUserId = (reply, replies) => {
-  // 优先使用后端返回的 reply_to_user_id
-  if (reply.reply_to_user_id) {
-    return reply.reply_to_user_id
-  }
-  // 如果有 reply_to_id 且非0，从回复列表中查找对应的用户ID
-  if (reply.reply_to_id && replies) {
-    const targetReply = replies.find(r => r.id === reply.reply_to_id)
-    return targetReply?.author_id
-  }
-  return null
-}
-
 const openReply = (comment) => {
   activeReplyId.value = activeReplyId.value === comment.id ? null : comment.id
+}
+
+// ============ 移动端回复抽屉 ============
+// 抽屉开合跟随路由 query.replies=<根评论ID>：打开时 push 一条记录，
+// Android 返回手势 / 浏览器后退即关闭抽屉，而不是离开帖子
+const SHEET_QUERY_KEY = 'replies'
+// 关闭在飞（back 的 popstate 尚未到达）：防止重复关闭多退一步
+let sheetClosing = false
+// 抽屉进场动画结束后要滚动到的回复ID（通知定位）
+let pendingSheetScrollId = ''
+
+// 本实例打开的根评论ID：只认自己打开的，挂载时残留的 query（刷新 / 后退回来）不会弹出抽屉
+const sheetOpenId = ref('')
+
+const sheetRouteActive = () => !!sheetOpenId.value && route.query[SHEET_QUERY_KEY] === sheetOpenId.value
+
+const sheetCommentId = computed(() => (mobileShell.value && sheetRouteActive() ? sheetOpenId.value : ''))
+const sheetComment = computed(() => {
+  if (!sheetCommentId.value) return null
+  return comments.value.find(c => c.id === sheetCommentId.value) || null
+})
+
+// 抽屉渲染用的根评论：关闭后保留到离场动画结束（after-leave），避免空白面板滑出
+const sheetDisplayComment = ref(null)
+watch(sheetComment, (comment) => {
+  if (comment) sheetDisplayComment.value = comment
+})
+
+const scrollToComment = (commentId, options) => {
+  document.getElementById(`comment-${commentId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center', ...options })
+}
+
+const queryWithoutSheet = () => {
+  const { [SHEET_QUERY_KEY]: _omit, ...query } = route.query
+  return query
+}
+
+// 去掉抽屉 query：上一条历史正是「同页无抽屉」时后退（抽屉是 push 进来的，返回手势一致），
+// 否则原地 replace（如刷新后上一条是别的页面），不会把用户退出帖子
+const leaveSheetRoute = () => {
+  const back = router.options.history.state?.back
+  if (back && back === router.resolve({ query: queryWithoutSheet() }).fullPath) {
+    router.back()
+  } else {
+    router.replace({ query: queryWithoutSheet() })
+  }
+}
+
+// 评论是否在该根评论的抽屉里（根评论本身或已加载的回复）
+const isInSheet = (rootId, commentId) => {
+  if (!commentId) return false
+  if (commentId === rootId) return true
+  return !!repliesData.value[rootId]?.pages.some(page => page?.some(r => r.id === commentId))
+}
+
+// fromLocate：通知定位已加载好目标页（之前的页为 null 占位），直接复用
+const openReplySheet = (comment, { fromLocate = false } = {}) => {
+  // 定位留下的跳页数据在抽屉里无法回看前面的页：用户主动打开时丢弃，从第一页重新拉
+  if (!fromLocate && repliesData.value[comment.id]?.pages.some(page => page === null)) {
+    collapseReplies(comment.id)
+  }
+  // 首次打开才加载；之后复用缓存（关闭抽屉不清数据，再开即时展示）
+  if (!isRepliesExpanded(comment.id)) loadReplies(comment)
+  if (sheetCommentId.value === comment.id) return
+  const switching = sheetRouteActive()
+  sheetOpenId.value = comment.id
+  const query = { ...route.query, [SHEET_QUERY_KEY]: comment.id }
+  if (switching) {
+    // 已开着另一条：原地替换，不叠加历史记录
+    router.replace({ query })
+  } else {
+    router.push({ query })
+  }
+}
+
+const closeReplySheet = () => {
+  if (!sheetRouteActive() || sheetClosing) return
+  sheetClosing = true
+  leaveSheetRoute()
+}
+
+const handleSheetAfterEnter = () => {
+  if (!pendingSheetScrollId) return
+  scrollToComment(pendingSheetScrollId)
+  pendingSheetScrollId = ''
+}
+
+const handleSheetAfterLeave = () => {
+  if (!sheetComment.value) sheetDisplayComment.value = null
+}
+
+// 抽屉关闭（返回手势 / 后退 / 关闭按钮，query 被移除）：复位抽屉状态，
+// 只收起抽屉里的回复框和高亮，主列表里其它评论的草稿不受影响
+watch(() => route.query[SHEET_QUERY_KEY], (id) => {
+  if (id || !sheetOpenId.value) return
+  const rootId = sheetOpenId.value
+  sheetOpenId.value = ''
+  sheetClosing = false
+  pendingSheetScrollId = ''
+  if (isInSheet(rootId, activeReplyId.value)) activeReplyId.value = null
+  if (isInSheet(rootId, highlightCommentId.value)) highlightCommentId.value = ''
+})
+
+// 跨到桌面断点：关掉抽屉（去掉 query 与历史记录），已加载的回复回到第一页内联展示
+watch(mobileShell, (mobile) => {
+  if (mobile) return
+  closeReplySheet()
+  Object.values(repliesData.value).forEach((data) => {
+    if (data.pages[0]) data.currentPage = 0
+  })
+})
+
+// 抽屉「加载更多」：从最后一个已加载页继续向后拉（抽屉拼接展示全部已加载页，不依赖 currentPage）
+const loadMoreReplies = (commentId) => {
+  const data = getRepliesData(commentId)
+  if (data.loading || data.pageLoading) return
+  data.currentPage = data.pages.length - 1
+  return nextPage(commentId)
 }
 
 // 评论 / 回复点赞：按评论 id 各自防抖串行提交期望状态（显式 action，幂等可重试），
@@ -497,6 +456,13 @@ const handleToggleLike = (type, target) => {
 
 const handleReplySubmit = async (parentComment, newReply) => {
   activeReplyId.value = null
+
+  // 移动端回复区在抽屉里：抽屉还没加载过时只加回复数，打开抽屉时再完整拉取
+  // （否则缓存里只有这一条新回复，打开抽屉会被当成已加载而不再请求）
+  if (mobileShell.value && !isRepliesExpanded(parentComment.id)) {
+    parentComment.reply_count = (parentComment.reply_count || 0) + 1
+    return
+  }
 
   // 如果有新回复的数据，直接添加到前端列表
   if (newReply) {
@@ -785,7 +751,21 @@ const locateAndJump = async (commentId) => {
     highlightCommentId.value = targetId
     await nextTick()
     if (isStale()) return
-    document.getElementById(`comment-${targetId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+    // 移动端回复在抽屉里：主列表先定位到根评论（关抽屉后停在上下文处），再打开抽屉滚到目标回复
+    if (mobileShell.value && !d.is_root) {
+      scrollToComment(root.id, { behavior: 'auto' })
+      // 防御：抽屉已开着该根评论时 after-enter 不会再触发，直接滚
+      if (sheetComment.value?.id === root.id) {
+        scrollToComment(targetId)
+      } else {
+        pendingSheetScrollId = targetId
+        openReplySheet(root, { fromLocate: true })
+      }
+      return
+    }
+
+    scrollToComment(targetId)
   } catch (error) {
     if (isStale()) return // 过期目标的错误不提示，交由最新流程处理
     // 业务码 40401 = 评论不存在、已删除或因审核不可见（对接文档 §3.2）
@@ -1003,6 +983,10 @@ const cleanupObserver = () => {
 }
 
 onMounted(() => {
+  // 刷新或从其它页后退回来时评论流已重建：残留的抽屉 query 不再对应已加载数据，直接去掉
+  if (route.query[SHEET_QUERY_KEY]) {
+    leaveSheetRoute()
+  }
   // 带定位参数进帖：跳过懒加载直接定位（定位流程自己会拉评论流）
   if (props.locateCommentId) {
     commentsLoaded.value = true
@@ -1057,115 +1041,6 @@ defineExpose({ refreshComments, addComment })
   flex-direction: column;
 }
 
-.comment-item {
-  display: flex;
-  gap: 12px;
-  padding: 16px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  /* 定位滚动居中时避开吸顶 header */
-  scroll-margin-top: calc(var(--header-height) + 12px);
-}
-
-/* 通知定位高亮：主题色呼吸背景，2s 淡出为透明 */
-.comment-highlight {
-  border-radius: 8px;
-  animation: comment-highlight-flash 2s ease-out;
-}
-
-@keyframes comment-highlight-flash {
-  0% {
-    background: rgba(102, 234, 194, 0.22);
-  }
-  100% {
-    background: transparent;
-  }
-}
-
-.comment-item:last-child {
-  border-bottom: none;
-}
-
-.comment-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.comment-author-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.comment-author {
-  font-size: 15px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
-  text-decoration: none;
-}
-
-.comment-author.clickable {
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-@media (hover: hover) {
-  .comment-author.clickable:hover {
-    color: #63e2b7;
-  }
-}
-.comment-time {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.comment-content {
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.75);
-  line-height: 1.6;
-  word-break: break-word;
-}
-
-.comment-content :deep(.md-editor) {
-  background: transparent !important;
-}
-
-.comment-content :deep(.md-editor-preview) {
-  padding: 0 !important;
-  font-size: 15px;
-}
-
-.comment-content :deep(.md-editor-preview-wrapper) {
-  padding: 0 !important;
-}
-
-.comment-actions {
-  display: flex;
-  gap: 16px;
-  margin-top: 8px;
-}
-
-.comment-action-btn {
-  color: rgba(255, 255, 255, 0.45) !important;
-  font-size: 13px;
-}
-
-@media (hover: hover) {
-  .comment-action-btn:hover {
-    color: rgba(255, 255, 255, 0.7) !important;
-  }
-}
-
-.comment-action-btn.liked-btn {
-  color: #f472b6 !important;
-}
-
-@media (hover: hover) {
-  .comment-action-btn.liked-btn:hover {
-    color: #ec4899 !important;
-  }
-}
-
 /* 查看回复按钮 */
 .load-replies-btn {
   display: inline-flex;
@@ -1183,165 +1058,6 @@ defineExpose({ refreshComments, addComment })
   .load-replies-btn:hover {
     color: #7fe7c4;
   }
-}
-
-/* 子评论区 */
-.comment-replies {
-  position: relative;
-  margin-top: 12px;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-}
-
-/* 加载状态下的遮罩效果 */
-.comment-replies.replies-loading {
-  pointer-events: none;
-}
-
-/* 加载遮罩层 */
-.replies-loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 12px;
-  z-index: 10;
-}
-
-/* 回复列表头部 */
-.comment-replies-header {
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 4px;
-  padding-bottom: 4px;
-}
-
-.comment-replies .comment-item {
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.comment-replies .comment-item:last-child {
-  border-bottom: none;
-}
-
-.reply-item .comment-author {
-  font-size: 14px;
-}
-
-.reply-arrow {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.reply-to-name {
-  color: #63e2b7;
-}
-
-/* 收起回复和翻页容器 */
-.replies-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-}
-
-/* 回复排序切换器 */
-.replies-sort-toggle {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-}
-
-.sort-option {
-  color: rgba(255, 255, 255, 0.4);
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-@media (hover: hover) {
-  .sort-option:hover {
-    color: rgba(255, 255, 255, 0.6);
-  }
-}
-
-.sort-option.active {
-  color: #63e2b7;
-}
-
-.sort-option.disabled {
-  opacity: 0.4;
-  pointer-events: none;
-  cursor: not-allowed;
-}
-
-.sort-divider {
-  color: rgba(255, 255, 255, 0.2);
-}
-
-/* 收起回复 */
-.collapse-replies-btn {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.4);
-  cursor: pointer;
-  user-select: none;
-}
-
-@media (hover: hover) {
-  .collapse-replies-btn:hover {
-    color: rgba(255, 255, 255, 0.6);
-  }
-}
-
-/* 翻页箭头容器 */
-.replies-pagination-arrows {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* 翻页箭头按钮 */
-.page-arrow-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.6);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-@media (hover: hover) {
-  .page-arrow-btn:hover:not(:disabled) {
-    background: rgba(99, 226, 183, 0.1);
-    border-color: rgba(99, 226, 183, 0.3);
-    color: #63e2b7;
-  }
-}
-
-.page-arrow-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-/* 页码显示 */
-.page-number {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  min-width: 40px;
-  text-align: center;
 }
 
 /* 无限滚动触发器 */
@@ -1383,6 +1099,45 @@ defineExpose({ refreshComments, addComment })
 
 :deep(.md-editor-dark .md-editor-preview) {
   --md-theme-bg-color: rgb(24, 24, 28);
+}
+
+/* 移动端回复抽屉：抽屉容器样式在 main.css（.reply-sheet），以下是本模板内元素 */
+.reply-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.reply-sheet-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.reply-sheet-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: -8px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.reply-sheet-close:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* 根评论作为上下文，与下方回复列表分隔 */
+.comment-item.reply-sheet-root {
+  padding-top: 4px;
+  margin-bottom: 8px;
 }
 
 :deep(.n-image-preview){
