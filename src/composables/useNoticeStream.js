@@ -13,8 +13,10 @@ const POLL_INTERVAL = 30000
  * 行为要点：
  * - 建连即推全量未读数，之后未读数变化才推；收到直接全量替换，不做加减
  * - 断线由浏览器 EventSource 按服务端 retry:5000 自动重连，不自建重连逻辑
- * - 建连被拒（401/429）→ readyState=CLOSED → 回落 30s 轮询
+ * - 建连被拒（401 / 服务关停 503）→ readyState=CLOSED → 回落 30s 轮询
  *   （EventSource 拿不到 HTTP 状态码；若真 401，轮询请求会被 axios 拦截器清 token 跳登录）
+ * - 收到 conn-evicted（同账号连接数超过上限 5，本连接是最旧的，被新连接挤掉）
+ *   → 主动 close（防自动重连又挤掉别的标签页，循环互踢）→ 本标签页回落 30s 轮询
  * - 收到 auth-expired（登出/过期/被踢下线）→ 主动 close（防自动重连 401 死循环）
  *   → 清 token → 回调 onAuthExpired 由调用方跳转登录页
  *
@@ -81,6 +83,11 @@ export function useNoticeStream({ onAuthExpired } = {}) {
       closeEs()
       auth.clearToken()
       if (onAuthExpired) onAuthExpired()
+    })
+
+    es.addEventListener('conn-evicted', () => {
+      closeEs()
+      startPolling()
     })
 
     // 建连成功 → 停轮询（两通道互备不互斥）
