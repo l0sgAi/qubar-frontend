@@ -346,9 +346,8 @@ import { Compass as ExploreIcon } from '@vicons/tabler'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal.vue'
-import { loginWithEmail, sendVerificationCode, verifyEmailCode, registerWithEmail } from '@/api/auth'
+import { loginWithEmail, loginWithOAuth, sendVerificationCode, verifyEmailCode, registerWithEmail } from '@/api/auth'
 import { auth, OAUTH_RETURN_PATH_KEY } from '@/utils/auth'
-import { API_BASE } from '@/config'
 
 const router = useRouter()
 const route = useRoute()
@@ -564,6 +563,7 @@ async function handleLogin() {
       password: loginData.value.password
     })
     auth.setToken(res.data.token)
+    auth.saveDeviceId(res.data.device_id)
     message.success(t('login.messages.loginSuccess'))
     redirectAfterAuth()
   } catch (err) {
@@ -641,6 +641,7 @@ async function handleRegister() {
       password: registerData.value.password
     })
     auth.setToken(res.data.token, res.data.expire)
+    auth.saveDeviceId(res.data.device_id)
     message.success(t('login.register.success'))
     redirectAfterAuth()
   } catch (err) {
@@ -663,23 +664,15 @@ function storeOauthReturnPath() {
   }
 }
 
-function handleGoogleLogin() {
+function startOauthLogin(provider) {
   oauthLoading.value = true
   storeOauthReturnPath()
-  window.location.href = `${API_BASE}/auth/google/login`
+  window.location.href = loginWithOAuth(provider)
 }
 
-function handleGithubLogin() {
-  oauthLoading.value = true
-  storeOauthReturnPath()
-  window.location.href = `${API_BASE}/auth/github/login`
-}
-
-function handleAzureLogin() {
-  oauthLoading.value = true
-  storeOauthReturnPath()
-  window.location.href = `${API_BASE}/auth/azure/login`
-}
+const handleGoogleLogin = () => startOauthLogin('google')
+const handleGithubLogin = () => startOauthLogin('github')
+const handleAzureLogin = () => startOauthLogin('azure')
 </script>
 
 <style scoped>
