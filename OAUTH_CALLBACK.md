@@ -3,11 +3,14 @@
 ## 登录流程
 
 ### 1. 用户发起登录
-用户点击登录按钮，跳转到后端 OAuth 登录接口：
+用户点击登录按钮，跳转到后端 OAuth 登录接口，query 带上终端类型与终端 ID（多端同时在线，
+见后端 `docs/multi-device-frontend-api.md`；`device_id` 存在 localStorage 的 `qubar_device_id`）：
 
 ```
-https://your-backend.com/auth/google/login
+https://your-backend.com/auth/google/login?device=web&device_id=3f1c9a52-7d4e-4b1a-9c2f-5e8d7a6b4c31
 ```
+
+后端把 `device` 与 `device_id` 编码进 OAuth state，回跳前端时原样带回。
 
 ### 2. Google 认证
 用户在 Google 页面完成认证。
@@ -23,12 +26,12 @@ https://your-backend.com/auth/google/login
 ### 推荐方式：后端重定向携带一次性 code
 
 后端收到 OAuth provider 回调后**不消耗 code、不在 URL 中下发 token**，只把 provider 的原始授权码
-302 透传到前端，URL 中携带一次性 code、provider 与 device（token、email 等敏感信息不出现在 URL 中，
-避免被浏览器历史、代理日志和分析工具留存）：
+302 透传到前端，URL 中携带一次性 code、provider、device 与 device_id（第 1 步带了合法值时才有；
+token、email 等敏感信息不出现在 URL 中，避免被浏览器历史、代理日志和分析工具留存）：
 
 ```
 HTTP 302 Redirect
-Location: https://qubar.site/success?code=4/0ATX87lPy3pP...&provider=google&device=web
+Location: https://qubar.site/success?code=4/0ATX87lPy3pP...&device=web&device_id=3f1c9a52-...&provider=google
 ```
 
 > **为什么不在后端直接换 token？** 授权码是一次性的：后端 GET 回调若先 Exchange，
@@ -53,9 +56,10 @@ func GoogleCallback(c *gin.Context) {
 
 **前端接收：**
 [Success.vue:43-100](src/views/auth/Success.vue#L43-L100) 会自动：
-1. 从 URL 参数提取 code、provider（白名单校验，缺省 google）、device（缺省 web）
+1. 从 URL 参数提取 code、provider（白名单校验，缺省 google）、device（缺省 web）；
+   device_id 优先取 localStorage，没有才用 URL 里的
 2. POST 到后端 `/auth/<provider>/callback` 交换 token
-3. 保存 token 到 localStorage
+3. 保存 token 到 localStorage，并以响应里的 device_id 覆盖本地值
 4. 显示成功消息
 5. 1.5秒后自动跳转到 `/home`
 
@@ -75,7 +79,8 @@ Content-Type: application/json
 
 {
   "code": "4/0ATX87lPy3pP...",
-  "device": "web"
+  "device": "web",
+  "device_id": "3f1c9a52-7d4e-4b1a-9c2f-5e8d7a6b4c31"
 }
 ```
 
@@ -88,7 +93,8 @@ Content-Type: application/json
   "data": {
     "expire": "259200",
     "token": "465f4e12-e538-40a4-98bd-6a50bb337a65",
-    "email": "user@example.com"
+    "email": "user@example.com",
+    "device_id": "3f1c9a52-7d4e-4b1a-9c2f-5e8d7a6b4c31"
   }
 }
 ```

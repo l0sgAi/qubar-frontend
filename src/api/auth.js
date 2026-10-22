@@ -1,13 +1,18 @@
 import request from '@/utils/request'
+import { auth } from '@/utils/auth'
+
+// 登录类接口统一带上终端类型与终端 ID（多端同时在线，见后端 docs/multi-device-frontend-api.md）
+const deviceFields = () => ({ device: 'web', device_id: auth.getDeviceId() })
 
 /**
- * 用户登录
- * @param {string} provider - 登录提供商 (google)
- * @returns {Promise}
+ * OAuth 登录跳转地址
+ * device / device_id 由后端编码进 OAuth state，回跳 /success 时原样带回
+ * @param {string} provider - 登录提供商（google / github / azure）
+ * @returns {string}
  */
 export function loginWithOAuth(provider) {
-  // 返回后端 OAuth 登录 URL
-  return `${request.defaults.baseURL}/auth/${provider}/login`
+  const query = new URLSearchParams(deviceFields())
+  return `${request.defaults.baseURL}/auth/${provider}/login?${query}`
 }
 
 /**
@@ -69,7 +74,7 @@ export function registerWithEmail(data) {
   return request({
     url: '/auth/register/complete',
     method: 'post',
-    data: { email, username, password }
+    data: { email, username, password, ...deviceFields() }
   })
 }
 
@@ -79,10 +84,11 @@ export function registerWithEmail(data) {
  * @returns {Promise}
  */
 export function loginWithEmail(data) {
+  const { email, password } = data
   return request({
     url: '/auth/login',
     method: 'post',
-    data
+    data: { email, password, ...deviceFields() }
   })
 }
 

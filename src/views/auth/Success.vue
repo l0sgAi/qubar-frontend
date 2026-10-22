@@ -53,6 +53,8 @@ onMounted(async () => {
     const providerParam = urlParams.get('provider')
     const provider = ['google', 'github', 'azure'].includes(providerParam) ? providerParam : 'google'
     const device = urlParams.get('device') || 'web'
+    // device_id 以本地为准；本地没有（跳转期间清了站点数据）才用回跳 URL 带回的，都没有就新生成
+    const deviceId = auth.getDeviceId(urlParams.get('device_id'))
     // OAuth 回调，需要发送给后端
     loading.value = true
     try {
@@ -63,12 +65,13 @@ onMounted(async () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ code, device })
+        body: JSON.stringify({ code, device, device_id: deviceId })
       })
 
       const data = await response.json()
 
       if (data.code === 200 && data.data && data.data.token) {
+        auth.saveDeviceId(data.data.device_id)
         handleLoginSuccess(data.data.token, data.data.expire, data.data.email || 'user@example.com')
       } else {
         throw new Error(data.message || t('common.unknownError'))
