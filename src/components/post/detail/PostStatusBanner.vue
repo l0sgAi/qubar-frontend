@@ -1,5 +1,5 @@
 <template>
-  <!-- 作者本人看到的非已发布状态提示条（审核中 / 审核较慢 / 驳回） -->
+  <!-- 作者本人看到的非已发布状态提示条（审核中 / 审核较慢 / 驳回 / 屏蔽等待复核） -->
   <NAlert
     v-if="variant"
     class="post-status-banner"
@@ -10,7 +10,7 @@
     <div class="banner-body">
       <span class="banner-text">{{ text }}</span>
       <NButton
-        v-if="variant !== 'rejected'"
+        v-if="variant === 'reviewing' || variant === 'slow'"
         class="banner-refresh"
         size="small"
         secondary
@@ -29,6 +29,7 @@ import { computed } from 'vue'
 import { NAlert, NButton } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { POST_STATUS } from '@/composables/usePostReview'
+import { usePostStatus } from '@/composables/usePostStatus'
 
 const props = defineProps({
   status: {
@@ -49,17 +50,21 @@ const props = defineProps({
 defineEmits(['refresh'])
 
 const { t } = useI18n()
+const { getPostStatusInfo } = usePostStatus()
 
 const variant = computed(() => {
   if (props.status === POST_STATUS.REVIEWING) return props.slow ? 'slow' : 'reviewing'
   if (props.status === POST_STATUS.REJECTED) return 'rejected'
+  if (props.status === POST_STATUS.BLOCKED) return 'blocked'
   return null
 })
 
 const text = computed(() => ({
   reviewing: t('post.reviewing.banner'),
   slow: t('post.reviewing.slow'),
-  rejected: t('post.rejected.banner')
+  // 驳回 / 屏蔽与「我的帖子」状态标签的说明共用一份文案
+  rejected: getPostStatusInfo(POST_STATUS.REJECTED).hint,
+  blocked: getPostStatusInfo(POST_STATUS.BLOCKED).hint
 })[variant.value])
 </script>
 

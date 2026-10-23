@@ -1,5 +1,5 @@
 <template>
-  <article class="m-post-item" :class="{ flush }">
+  <article class="m-post-item" :class="[{ flush }, tone && `is-tone-${tone}`]">
     <!-- 移动端紧凑帖子列表项（PostCard / 我的帖子 / 收藏 / 浏览历史在移动端外框下共用）。
          单行头部 + 标题、摘要各 2 行 + 右侧缩略图 + 小号统计栏，一屏约 4 条。
          整项由封面链接承担跳转；头部有链接的来源抬层各自响应，无链接时渲染普通 div、点击落到封面链接 -->
@@ -81,7 +81,9 @@ defineProps({
   likeCount: { type: Number, default: 0 },
   commentCount: { type: Number, default: 0 },
   // 通栏：去掉圆角与左右边框，用于左右无边距的列表（如「我的」页）
-  flush: { type: Boolean, default: false }
+  flush: { type: Boolean, default: false },
+  // 状态色调（「我的帖子」里驳回 = warning / 屏蔽 = error）：左侧色条 + 正文降低不透明度
+  tone: { type: String, default: '', validator: (v) => ['', 'warning', 'error'].includes(v) }
 })
 
 const { t } = useI18n()
@@ -109,6 +111,19 @@ const { formatNumber } = useFormatNumber()
   margin-bottom: 0;
   border-radius: 0;
   border-width: 0 0 1px;
+}
+
+/* 状态色调：左侧色条（inset 阴影，不改变布局），正文 / 缩略图变淡；头部状态标签保持清晰 */
+.m-post-item.is-tone-warning {
+  box-shadow: inset 3px 0 0 #fbbf24;
+}
+
+.m-post-item.is-tone-error {
+  box-shadow: inset 3px 0 0 #f87171;
+}
+
+.m-post-item[class*='is-tone-'] .m-body {
+  opacity: 0.6;
 }
 
 /* 整项封面链接（stretched-link），头部链接抬层盖住它 */
