@@ -94,6 +94,7 @@ export default {
     notifications: 'Messages',
     adminAgents: 'Agent Management',
     circleAgents: 'Circle Agents',
+    circleModeration: 'Moderation',
     // Dynamic title templates: show concrete content after data loads (see utils/pageTitle.js)
     postDetailName: '{name}',
     circleDetailName: '{name}',
@@ -101,6 +102,7 @@ export default {
     circleMembersName: 'Member Management: {name}',
     circleEditName: 'Edit Circle: {name}',
     circleAgentsName: 'Agent Management: {name}',
+    circleModerationName: 'Moderation: {name}',
     profileName: 'Profile: {name}',
     notFound: 'Page Not Found'
   },
@@ -339,6 +341,72 @@ export default {
         memberNotFound: 'Member not found or no longer in this circle',
         badRequest: 'Invalid request parameters',
         generic: 'Operation failed, please try again later'
+      }
+    },
+    moderation: {
+      title: 'Moderation',
+      noPermissionVisit: "You don't have permission to access moderation.",
+      tabs: {
+        pending: 'Pending review'
+      },
+      empty: 'No posts waiting for review.',
+      loadFailed: 'Failed to load posts pending review',
+      unknownUser: 'Unknown user',
+      untitled: '(Untitled)',
+      postedAt: 'Posted {time}',
+      showContent: 'Show full post',
+      hideContent: 'Hide full post',
+      ai: {
+        title: 'AI verdict',
+        pending: 'No AI verdict yet. You can review it manually.',
+        failed: "AI couldn't reach a verdict.",
+        noHit: 'No risks flagged',
+        hazardTag: '{label} {percent}%',
+        severity: 'Severity: {level} ({score})',
+        confidence: '{percent}% confidence',
+        model: 'Model: {model}',
+        showHazards: 'Show all risk scores',
+        hideHazards: 'Hide risk scores',
+        care: 'This author may need support.'
+      },
+      hazards: {
+        sexual: 'Sexual content',
+        violence_terror: 'Violence / terrorism',
+        harassment: 'Harassment',
+        illegal: 'Illegal activity',
+        spam_ad: 'Spam / ads',
+        privacy: 'Privacy leak',
+        self_harm: 'Self-harm',
+        manipulation: 'Manipulation'
+      },
+      severity: {
+        none: 'None',
+        minor: 'Minor',
+        severe: 'Severe',
+        extreme: 'Extreme'
+      },
+      actions: {
+        approve: 'Approve',
+        reject: 'Reject'
+      },
+      confirm: {
+        approveTitle: 'Approve post',
+        approveContent: 'Approve "{title}"? It will become public in the circle, and the author will be notified.',
+        rejectTitle: 'Reject post',
+        rejectContent: 'Reject "{title}"? Only the author will be able to see it, and they will be notified.',
+        reasonLabel: 'Note (optional)',
+        reasonPlaceholder: 'Add a reason',
+        reasonHint: "Notes are only kept in the moderation log and aren't shown to the author."
+      },
+      success: {
+        approved: 'Approved. The post will appear in the circle in a few seconds.',
+        rejected: 'Rejected.'
+      },
+      error: {
+        handled: 'This post has already been handled.',
+        noPermission: "You don't have permission to do this.",
+        badRequest: 'Invalid request',
+        generic: 'Something went wrong. Please try again later.'
       }
     },
     edit: {

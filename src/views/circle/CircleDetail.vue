@@ -91,7 +91,7 @@
                 type="primary"
                 secondary
                 round
-                @click="router.push(`/circle/${circleDetail.id}/members`)"
+                @click="router.push(`/circle/${circleDetail.id}/${manageTarget}`)"
               >
                 <template #icon>
                   <NIcon><ShieldCheckIcon /></NIcon>
@@ -317,6 +317,8 @@ import { requireLogin } from '@/utils/guest-action'
 import { useCircleMeta } from '@/composables/useCircleMeta'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { isManager, MEMBER_PAGE_SIZE } from '@/constants/circle'
+import { getModerationPosts } from '@/api/moderation'
+import { MODERATION_PAGE_SIZE } from '@/constants/moderation'
 import { Bell as BellIcon, BellOff as BellOffIcon, Edit as EditIcon, DotsVertical as MoreIcon } from '@vicons/tabler'
 import { User as UserIcon, FileText as FileTextIcon, Flame as FlameIcon } from '@vicons/tabler'
 import { ShieldCheck as ShieldCheckIcon } from '@vicons/tabler'
@@ -669,9 +671,12 @@ const handleMobileShare = async () => {
 
 const canManage = computed(() => isManager(circleDetail.value.member_role))
 
-// 待审核角标（入口提示）：拉一页 status=0&size=20，满页显示「20+」
+// 待处理角标（入口提示）：入圈待审（status=0）与待审帖子各拉一页 size=20，两者相加；任一满页显示「20+」。
+// 两个请求互不影响，单个失败按 0 计
 const pendingModCount = ref(0)
 const pendingModFull = ref(false)
+// 入口落点：只有待审帖子、没有入圈待审时直接进内容审核页，否则进成员管理
+const manageTarget = ref('members')
 
 // 世代守卫：切换圈子后旧请求的响应直接丢弃，防止角标被上一个圈子的数据覆盖
 let pendingModGen = 0
@@ -679,20 +684,17 @@ let pendingModGen = 0
 const fetchPendingModCount = async () => {
   const gen = ++pendingModGen
   if (!canManage.value) return
-  try {
-    const res = await getCircleMembers({
-      circle_id: circleDetail.value.id,
-      status: '0',
-      size: MEMBER_PAGE_SIZE
-    })
-    if (gen !== pendingModGen) return
-    pendingModCount.value = res.data?.members?.length || 0
-    pendingModFull.value = pendingModCount.value >= MEMBER_PAGE_SIZE
-  } catch {
-    if (gen !== pendingModGen) return
-    pendingModCount.value = 0
-    pendingModFull.value = false
-  }
+  const circleId = circleDetail.value.id
+  const [members, posts] = await Promise.allSettled([
+    getCircleMembers({ circle_id: circleId, status: '0', size: MEMBER_PAGE_SIZE }),
+    getModerationPosts({ circle_id: circleId, size: MODERATION_PAGE_SIZE })
+  ])
+  if (gen !== pendingModGen) return
+  const memberCount = members.status === 'fulfilled' ? members.value.data?.members?.length || 0 : 0
+  const postCount = posts.status === 'fulfilled' ? posts.value.data?.posts?.length || 0 : 0
+  pendingModCount.value = memberCount + postCount
+  pendingModFull.value = memberCount >= MEMBER_PAGE_SIZE || postCount >= MODERATION_PAGE_SIZE
+  manageTarget.value = memberCount === 0 && postCount > 0 ? 'moderation' : 'members'
 }
 
 // 无限滚动
@@ -755,6 +757,7 @@ watch(() => route.params.id, async (newId, oldId) => {
   topHasMore.value = true
   pendingModCount.value = 0
   pendingModFull.value = false
+  manageTarget.value = 'members'
 
   await fetchCircleDetail()
   fetchPosts(activeTab.value)
