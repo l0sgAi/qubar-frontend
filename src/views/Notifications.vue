@@ -45,7 +45,17 @@
               :to="noticeTarget(item)"
               @click="markReadAndBump(item)"
             >
+              <!-- 系统类通知（审核结果等）无 actor：用系统图标代替首字母兜底 -->
               <NAvatar
+                v-if="isSystemNotice(item)"
+                round
+                :size="40"
+                class="notice-avatar system-avatar"
+              >
+                <NIcon :size="22" :component="item.notice_type === 8 ? ShieldX : ShieldCheck" />
+              </NAvatar>
+              <NAvatar
+                v-else
                 round
                 :size="40"
                 :src="item.actor?.avatar_url || undefined"
@@ -82,13 +92,15 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { NAvatar, NButton, NEmpty, NSpin, useMessage } from 'naive-ui'
+import { NAvatar, NButton, NEmpty, NIcon, NSpin, useMessage } from 'naive-ui'
+import { ShieldCheck, ShieldX } from '@vicons/tabler'
 import { useI18n } from 'vue-i18n'
 import AppShell from '@/components/layout/AppShell.vue'
 import { useAppShell } from '@/composables/useAppShell'
 import SmartLink from '@/components/common/SmartLink.vue'
 import { getNoticeList, markNoticesRead, markAllNoticesRead } from '@/api/notice'
 import { useFormatTime } from '@/utils/i18n'
+import { renderNoticeText, noticeTarget, isSystemNotice } from '@/utils/noticeDisplay'
 
 const message = useMessage()
 const { t } = useI18n()
@@ -99,13 +111,15 @@ const { offset, contentStyle } = useAppShell()
 
 // 类型过滤 Tab：type 对应后端 notice_type，空/0=全部
 // 接口支持逗号分隔多值过滤（notice_type IN (...)），帖子被赞(1)与评论被赞(2)同属「点赞」tab
+// 「审核」tab 目前只含 7/8：后端 l0sgAi/qubar#154 上线前，type 带 9–11 会返回 400
 const tabs = computed(() => [
   { type: 0, label: t('notice.tabs.all') },
   { type: '1,2', label: t('notice.tabs.like') },
   { type: 3, label: t('notice.tabs.collect') },
   { type: 4, label: t('notice.tabs.comment') },
   { type: 5, label: t('notice.tabs.reply') },
-  { type: 6, label: t('notice.tabs.mention') }
+  { type: 6, label: t('notice.tabs.mention') },
+  { type: '7,8', label: t('notice.tabs.review') }
 ])
 const activeType = ref(0)
 
@@ -115,22 +129,8 @@ const cursor = ref('')
 const hasMore = ref(true)
 const readingAll = ref(false)
 
-// 文案模板按类型渲染；actor 缺省（用户注销等降级场景）兜底为「有人」
-const TEMPLATE_KEYS = {
-  1: 'likePost',
-  2: 'likeComment',
-  3: 'collectPost',
-  4: 'commentPost',
-  5: 'replyComment',
-  6: 'mention'
-}
-
-const renderText = (item) => {
-  const key = TEMPLATE_KEYS[item.notice_type]
-  const actor = item.actor?.username || t('notice.someone')
-  if (!key) return item.snippet || ''
-  return t(`notice.templates.${key}`, { actor, snippet: item.snippet || '' })
-}
+// 文案模板按类型渲染，见 utils/noticeDisplay.js
+const renderText = (item) => renderNoticeText(item, t)
 
 // 加载世代：切换过滤类型后旧请求的响应直接丢弃，不得覆盖新列表/游标
 let loadGen = 0
@@ -184,15 +184,6 @@ const switchTab = (type) => {
   hasMore.value = true
   cleanupObserver()
   loadNotices(true)
-}
-
-// 通知跳转目标：帖子详情（有 comment_id 带上定位参数）；无 post_id 时降级为普通块
-const noticeTarget = (item) => {
-  if (!item.post_id) return null
-  return {
-    path: `/post/${item.post_id}`,
-    query: item.comment_id ? { comment_id: item.comment_id } : {}
-  }
 }
 
 // 点击通知顺手标记已读并校正顶栏角标（跳转由 SmartLink 承担）
@@ -422,6 +413,12 @@ onUnmounted(() => {
 
 .notice-avatar {
   flex-shrink: 0;
+}
+
+/* 系统通知头像：主题绿图标 */
+.system-avatar {
+  background: rgba(102, 234, 194, 0.14);
+  color: #8af0d0;
 }
 
 .notice-body {

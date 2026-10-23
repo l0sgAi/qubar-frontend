@@ -912,7 +912,8 @@ export default {
       collect: 'Favorites',
       comment: 'Comments',
       reply: 'Replies',
-      mention: 'Mentions'
+      mention: 'Mentions',
+      review: 'Review'
     },
     readAll: 'Mark all as read',
     empty: 'No notifications',
@@ -930,7 +931,9 @@ export default {
       collectPost: '{actor} favorited your post "{snippet}"',
       commentPost: '{actor} commented on your post: {snippet}',
       replyComment: '{actor} replied to your comment: {snippet}',
-      mention: '{actor} mentioned you: {snippet}'
+      mention: '{actor} mentioned you: {snippet}',
+      postApproved: 'Your post "{snippet}" has been approved',
+      postRejected: 'Your post "{snippet}" didn\'t pass review'
     },
     mention: {
       button: 'Mention',
