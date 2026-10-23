@@ -334,8 +334,8 @@ const resolveView = (Component, route) =>
 | `CircleDetail.vue:102` | 圈子管理入口 | 隐藏 |
 | `CircleDetail.vue:286` / `CircleInfoCard` | 消息免打扰开关 | 隐藏 |
 | `CircleDetail.vue:340-345` | 更多菜单的「举报」 | 从 options 中过滤掉；「分享」改用 `navigator.share`，不可用时复制链接 |
-| `PostDetail.vue:24` | `CommentEditor` | 换成 `PlainCommentInput`（6.6） |
-| `CommentList.vue:60/155` | `CommentReplyEditor` | 换成 `PlainCommentInput`，回复按钮保留（6.6） |
+| `PostDetail.vue:24` | `CommentEditor` | 换成底部「说点什么…」输入条 + 输入抽屉（6.6） |
+| `CommentList.vue:60/155` | `CommentReplyEditor` | 回复按钮打开输入抽屉（6.6） |
 | `UserProfile.vue:151` | 编辑资料（含头像上传） | 隐藏入口 |
 | `MyGroups` / `ManagedCircleList` | 「管理」按钮或链接 | 隐藏，只保留进入圈子 |
 | `AppHeader` / `SideNav` 中的发帖、建圈 | — | 移动端本来就不渲染这两个组件 |
@@ -385,22 +385,31 @@ export function useCommentSubmit() { ... }
 - 桌面的 `CommentEditor`、`CommentReplyEditor` 改为调用它，行为不变。这是本节唯一的桌面端改动，需要回归验证（11.2）。
 - 移动端调用时不传 `extraData` 和 `mentionIds`。
 
-**组件：`src/components/post/detail/PlainCommentInput.vue`**
+> **#35 变更**：输入从「内联在评论区 / 被回复的评论下方」改为**底部输入抽屉**。内联输入框在长帖里要先滚回正文末尾才能评论，弹出键盘时还常被挡住、把页面顶来顶去。下面是现行方案。
 
-- 对外契约与现有编辑器一致，父组件只需按 `isMobile` 切换组件：
-  - 顶层评论模式：`postId`，emit `submit`。对应 `CommentEditor`。
-  - 回复模式：`postId`、`rootId`、`replyToId`、`replyToName`，emit `submit` 和 `cancel`。对应 `CommentReplyEditor`。
-- UI：
-  - `NInput type="textarea"`，`autosize: { minRows: 1, maxRows: 6 }`，字号 16px。
-  - 右侧发送按钮，内容为空或提交中时禁用。
-  - 下方小字提示 `mobile.comment.richHint`。
-- 回车换行，不发送：移动端软键盘的回车很容易误触。
-- 访客点击输入框时调用 `requireLogin('comment')`，与 `CommentEditor.vue:7` 现有的访客引导一致。
-- **位置**：
-  - 顶层评论：内联在评论区顶部，与桌面相同位置。
-  - 回复：内联在被回复的评论下方，与桌面 `CommentReplyEditor` 相同位置。
-  - **不做底部固定输入栏**：固定在底部的输入框在 iOS 键盘弹起时需要额外处理 `visualViewport`，内联方案没有这个问题。
-- 提交成功后：清空内容，收起回复框，评论插入列表，沿用父组件现有的 `submit` 处理逻辑。
+**组件**
+
+- `src/components/post/detail/PlainCommentInput.vue`：抽屉里的输入区。
+  - Props：`postId`、`rootId`、`replyToId`、`replyToName`，内容走 `v-model:value`（草稿由抽屉持有）。传 `rootId` 即回复模式。
+  - UI：`NInput type="textarea"`，`autosize: { minRows: 1, maxRows: 6 }`，`maxlength` 2000，字号 16px；右侧发送按钮，内容为空时禁用、提交中 loading；下方小字提示 `mobile.comment.richHint`；字数到 1800 才显示 `n/2000`。
+  - 回车换行，不发送：移动端软键盘的回车很容易误触。
+  - 成功：提示、清空、emit `submit`。失败：提示错误，保留内容。
+- `src/components/post/detail/MobileCommentComposer.vue`：输入抽屉（`NDrawer placement="bottom" height="auto"`，高度随内容），挂在 `CommentList` 里，只在移动端外框渲染。
+  - `open({ rootId, replyToId, replyToName })` 打开：顶层评论 / 回复根评论 / 回复某条回复。头部显示「发表评论」或「回复 @{name}」（`mobile.comment.replyTitle`）。
+  - 访客：`requireLogin('comment')`，不打开抽屉。
+  - 发送成功：收起抽屉和键盘，emit `submit(created, target)`；`CommentList` 沿用 `addComment` / `handleReplySubmit` 乐观插入，高亮新评论，抽屉离场动画结束（emit `closed`）后滚动过去。
+- `src/components/post/detail/MobileComposeBar.vue`：「说点什么…」伪输入条，点击打开输入抽屉。
+  - 帖子详情页底部常驻（`fixed`）：占位 `mobile.comment.barPlaceholder`，右侧显示评论数，点它滚到评论区；底部让出 `var(--safe-bottom)`，内容区底部加等高留白。帖子未发布（`status !== 1`，评论区不渲染）时不显示。
+  - 回复抽屉（`reply-sheet`）的 footer 里也放一条，占位「回复 @{根评论作者}」，打开回复根评论的输入抽屉。
+
+**交互细节**
+
+- **打开即弹键盘**：iOS Safari 只在用户手势的同步调用里 `focus()` 才弹键盘，而抽屉内容要等路由更新后才渲染。点击时先同步聚焦一个常驻的代理输入框（`.composer-focus-proxy`，透明、1px、`position: fixed`），键盘弹出；抽屉渲染后再把焦点移到真正的 textarea，键盘保持弹出。所以 `open()` 必须在点击处理里同步调用。两个抽屉都关掉了 `trap-focus`，否则回复抽屉的焦点陷阱会把代理输入框的焦点抢回去。
+- **贴着键盘**：`src/composables/useKeyboardInset.js` 监听 `visualViewport` 的 `resize` / `scroll`，遮挡高度 = `innerHeight − visualViewport.height − visualViewport.offsetTop`，作为抽屉的内联 `bottom`。键盘弹出时去掉底部安全区留白。iOS Safari 和 Android Chrome（默认 `interactive-widget=resizes-visual`）走同一条路径，`index.html` 不加 `interactive-widget=resizes-content`，避免任何输入框聚焦都让整页重新布局。
+- **不滚动穿透**：`NDrawer` 默认锁住 `html` 滚动；遮罩加 `touch-action: none`，抽屉加 `overscroll-behavior: contain`。
+- **草稿**：按目标（顶层 `post` / 根评论 id / 被回复的回复 id）保存在内存里，关闭再打开同一目标时恢复，发送成功后清空。草稿随评论区卸载，离开帖子不保留。
+- **叠加与返回手势**：开合跟随路由 query `compose=<目标 key>`，与回复抽屉的 `replies` 用同一套做法：打开时 push，关闭时上一条历史正是「同页无该 query」才 `router.back()`，否则 `replace`，并用 `closing` 标记防止重复关闭多退一步。从回复抽屉打开时后打开的 `NDrawer` z-index 更高，叠在上方。返回顺序：先关输入抽屉，再关回复抽屉，最后离开帖子。刷新或后退回来时残留的 `replies` / `compose` 由 `CommentList` 挂载时一并去掉；跨到桌面断点时也一样。
+- 桌面端不变：`CommentEditor` / `CommentReplyEditor` 内联 Markdown 编辑器。
 
 **内容格式**
 
@@ -417,7 +426,7 @@ export function useCommentSubmit() { ... }
 | Home `/home` | 默认 | ✅ | tab 吸顶；单列；去掉 RightSidebar |
 | Hot `/hot` | 默认 | ✅ | 顶部分段控件「发现 \| 热榜」；`TrendingCard` 单列 |
 | Discover `/discover` | 默认 | ✅ | 分段控件；帖子网格 2 列；圈子卡片改横向滚动带 |
-| PostDetail `/post/:id` | `back`，无 TabBar | ✅ | 标题显示圈子名；点赞、收藏放大触控区；评论和回复换成 `PlainCommentInput`（6.6）；Markdown 溢出处理；评论定位加 `scroll-margin-top` |
+| PostDetail `/post/:id` | `back`，无 TabBar | ✅ | 标题显示圈子名；点赞、收藏放大触控区；评论和回复改为底部输入条 + 输入抽屉（6.6）；Markdown 溢出处理；评论定位加 `scroll-margin-top` |
 | Notifications `/notifications` | 默认 | ✅ | 分类 tab 横向滑动；列表项整行可点 |
 | UserProfile `/profile` | 默认 | ✅ | 6.5 |
 | UserDetail `/user/:id` | `back` | ✅ | 信息纵向排列 |
@@ -510,11 +519,12 @@ export function useCommentSubmit() { ... }
   - 并发提交时 `submitting` 能防止重复提交。
   - 接口失败时抛错，`submitting` 复位。
 - **`PlainCommentInput.spec.js`**：
-  - 内容为空时发送按钮禁用。
-  - 访客点击时调用 `requireLogin('comment')`。
-  - 提交成功后 emit `submit` 并清空内容。
-  - 回复模式下有取消按钮并 emit `cancel`。
-  - 如果采用了换行转换，验证 `\n` 被转成 `  \n`。
+  - 内容为空 / 只有空白时发送按钮禁用。
+  - 受控 `v-model:value`；提交成功后 emit `submit` 并清空内容；失败时保留内容。
+  - 回复模式的请求参数和占位符；接近上限才显示字数。
+- **`MobileCommentComposer.spec.js`**（#35）：访客不打开；打开时同步聚焦代理输入框、push `?compose=`、渲染后焦点移到 textarea；按目标保留草稿；关闭不多退一步；叠在回复抽屉上时返回只关输入抽屉；发送成功 / 失败；键盘遮挡时抽屉 `bottom` 抬高。
+- **`useKeyboardInset.spec.js`**（#35）：用假的 `visualViewport` 覆盖遮挡高度计算、只在打开期间监听。
+- **`CommentList.spec.js`**（#35）：主列表 / 回复抽屉里点回复打开输入抽屉；回复抽屉底部输入条；返回手势关闭顺序；残留 query 清理；跨断点。
 - **暂不支持页的替换逻辑**：把 `resolveView` 抽成纯函数，测四种组合：桌面 × supported、桌面 × unsupported、移动 × supported、移动 × unsupported。
 - **`tests/router/`**：断言所有 `meta.mobile` 取值合法；第 6.3 节列出的 5 个路由都带有 `supported: false`。
 - `vitest.config.js` 的 coverage `include` 已经覆盖 `src/composables/**`；给 `useBreakpoint` 和 `useUnreadNotice` 设高门槛。

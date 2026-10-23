@@ -4,7 +4,7 @@
     <AppShell v-model:offset="offset" />
 
     <!-- 主内容区域 -->
-    <div class="main-content" :style="contentStyle">
+    <div class="main-content" :style="[contentStyle, composeBarPadding]">
       <div v-if="loading" class="loading-container">
         <NSpin size="large" />
       </div>
@@ -24,14 +24,9 @@
             >
             <!-- 未发布（审核中 / 驳回 / 屏蔽）的帖子后端不接受评论，评论区整体不渲染 -->
             <template v-if="published">
-            <!-- 移动端门户：纯文本评论（不带工具栏 / 配图 / @ 提及，见 docs/mobile-adaptation-plan.md 6.6） -->
-            <PlainCommentInput
-              v-if="mobileShell"
-              :post-id="route.params.id"
-              @submit="handleSubmitComment"
-            />
+            <!-- 移动端门户：顶层评论走底部输入条 + 输入抽屉（见下方 MobileComposeBar 与 docs/mobile-adaptation-plan.md 6.6） -->
             <CommentEditor
-              v-else
+              v-if="!mobileShell"
               :post-id="route.params.id"
               :circle-id="post.circle_id"
               :language="language"
@@ -70,6 +65,16 @@
         </template>
       </NEmpty> 
     </div>
+
+    <!-- 移动端底部常驻「说点什么…」输入条：点击打开输入抽屉；未发布的帖子不能评论，不显示 -->
+    <MobileComposeBar
+      v-if="showComposeBar"
+      fixed
+      :placeholder="t('mobile.comment.barPlaceholder')"
+      :count="commentCount"
+      @compose="openTopLevelComposer"
+      @count-click="commentListRef?.scrollToList()"
+    />
   </div>
 </template>
 
@@ -83,7 +88,7 @@ import { useAppShell } from '@/composables/useAppShell'
 import CircleInfoCard from '@/components/circle/CircleInfoCard.vue'
 import PostHeaderAndContent from '@/components/post/detail/PostHeaderAndContent.vue'
 import CommentEditor from '@/components/post/detail/CommentEditor.vue'
-import PlainCommentInput from '@/components/post/detail/PlainCommentInput.vue'
+import MobileComposeBar from '@/components/post/detail/MobileComposeBar.vue'
 import CommentList from '@/components/post/detail/CommentList.vue'
 import { getPostDetail } from '@/api/post'
 import { usePageTitle } from '@/composables/usePageTitle'
@@ -316,6 +321,17 @@ const handleSubmitComment = (newComment) => {
     // 降级处理：如果没有返回数据，则刷新列表
     commentListRef.value?.refreshComments()
   }
+}
+
+// 移动端底部输入条：只在评论区渲染时显示（已发布）；内容区底部让出输入条高度，最后一条评论不被挡住
+const showComposeBar = computed(() => mobileShell.value && !loading.value && published.value)
+const composeBarPadding = computed(() => (showComposeBar.value
+  ? { 'padding-bottom': 'calc(var(--compose-bar-height) + var(--safe-bottom) + 16px)' }
+  : null))
+
+// 须在点击处理里同步打开（iOS 弹键盘依赖用户手势），访客由输入抽屉弹登录引导
+const openTopLevelComposer = () => {
+  commentListRef.value?.openComposer({ rootId: null, replyToId: null, replyToName: '' })
 }
 
 // 评论图片上传

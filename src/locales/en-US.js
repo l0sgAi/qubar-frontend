@@ -61,6 +61,10 @@ export default {
     comment: {
       placeholder: 'Write a comment...',
       replyPlaceholder: 'Reply to {name}',
+      // Bottom compose bar / composer drawer (see MobileComposeBar, MobileCommentComposer)
+      barPlaceholder: 'Say something…',
+      replyTitle: "Reply to {'@'}{name}",
+      toComments: 'View comments',
       send: 'Send',
       richHint: "Images and {'@'} mentions are available on desktop"
     },

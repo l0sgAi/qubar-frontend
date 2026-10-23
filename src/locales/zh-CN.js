@@ -61,6 +61,10 @@ export default {
     comment: {
       placeholder: '写下你的评论...',
       replyPlaceholder: '回复 {name}',
+      // 底部输入条 / 输入抽屉（见 MobileComposeBar、MobileCommentComposer）
+      barPlaceholder: '说点什么…',
+      replyTitle: "回复 {'@'}{name}",
+      toComments: '查看评论',
       send: '发送',
       richHint: "图片和 {'@'} 提及请在电脑端使用"
     },

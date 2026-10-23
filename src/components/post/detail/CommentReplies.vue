@@ -38,29 +38,18 @@
       @like="emit('like', $event)"
       @reply="emit('open-reply', $event)"
     >
-      <!-- 内联回复编辑器（回复子评论；移动端门户为纯文本输入） -->
-      <template v-if="activeReplyId === reply.id">
-        <PlainCommentInput
-          v-if="mobileShell"
-          :post-id="postId"
-          :root-id="root.id"
-          :reply-to-id="reply.id"
-          :reply-to-name="reply.author_name"
-          @submit="emit('reply-submit', $event)"
-          @cancel="emit('reply-cancel')"
-        />
-        <CommentReplyEditor
-          v-else
-          :post-id="postId"
-          :circle-id="circleId"
-          :root-id="root.id"
-          :reply-to-id="reply.id"
-          :reply-to-name="reply.author_name"
-          :language="language"
-          @submit="emit('reply-submit', $event)"
-          @cancel="emit('reply-cancel')"
-        />
-      </template>
+      <!-- 桌面内联回复编辑器（回复子评论；sheet 里由 open-reply 打开底部输入抽屉） -->
+      <CommentReplyEditor
+        v-if="!isSheet && activeReplyId === reply.id"
+        :post-id="postId"
+        :circle-id="circleId"
+        :root-id="root.id"
+        :reply-to-id="reply.id"
+        :reply-to-name="reply.author_name"
+        :language="language"
+        @submit="emit('reply-submit', $event)"
+        @cancel="emit('reply-cancel')"
+      />
     </CommentItem>
 
     <!-- 抽屉：向下追加加载 -->
@@ -124,7 +113,7 @@
 </template>
 
 <script setup>
-// 一条根评论的回复区：排序切换 + 回复列表 + 内联回复输入 + 翻页。
+// 一条根评论的回复区：排序切换 + 回复列表 + 内联回复输入（仅 inline）+ 翻页。
 // 分页状态（data）归 CommentList 所有，本组件只读展示，变更一律 emit 给父组件。
 //   inline：桌面端内联在根评论下方，按页翻页（上一页 / 下一页），可收起
 //   sheet ：移动端底部抽屉内，已加载的页依次拼接，底部「加载更多」向下追加
@@ -133,8 +122,6 @@ import { NIcon, NSpin } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import CommentItem from '@/components/post/detail/CommentItem.vue'
 import CommentReplyEditor from '@/components/post/detail/CommentReplyEditor.vue'
-import PlainCommentInput from '@/components/post/detail/PlainCommentInput.vue'
-import { useMobileShell } from '@/composables/useAppShell'
 import { getReplyToName, getReplyToUserId } from '@/utils/commentDisplay'
 
 const props = defineProps({
@@ -187,7 +174,6 @@ const emit = defineEmits([
 ])
 
 const { t } = useI18n()
-const mobileShell = useMobileShell()
 
 const isSheet = computed(() => props.variant === 'sheet')
 
