@@ -20,6 +20,15 @@
       >
         {{ getStatusText(post.status) }}
       </NTag>
+      <!-- 作者本人：审核中 / 驳回提示条（status=2 时带刷新按钮） -->
+      <PostStatusBanner
+        v-if="isAuthor"
+        class="post-status-banner-slot"
+        :status="post.status"
+        :slow="reviewSlow"
+        :refreshing="refreshing"
+        @refresh="$emit('refresh')"
+      />
 
       <!-- 作者信息 -->
       <div class="post-meta">
@@ -87,8 +96,8 @@
       />
     </div>
 
-    <!-- 底部操作栏 -->
-    <div class="post-actions">
+    <!-- 底部操作栏：未发布（审核中 / 驳回 / 屏蔽）的帖子后端不接受点赞 / 收藏，直接隐藏 -->
+    <div v-if="isPostPublished(post)" class="post-actions">
       <NButton
         size="large"
         :type="post.is_liked ? 'primary' : 'default'"
@@ -135,6 +144,8 @@ import { NCard, NTag, NAvatar, NButton, NIcon } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import MentionPreview from '@/components/post/detail/MentionPreview.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
+import PostStatusBanner from '@/components/post/detail/PostStatusBanner.vue'
+import { isPostPublished } from '@/composables/usePostReview'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 
 defineProps({
@@ -145,10 +156,24 @@ defineProps({
   language: {
     type: String,
     default: 'zh-CN'
+  },
+  // 当前用户是否为作者：只有作者能看到未发布的帖子及其状态提示条
+  isAuthor: {
+    type: Boolean,
+    default: false
+  },
+  // 审核中且自动刷新已停止（审核时间较长）
+  reviewSlow: {
+    type: Boolean,
+    default: false
+  },
+  refreshing: {
+    type: Boolean,
+    default: false
   }
 })
 
-defineEmits(['like', 'collect'])
+defineEmits(['like', 'collect', 'refresh'])
 
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
@@ -203,6 +228,10 @@ const getStatusTagType = (status) => {
   margin: 0 0 16px 0;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.post-status-banner-slot {
+  margin-top: 12px;
 }
 
 .post-meta {

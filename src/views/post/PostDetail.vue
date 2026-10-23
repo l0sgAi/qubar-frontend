@@ -15,9 +15,15 @@
             <PostHeaderAndContent
               :post="post"
               :language="language"
+              :is-author="isAuthor"
+              :review-slow="reviewSlow"
+              :refreshing="reviewRefreshing"
               @like="handleLike"
               @collect="handleCollect"
+              @refresh="refreshReview"
             >
+            <!-- 未发布（审核中 / 驳回 / 屏蔽）的帖子后端不接受评论，评论区整体不渲染 -->
+            <template v-if="published">
             <!-- 移动端门户：纯文本评论（不带工具栏 / 配图 / @ 提及，见 docs/mobile-adaptation-plan.md 6.6） -->
             <PlainCommentInput
               v-if="mobileShell"
@@ -42,6 +48,7 @@
               :language="language"
               :locate-comment-id="route.query.comment_id || ''"
             />
+            </template>
           </PostHeaderAndContent>
         </div>
 
@@ -54,7 +61,8 @@
         </div>
       </div>
 
-      <NEmpty v-else :description="t('post.postNotFound')" >
+      <!-- 不存在 / 非作者打开未发布的帖子（详情 404）：中性空态，不透露帖子是否在审核 -->
+      <NEmpty v-else :description="t('post.unavailable')" >
         <template #icon>
           <NIcon>
             <ArticleRound/>
@@ -66,8 +74,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, inject, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { NSpin, NEmpty, useMessage, NIcon } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import AppShell from '@/components/layout/AppShell.vue'
@@ -83,12 +91,15 @@ import { useInteractionToggle, interactionErrorMessage } from '@/composables/use
 import { toggleLike } from '@/api/like'
 import { toggleCollect } from '@/api/collect'
 import { getCircleDetail } from '@/api/circle'
+import { getUserInfo } from '@/api/auth'
+import { useReviewPolling, isPostPublished, POST_STATUS } from '@/composables/usePostReview'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
 import { seedContentMentions } from '@/utils/mentionResolve'
 import {ArticleRound} from '@vicons/material'
 
 const route = useRoute()
+const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
 const { setTitleData } = usePageTitle()
@@ -101,23 +112,107 @@ const post = ref(null)
 const language = ref('zh-CN')
 // 侧栏宽度与内容区偏移（移动端外框下不偏移），见 composables/useAppShell.js
 const { offset, mobileShell, contentStyle } = useAppShell()
+// 未发布的帖子只有作者能看到，提示条 / 轮询也只对作者生效
+const isAuthor = ref(false)
+const published = computed(() => isPostPublished(post.value))
+
+// 详情 404（信封 code=204）：帖子不存在，或非作者访问未发布的帖子，两者对外不作区分
+const isNotFoundError = (error) => error?.status === 404 || error?.code === 204
+
+// 当前用户 id 只在帖子未发布时才需要（判断作者），按页缓存
+let currentUserId = null
+const resolveIsAuthor = async (detail) => {
+  if (isPostPublished(detail) || !auth.isAuthenticated()) return false
+  if (!currentUserId) {
+    try {
+      const res = await getUserInfo()
+      currentUserId = res.data?.id || null
+    } catch (error) {
+      console.error('获取用户信息失败:', error)
+    }
+  }
+  // 拿不到当前用户时按后端约定兜底：未发布的帖子只会返回给作者本人
+  return currentUserId ? currentUserId === detail.author_id : true
+}
+
+const applyPost = (detail) => {
+  // 先回灌后端回传的提及用户，再进响应式渲染 → 链接化零搜索精确建链
+  seedContentMentions([detail])
+  post.value = detail
+  // 设置评论数
+  commentCount.value = detail.comment_count || 0
+
+  // 数据加载成功后用帖子标题覆盖标签页标题
+  if (detail.title) {
+    setTitleData('title.postDetailName', { name: detail.title })
+  }
+}
+
+// 发帖页跳转带 ?justCreated=1：取出并从地址栏去掉，刷新页面不再重复提示
+const consumeJustCreated = () => {
+  if (route.query.justCreated !== '1') return false
+  const { justCreated, ...query } = route.query
+  router.replace({ query })
+  return true
+}
+
+// 发帖后按帖子的实际状态提示（驳回 / 屏蔽由提示条说明，不再弹 toast）
+const notifyCreated = (status) => {
+  if (status === POST_STATUS.PUBLISHED) {
+    message.success(t('post.publishSuccess'))
+  } else if (status === POST_STATUS.REVIEWING) {
+    message.info(t('post.submittedForReview'))
+  }
+}
+
+// 审核中轮询：每次只在状态变化时替换帖子数据，避免正文重复渲染
+const refreshPostStatus = async () => {
+  const postId = route.params.id
+  try {
+    const res = await getPostDetail(postId)
+    if (postId !== route.params.id || !res.data) return null
+    if (res.data.status !== post.value?.status) applyPost(res.data)
+    return res.data.status
+  } catch (error) {
+    // 作者本人也拿到 404：帖子已被删除，转空态并停止轮询
+    if (isNotFoundError(error) && postId === route.params.id) {
+      post.value = null
+      return null
+    }
+    throw error
+  }
+}
+
+const reviewPoll = useReviewPolling({
+  fetchStatus: refreshPostStatus,
+  onSettled: (status) => {
+    if (status === POST_STATUS.PUBLISHED) {
+      message.success(t('post.reviewing.published'))
+    }
+  }
+})
+const { exhausted: reviewSlow, refreshing: reviewRefreshing, refresh: refreshReview } = reviewPoll
+
 // 加载帖子详情
 const loadPostDetail = async () => {
+  const postId = route.params.id
+  const justCreated = consumeJustCreated()
+  reviewPoll.stop()
+  loading.value = true
+  post.value = null
+  isAuthor.value = false
   try {
-    loading.value = true
-    const postId = route.params.id
     const res = await getPostDetail(postId)
+    if (postId !== route.params.id) return
 
     if (res.data) {
-      // 先回灌后端回传的提及用户，再进响应式渲染 → 链接化零搜索精确建链
-      seedContentMentions([res.data])
-      post.value = res.data
-      // 设置评论数
-      commentCount.value = res.data.comment_count || 0
-
-      // 数据加载成功后用帖子标题覆盖标签页标题
-      if (post.value.title) {
-        setTitleData('title.postDetailName', { name: post.value.title })
+      const author = await resolveIsAuthor(res.data)
+      if (postId !== route.params.id) return
+      isAuthor.value = author
+      applyPost(res.data)
+      if (justCreated) notifyCreated(res.data.status)
+      if (author && res.data.status === POST_STATUS.REVIEWING) {
+        reviewPoll.start()
       }
 
       // 设置圈子搜索状态
@@ -135,14 +230,16 @@ const loadPostDetail = async () => {
           console.error('获取圈子信息失败:', error)
         }
       }
-    } else {
-      message.error(t('post.postNotFound'))
     }
   } catch (error) {
+    if (postId !== route.params.id) return
     console.error('加载帖子详情失败:', error)
-    message.error(t('messages.getDetailFailed', { error: error.message }))
+    // 404 只显示空态，不弹带后端英文 message 的 toast
+    if (!isNotFoundError(error)) {
+      message.error(t('messages.getDetailFailed', { error: error.message }))
+    }
   } finally {
-    loading.value = false
+    if (postId === route.params.id) loading.value = false
   }
 }
 
@@ -173,7 +270,7 @@ const setPostLiked = (target, liked) => {
 }
 
 const handleLike = () => {
-  if (!post.value) return
+  if (!published.value) return
   // 访客点赞前置拦截：避免触发 401 硬跳转，改为弹登录引导
   if (!auth.isAuthenticated()) {
     requireLogin('like')
@@ -190,7 +287,7 @@ const handleLike = () => {
 
 // 收藏数 collect_count 由后端异步聚合，前端不本地 ±1（对接文档约定）
 const handleCollect = () => {
-  if (!post.value) return
+  if (!published.value) return
   // 访客收藏前置拦截
   if (!auth.isAuthenticated()) {
     requireLogin('collect')
@@ -231,6 +328,13 @@ const handleCommentUploadImg = async (files, callback) => {
 }
 
 onMounted(() => {
+  loadPostDetail()
+})
+
+// 路由以 route.name 为 key，帖子之间跳转（如通知 / 提及链接）复用本组件：按 id 重新加载，旧帖子的轮询随之停止。
+// 离开详情页时 route 先切到目标页（其 params.id 可能是用户 / 圈子 id），按路由名过滤
+watch(() => route.params.id, (id, oldId) => {
+  if (route.name !== 'post-detail' || !id || id === oldId) return
   loadPostDetail()
 })
 </script>

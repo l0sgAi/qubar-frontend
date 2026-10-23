@@ -91,7 +91,10 @@ export function getUserCircles(userId, params) {
  * @param {string} data.summary - 摘要/关键词（可选）
  * @param {string} data.content - 正文内容（Markdown格式）
  * @param {Object} data.media_extra - 媒体扩展信息
- * @returns {Promise}
+ * @returns {Promise<{ data: string }>} data 只有新帖 postID，不带 status。
+ *   发帖状态由服务端决定（请求体里的 status 会被忽略）：开启审核时新帖先是 2（审核中），
+ *   由 AI 异步分流为 1（已发布）/ 3（驳回），拿不准的可能一直停在 2 等人工处理；
+ *   实际状态以 getPostDetail 返回的 status 为准
  */
 export function createPost(data) {
   return request({
@@ -157,7 +160,10 @@ export function getUserPosts(userId, params) {
 /**
  * 获取帖子详情
  * @param {string} id - 帖子ID(UUIDv7)
- * @returns {Promise}
+ * @returns {Promise<{ data: Object }>} data 含 status（1 已发布 / 2 审核中 / 3 驳回 / 4 屏蔽，
+ *   见 POST_STATUS）与 author_id。作者能看自己任何状态的帖子；
+ *   其他人（含访客）访问非 1 的帖子一律 reject：HTTP 404、信封 code=204、message `Post not found`，
+ *   与帖子不存在不作区分
  */
 export function getPostDetail(id) {
   return request({

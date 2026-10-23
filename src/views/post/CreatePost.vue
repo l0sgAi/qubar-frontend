@@ -429,14 +429,14 @@ const handleSubmit = async () => {
 
     const res = await createPost(submitData)
 
-    message.success(t('post.publishSuccess'))
-
-    // 跳转到帖子详情页
+    // 跳转到帖子详情页：新帖可能先进入审核（status=2），接口不返回 status，
+    // 由详情页拉到实际状态后提示「发布成功」或「已提交审核」（?justCreated=1）
     if (res.data) {
       const postId = res.data
       router.push({
         name: 'post-detail',
-        params: { id: postId }
+        params: { id: postId },
+        query: { justCreated: '1' }
       })
     } else {
       message.warning(t('post.publishNoId'))
