@@ -21,7 +21,7 @@
         </NTag>
       </div>
 
-      <!-- 管理区切换：成员管理 / 编辑资料 -->
+      <!-- 管理区切换：成员管理 / 编辑资料 / 内容审核 -->
       <div class="seg-nav">
         <button
           class="seg-item"
@@ -44,6 +44,18 @@
           <NIcon size="16"><SettingsIcon /></NIcon>
           <span>{{ t('circle.edit.title') }}</span>
         </button>
+        <button
+          class="seg-item"
+          :class="{ active: active === 'moderation' }"
+          type="button"
+          @click="go('moderation')"
+        >
+          <NIcon size="16"><ShieldCheckIcon /></NIcon>
+          <span>{{ t('circle.moderation.title') }}</span>
+          <span v-if="moderationBadgeCount > 0" class="seg-badge">
+            {{ moderationBadgeFull ? t('circle.manage.badgeFull') : moderationBadgeCount }}
+          </span>
+        </button>
       </div>
     </div>
   </div>
@@ -54,10 +66,17 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NAvatar, NButton, NIcon, NTag } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import { ArrowLeft as ArrowLeftIcon, Users as UsersIcon, Settings as SettingsIcon } from '@vicons/tabler'
+import {
+  ArrowLeft as ArrowLeftIcon,
+  Users as UsersIcon,
+  Settings as SettingsIcon,
+  ShieldCheck as ShieldCheckIcon
+} from '@vicons/tabler'
 import { getCircleMembers } from '@/api/circle'
+import { getModerationPosts } from '@/api/moderation'
 import { useCircleMeta } from '@/composables/useCircleMeta'
 import { MEMBER_PAGE_SIZE, isManager } from '@/constants/circle'
+import { MODERATION_PAGE_SIZE } from '@/constants/moderation'
 
 const props = defineProps({
   // 圈子详情对象（含 member_role / name / avatar_url）
@@ -65,7 +84,7 @@ const props = defineProps({
     type: Object,
     default: () => ({})
   },
-  // 当前激活的管理页：'members' | 'edit'
+  // 当前激活的管理页：'members' | 'edit' | 'moderation'
   active: {
     type: String,
     required: true
@@ -80,9 +99,10 @@ const { getRoleInfo } = useCircleMeta()
 const myRole = computed(() => props.circle.member_role || 0)
 
 const goDetail = () => router.push(`/circle/${route.params.id}`)
+// seg key 与管理页子路径一一对应：/circle/:id/<key>
 const go = (key) => {
   if (key === props.active) return
-  router.push(key === 'members' ? `/circle/${route.params.id}/members` : `/circle/${route.params.id}/edit`)
+  router.push(`/circle/${route.params.id}/${key}`)
 }
 
 // 待审核角标：拉一页 status=0&size=20，满页显示「20+」，否则按实际条数。
@@ -106,9 +126,31 @@ const refreshPendingBadge = async () => {
   }
 }
 
-onMounted(refreshPendingBadge)
+// 内容审核角标：同上，拉一页待审帖子 size=20，满页显示「20+」；审核页处理后经 ref 调 refreshModerationBadge 同步
+const moderationBadgeCount = ref(0)
+const moderationBadgeFull = ref(false)
 
-defineExpose({ refreshPendingBadge })
+const refreshModerationBadge = async () => {
+  if (!isManager(myRole.value)) return
+  try {
+    const res = await getModerationPosts({
+      circle_id: route.params.id,
+      size: MODERATION_PAGE_SIZE
+    })
+    moderationBadgeCount.value = res.data?.posts?.length || 0
+    moderationBadgeFull.value = moderationBadgeCount.value >= MODERATION_PAGE_SIZE
+  } catch {
+    moderationBadgeCount.value = 0
+    moderationBadgeFull.value = false
+  }
+}
+
+onMounted(() => {
+  refreshPendingBadge()
+  refreshModerationBadge()
+})
+
+defineExpose({ refreshPendingBadge, refreshModerationBadge })
 </script>
 
 <style scoped>

@@ -1,0 +1,68 @@
+/**
+ * 圈内内容审核枚举常量与 AI 结论解析（纯函数，不含文案）。
+ * 文案见 locales 的 circle.moderation.*（风险 key → circle.moderation.hazards.<key>，
+ * 危害等级 → circle.moderation.severity.<level>）。
+ */
+
+// 风险 key（与后端 AI 审核结论 hazards 的 key 一致，顺序即全量表展示顺序）
+export const HAZARD_KEYS = [
+  'sexual',
+  'violence_terror',
+  'harassment',
+  'illegal',
+  'spam_ad',
+  'privacy',
+  'self_harm',
+  'manipulation'
+]
+
+// 需要额外提示「可能需要人工关怀」的风险 key
+export const CARE_HAZARD = 'self_harm'
+
+// 危害程度等级：severity 为 0–3 的期望分，四舍五入后落到下列等级
+export const SEVERITY_LEVELS = ['none', 'minor', 'severe', 'extreme']
+
+// 审核动作（POST /circle/moderation/review 的 action）
+export const REVIEW_ACTION = {
+  APPROVE: 'approve',
+  REJECT: 'reject'
+}
+
+// 审核备注上限（后端超出截断，前端直接限制输入）
+export const REVIEW_REASON_MAX = 200
+
+// 待审列表单页大小（后端 ≤0 或 >100 按 20 处理）；页头角标也只拉这一页，满页显示「20+」
+export const MODERATION_PAGE_SIZE = 20
+
+/** 概率（0–1）转整数百分比，非法值返回 0 */
+export function toPercent(probability) {
+  const n = Number(probability)
+  if (!Number.isFinite(n)) return 0
+  return Math.round(Math.min(Math.max(n, 0), 1) * 100)
+}
+
+/** severity 期望分（0–3）→ SEVERITY_LEVELS 中的等级；null / 非数值返回 null */
+export function severityLevel(severity) {
+  if (severity === null || severity === undefined || severity === '') return null
+  const n = Number(severity)
+  if (!Number.isFinite(n)) return null
+  const index = Math.min(Math.max(Math.round(n), 0), SEVERITY_LEVELS.length - 1)
+  return SEVERITY_LEVELS[index]
+}
+
+/**
+ * 解析 AI 审核结论的展示状态：
+ * - 'pending'：ai_verdict 为 null，AI 尚未处理，可直接人工处理
+ * - 'failed'：error_msg 非空，AI 服务不可用，未能给出结论
+ * - 'ready'：正常结论
+ */
+export function verdictState(verdict) {
+  if (!verdict) return 'pending'
+  if (verdict.error_msg) return 'failed'
+  return 'ready'
+}
+
+/** 命中风险是否包含需要人工关怀的 self_harm */
+export function needsCare(verdict) {
+  return Array.isArray(verdict?.hit_hazards) && verdict.hit_hazards.includes(CARE_HAZARD)
+}

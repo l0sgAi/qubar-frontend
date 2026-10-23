@@ -108,6 +108,14 @@ export const routes = [
     meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleAgents', mobile: { supported: false } }
   },
   {
+    // 圈子内容审核：需登录；圈主/管理员（member_role>=20）处理本圈待审帖子（子 Tab，被举报队列后续加入），
+    // 角色校验在页面内自查（非管理角色 /circle/moderation/* 返回 403）
+    path: '/circle/:id/moderation',
+    name: 'circle-moderation',
+    component: () => import('@/views/circle/CircleModeration.vue'),
+    meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleModeration', mobile: { supported: false } }
+  },
+  {
     // 帖子详情：访客可读（/post/detail/:id 已开放 anonymous）
     // pageFade：进出该页时启用页面级淡入淡出（见 App.vue）
     path: '/post/:id',

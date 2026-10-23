@@ -31,7 +31,8 @@ const PROTECTED = [
   '/admin/agents',
   '/circle/1/members',
   '/circle/1/edit',
-  '/circle/1/agents'
+  '/circle/1/agents',
+  '/circle/1/moderation'
 ]
 
 const PUBLIC = [

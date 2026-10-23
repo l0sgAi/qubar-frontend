@@ -94,6 +94,7 @@ export default {
     notifications: '消息中心',
     adminAgents: '机器人管理',
     circleAgents: '圈子机器人管理',
+    circleModeration: '内容审核',
     // 动态标题模板：详情页数据加载成功后展示具体内容（见 utils/pageTitle.js）
     postDetailName: '{name}',
     circleDetailName: '{name}',
@@ -101,6 +102,7 @@ export default {
     circleMembersName: '成员管理：{name}',
     circleEditName: '编辑圈子资料：{name}',
     circleAgentsName: '机器人管理：{name}',
+    circleModerationName: '内容审核：{name}',
     profileName: '个人中心：{name}',
     notFound: '页面不存在'
   },
@@ -323,6 +325,72 @@ export default {
         noPermission: '无权限执行该操作',
         roleDemoted: '你的管理身份已变更',
         memberNotFound: '该成员不存在或已不在本圈',
+        badRequest: '请求参数有误',
+        generic: '操作失败，请稍后重试'
+      }
+    },
+    moderation: {
+      title: '内容审核',
+      noPermissionVisit: '无权限访问内容审核',
+      tabs: {
+        pending: '待审帖子'
+      },
+      empty: '暂无待审帖子',
+      loadFailed: '待审帖子加载失败',
+      unknownUser: '未知用户',
+      untitled: '（无标题）',
+      postedAt: '发布于 {time}',
+      showContent: '展开全文',
+      hideContent: '收起全文',
+      ai: {
+        title: 'AI 审核结论',
+        pending: 'AI 尚未给出结论，可直接人工处理',
+        failed: 'AI 未能给出结论',
+        noHit: '未命中风险',
+        hazardTag: '{label} {percent}%',
+        severity: '危害程度：{level}（{score}）',
+        confidence: '置信度 {percent}%',
+        model: '模型：{model}',
+        showHazards: '查看全部风险概率',
+        hideHazards: '收起风险概率',
+        care: '可能需要人工关怀'
+      },
+      hazards: {
+        sexual: '色情低俗',
+        violence_terror: '暴力恐怖',
+        harassment: '辱骂骚扰',
+        illegal: '违法违规',
+        spam_ad: '广告引流',
+        privacy: '泄露隐私',
+        self_harm: '自伤轻生',
+        manipulation: '干扰审核'
+      },
+      severity: {
+        none: '无',
+        minor: '轻微',
+        severe: '严重',
+        extreme: '极端'
+      },
+      actions: {
+        approve: '通过',
+        reject: '驳回'
+      },
+      confirm: {
+        approveTitle: '通过帖子',
+        approveContent: '确定通过「{title}」吗？通过后帖子将在圈子中公开，作者会收到通知。',
+        rejectTitle: '驳回帖子',
+        rejectContent: '确定驳回「{title}」吗？驳回后帖子仅作者可见，作者会收到通知。',
+        reasonLabel: '备注（可选）',
+        reasonPlaceholder: '填写处理理由',
+        reasonHint: '备注仅记入审核日志，不会展示给作者'
+      },
+      success: {
+        approved: '已通过，帖子将在几秒内出现在圈子中',
+        rejected: '已驳回'
+      },
+      error: {
+        handled: '该帖子已被处理',
+        noPermission: '无权限执行该操作',
         badRequest: '请求参数有误',
         generic: '操作失败，请稍后重试'
       }
