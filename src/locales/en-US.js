@@ -187,6 +187,20 @@ export default {
     publishSuccess: 'Published successfully',
     publishNoId: 'Post ID not received, returning to home',
     publishFailed: 'Publish failed, please try again',
+    submittedForReview: "Submitted. It's being reviewed and will be visible to others once approved.",
+    // Post doesn't exist, or a non-author opened an unpublished post (must not reveal review state)
+    unavailable: "This post doesn't exist or isn't available right now.",
+    // Under-review banner shown to the author
+    reviewing: {
+      banner: 'This post is under review and only visible to you.',
+      refresh: 'Refresh',
+      published: 'Approved. Your post is now public.',
+      slow: "Review is taking longer than usual. We'll notify you in Notifications when it's done."
+    },
+    // Rejected banner shown to the author (shared by post detail and My Posts)
+    rejected: {
+      banner: "This post didn't pass review and is only visible to you."
+    },
     validation: {
       circleRequired: 'Please select a circle',
       titleRequired: 'Please enter a title',

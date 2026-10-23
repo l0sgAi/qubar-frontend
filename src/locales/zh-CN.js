@@ -187,6 +187,20 @@ export default {
     publishSuccess: '发布成功',
     publishNoId: '未获取到帖子ID，返回首页',
     publishFailed: '发布失败，请重试',
+    submittedForReview: '已提交，正在审核，通过后其他人即可看到',
+    // 帖子不存在，或非作者打开未发布的帖子（不透露是否在审核）
+    unavailable: '帖子不存在或暂时无法查看',
+    // 作者本人看到的审核中提示条
+    reviewing: {
+      banner: '帖子正在审核中，仅你自己可见',
+      refresh: '刷新',
+      published: '审核通过，帖子已发布',
+      slow: '审核时间较长，结果会通过消息中心通知你'
+    },
+    // 作者本人看到的驳回提示条（详情页与「我的帖子」共用）
+    rejected: {
+      banner: '帖子未通过审核，仅你自己可见'
+    },
     validation: {
       circleRequired: '请选择所属圈子',
       titleRequired: '请输入帖子标题',
