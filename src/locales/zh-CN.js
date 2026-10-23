@@ -829,7 +829,8 @@ export default {
       collect: '收藏',
       comment: '评论',
       reply: '回复',
-      mention: '提及'
+      mention: '提及',
+      review: '审核'
     },
     readAll: '全部已读',
     empty: '暂无通知',
@@ -847,7 +848,9 @@ export default {
       collectPost: '{actor} 收藏了你的帖子《{snippet}》',
       commentPost: '{actor} 评论了你的帖子：{snippet}',
       replyComment: '{actor} 回复了你的评论：{snippet}',
-      mention: '{actor} 在帖子/评论中提到了你：{snippet}'
+      mention: '{actor} 在帖子/评论中提到了你：{snippet}',
+      postApproved: '你的帖子《{snippet}》已通过审核',
+      postRejected: '你的帖子《{snippet}》未通过审核'
     },
     mention: {
       button: '提及',
