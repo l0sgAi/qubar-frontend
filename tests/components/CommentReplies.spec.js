@@ -23,7 +23,11 @@ const mountReplies = (props = {}) => mount(CommentReplies, {
   global: {
     plugins: [createTestI18n(), createTestRouter([{ path: '/' }, { path: '/user/:id' }])],
     // 正文走 MdPreview，测试只关心列表结构
-    stubs: { MentionPreview: { props: ['content'], template: '<span class="md">{{ content }}</span>' }, ImageCarousel: true }
+    stubs: {
+      MentionPreview: { props: ['content'], template: '<span class="md">{{ content }}</span>' },
+      ImageCarousel: true,
+      CommentReplyEditor: { props: ['replyToId'], template: '<div class="reply-editor-stub" :data-to="replyToId" />' }
+    }
   }
 })
 
@@ -93,5 +97,21 @@ describe('CommentReplies', () => {
     const replyBtn = items[0].findAll('button').find(b => b.text().includes('回复'))
     await replyBtn.trigger('click')
     expect(wrapper.emitted('open-reply')[0][0].id).toBe('r1')
+  })
+
+  it('inline：activeReplyId 命中的回复下方内联桌面编辑器', () => {
+    const wrapper = mountReplies({ activeReplyId: 'r2' })
+    const editors = wrapper.findAll('.reply-editor-stub')
+    expect(editors).toHaveLength(1)
+    expect(editors[0].attributes('data-to')).toBe('r2')
+  })
+
+  it('sheet：不内联任何输入框（回复走底部输入抽屉），点回复只 emit open-reply', async () => {
+    const wrapper = mountReplies({ variant: 'sheet', activeReplyId: 'r1' })
+    expect(wrapper.find('.reply-editor-stub').exists()).toBe(false)
+    expect(wrapper.find('textarea').exists()).toBe(false)
+    const replyBtn = wrapper.findAll('.reply-item')[1].findAll('button').find(b => b.text().includes('回复'))
+    await replyBtn.trigger('click')
+    expect(wrapper.emitted('open-reply')[0][0].id).toBe('r2')
   })
 })

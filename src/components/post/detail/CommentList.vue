@@ -19,30 +19,18 @@
         @like="handleToggleLike('comment', $event)"
         @reply="openReply"
       >
-        <!-- 内联回复编辑器（移动端门户为纯文本输入，见 PlainCommentInput）；
-             抽屉开着该根评论时输入框只在抽屉里出现 -->
-        <template v-if="activeReplyId === comment.id && sheetCommentId !== comment.id">
-          <PlainCommentInput
-            v-if="mobileShell"
-            :post-id="postId"
-            :root-id="comment.id"
-            :reply-to-id="null"
-            :reply-to-name="comment.author_name"
-            @submit="handleReplySubmit(comment, $event)"
-            @cancel="activeReplyId = null"
-          />
-          <CommentReplyEditor
-            v-else
-            :post-id="postId"
-            :circle-id="circleId"
-            :root-id="comment.id"
-            :reply-to-id="null"
-            :reply-to-name="comment.author_name"
-            :language="language"
-            @submit="handleReplySubmit(comment, $event)"
-            @cancel="activeReplyId = null"
-          />
-        </template>
+        <!-- 桌面内联回复编辑器（移动端回复走底部输入抽屉 MobileCommentComposer） -->
+        <CommentReplyEditor
+          v-if="!mobileShell && activeReplyId === comment.id"
+          :post-id="postId"
+          :circle-id="circleId"
+          :root-id="comment.id"
+          :reply-to-id="null"
+          :reply-to-name="comment.author_name"
+          :language="language"
+          @submit="handleReplySubmit(comment, $event)"
+          @cancel="activeReplyId = null"
+        />
 
         <!-- 点击查看回复：桌面内联展开；移动端打开底部抽屉 -->
         <div
@@ -105,6 +93,7 @@
       height="82%"
       class="reply-sheet"
       :auto-focus="false"
+      :trap-focus="false"
       @update:show="(show) => !show && closeReplySheet()"
       @after-enter="handleSheetAfterEnter"
       @after-leave="handleSheetAfterLeave"
@@ -132,17 +121,7 @@
           class="reply-sheet-root"
           @like="handleToggleLike('comment', $event)"
           @reply="openReply"
-        >
-          <PlainCommentInput
-            v-if="activeReplyId === sheetDisplayComment.id"
-            :post-id="postId"
-            :root-id="sheetDisplayComment.id"
-            :reply-to-id="null"
-            :reply-to-name="sheetDisplayComment.author_name"
-            @submit="handleReplySubmit(sheetDisplayComment, $event)"
-            @cancel="activeReplyId = null"
-          />
-        </CommentItem>
+        />
 
         <CommentReplies
           variant="sheet"
@@ -152,17 +131,31 @@
           :circle-id="circleId"
           :language="language"
           :highlight-comment-id="highlightCommentId"
-          :active-reply-id="activeReplyId"
           @toggle-sort="toggleRepliesSort(sheetDisplayComment.id)"
           @load-more="loadMoreReplies(sheetDisplayComment.id)"
           @retry="loadReplies(sheetDisplayComment)"
           @like="handleToggleLike('comment', $event)"
-          @open-reply="openReply"
-          @reply-submit="handleReplySubmit(sheetDisplayComment, $event)"
-          @reply-cancel="activeReplyId = null"
+          @open-reply="openReplyToReply(sheetDisplayComment, $event)"
         />
+
+        <!-- 底部输入条：回复根评论 -->
+        <template #footer>
+          <MobileComposeBar
+            :placeholder="t('mobile.comment.replyTitle', { name: sheetDisplayComment.author_name })"
+            @compose="openReply(sheetDisplayComment)"
+          />
+        </template>
       </NDrawerContent>
     </NDrawer>
+
+    <!-- 移动端：评论 / 回复的输入抽屉（顶层评论由 PostDetail 底部输入条经 openComposer 打开） -->
+    <MobileCommentComposer
+      v-if="mobileShell"
+      ref="composerRef"
+      :post-id="postId"
+      @submit="handleComposerSubmit"
+      @closed="handleComposerClosed"
+    />
   </NCard>
 </template>
 
@@ -177,14 +170,15 @@ import { getCommentList, getCommentReplies, locateComment, COMMENT_NOT_FOUND_COD
 import { seedContentMentions } from '@/utils/mentionResolve'
 import { toggleLike } from '@/api/like'
 import CommentReplyEditor from '@/components/post/detail/CommentReplyEditor.vue'
-import PlainCommentInput from '@/components/post/detail/PlainCommentInput.vue'
+import MobileComposeBar from '@/components/post/detail/MobileComposeBar.vue'
+import MobileCommentComposer, { COMPOSE_QUERY_KEY } from '@/components/post/detail/MobileCommentComposer.vue'
 import { useMobileShell } from '@/composables/useAppShell'
 import {CommentRound} from '@vicons/material'
 import { useInteractionToggle, interactionErrorMessage } from '@/composables/useInteractionToggle'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
 
-// 移动端门户：回复改用纯文本输入（docs/mobile-adaptation-plan.md 6.6）
+// 移动端门户：评论 / 回复改用底部输入抽屉里的纯文本输入（docs/mobile-adaptation-plan.md 6.6）
 const mobileShell = useMobileShell()
 
 const props = defineProps({
@@ -299,11 +293,25 @@ const resetRepliesData = (commentId) => {
   delete repliesData.value[commentId]
 }
 
-// 内联回复编辑器
+// 桌面内联回复编辑器
 const activeReplyId = ref(null)
 
+// 移动端输入抽屉。open 须在点击处理里同步调用（iOS 弹键盘依赖用户手势）
+const composerRef = ref(null)
+const openComposer = (target) => composerRef.value?.open(target)
+
+// 回复根评论：桌面切换内联编辑器；移动端打开输入抽屉
 const openReply = (comment) => {
+  if (mobileShell.value) {
+    openComposer({ rootId: comment.id, replyToId: null, replyToName: comment.author_name })
+    return
+  }
   activeReplyId.value = activeReplyId.value === comment.id ? null : comment.id
+}
+
+// 移动端回复抽屉里回复某条回复
+const openReplyToReply = (root, reply) => {
+  openComposer({ rootId: root.id, replyToId: reply.id, replyToName: reply.author_name })
 }
 
 // ============ 移动端回复抽屉 ============
@@ -395,22 +403,38 @@ const handleSheetAfterLeave = () => {
   if (!sheetComment.value) sheetDisplayComment.value = null
 }
 
-// 抽屉关闭（返回手势 / 后退 / 关闭按钮，query 被移除）：复位抽屉状态，
-// 只收起抽屉里的回复框和高亮，主列表里其它评论的草稿不受影响
+// 抽屉关闭（返回手势 / 后退 / 关闭按钮，query 被移除）：复位抽屉状态，清掉抽屉里的高亮
+// （回复草稿在输入抽屉里按目标保留，不受影响）
 watch(() => route.query[SHEET_QUERY_KEY], (id) => {
   if (id || !sheetOpenId.value) return
   const rootId = sheetOpenId.value
   sheetOpenId.value = ''
   sheetClosing = false
   pendingSheetScrollId = ''
-  if (isInSheet(rootId, activeReplyId.value)) activeReplyId.value = null
   if (isInSheet(rootId, highlightCommentId.value)) highlightCommentId.value = ''
 })
+
+// 去掉抽屉相关 query（回复抽屉 + 输入抽屉）：刷新 / 后退回来的残留，或跨到桌面断点。
+// 上一条历史正是「同页无抽屉」时后退，否则原地 replace
+const leaveOverlayRoutes = () => {
+  const { [SHEET_QUERY_KEY]: _sheet, [COMPOSE_QUERY_KEY]: _compose, ...query } = route.query
+  const back = router.options.history.state?.back
+  if (back && back === router.resolve({ query }).fullPath) {
+    router.back()
+  } else {
+    router.replace({ query })
+  }
+}
 
 // 跨到桌面断点：关掉抽屉（去掉 query 与历史记录），已加载的回复回到第一页内联展示
 watch(mobileShell, (mobile) => {
   if (mobile) return
-  closeReplySheet()
+  // 输入抽屉随移动端组件卸载，它的 query 在这里一并去掉
+  if (route.query[COMPOSE_QUERY_KEY]) {
+    leaveOverlayRoutes()
+  } else {
+    closeReplySheet()
+  }
   Object.values(repliesData.value).forEach((data) => {
     if (data.pages[0]) data.currentPage = 0
   })
@@ -497,6 +521,36 @@ const handleReplySubmit = async (parentComment, newReply) => {
       await loadReplies(parentComment)
     }
   }
+}
+
+// 输入抽屉发送成功：插入列表（沿用桌面的乐观插入），再滚动到并高亮新评论
+// （主列表里回复未加载过的根评论只加回复数，新回复不在页面上，不滚动）
+const handleComposerSubmit = async (created, target) => {
+  if (!target.rootId) {
+    if (created) addComment(created)
+    else refreshComments()
+  } else {
+    const root = comments.value.find(c => c.id === target.rootId)
+    if (root) await handleReplySubmit(root, created)
+  }
+  if (!created?.id) return
+  highlightCommentId.value = created.id
+  pendingComposerScrollId = created.id
+}
+
+// 输入抽屉离场动画结束后再滚到新评论：动画期间页面滚动仍被锁住，
+// 且 router.back 关抽屉时浏览器会恢复打开前的滚动位置，提前滚会被覆盖
+let pendingComposerScrollId = ''
+const handleComposerClosed = () => {
+  if (!pendingComposerScrollId) return
+  scrollToComment(pendingComposerScrollId)
+  pendingComposerScrollId = ''
+}
+
+// 移动端底部输入条点评论数：滚动到评论区
+const scrollToList = () => {
+  const el = commentListCardRef.value?.$el || commentListCardRef.value
+  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 // 添加新评论到列表顶部
@@ -984,8 +1038,8 @@ const cleanupObserver = () => {
 
 onMounted(() => {
   // 刷新或从其它页后退回来时评论流已重建：残留的抽屉 query 不再对应已加载数据，直接去掉
-  if (route.query[SHEET_QUERY_KEY]) {
-    leaveSheetRoute()
+  if (route.query[SHEET_QUERY_KEY] || route.query[COMPOSE_QUERY_KEY]) {
+    leaveOverlayRoutes()
   }
   // 带定位参数进帖：跳过懒加载直接定位（定位流程自己会拉评论流）
   if (props.locateCommentId) {
@@ -1009,12 +1063,13 @@ onUnmounted(() => {
   cleanupObserver()
 })
 
-defineExpose({ refreshComments, addComment })
+defineExpose({ refreshComments, addComment, openComposer, scrollToList })
 </script>
 
 <style scoped>
 .comment-list-card {
   border-radius: 16px !important;
+  scroll-margin-top: calc(var(--header-height) + 12px);
 }
 
 .comment-section-title {

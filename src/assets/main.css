@@ -26,6 +26,8 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --mobile-topbar-height: 48px;
   --tabbar-height: 56px;
+  /* 帖子详情页底部「说点什么…」输入条（不含安全区） */
+  --compose-bar-height: 56px;
 
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
@@ -796,5 +798,34 @@ body {
 }
 
 .n-drawer.reply-sheet .reply-sheet-body {
-  padding: 0 16px calc(var(--safe-bottom) + 16px);
+  padding: 0 16px 16px;
+}
+
+/* 回复抽屉底部的「回复 @作者」输入条，底部让出 Home Indicator 安全区 */
+.n-drawer.reply-sheet .n-drawer-footer {
+  padding: 0 16px var(--safe-bottom);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* =========================================================
+ * 移动端评论输入抽屉（MobileCommentComposer 的 NDrawer.comment-composer）
+ * 与回复抽屉同一套玻璃样式；高度随内容（height="auto"），
+ * 键盘弹出时由 useKeyboardInset 以内联 bottom 抬到键盘上方。
+ * 遮罩禁止触摸滚动，避免 iOS 上滑动穿透到背后页面。
+ * ========================================================= */
+.n-drawer-container:has(.comment-composer) > .n-drawer-mask {
+  background: rgba(8, 8, 18, 0.5);
+  touch-action: none;
+}
+
+.n-drawer.comment-composer {
+  max-height: 80%;
+  background: rgba(22, 22, 38, 0.92);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  overscroll-behavior: contain;
 }
