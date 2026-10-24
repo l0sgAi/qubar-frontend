@@ -1,136 +1,193 @@
-# 趣吧配套前端
+# Qubar Frontend
 
-与我的后端项目[qubar](https://github.com/l0sgAi/qubar "趣吧后端")配套的前端代码，使用 `VUE3`+`javascript`+`NaiveUI`开发，`Vite`构建。
+**English** | [简体中文](README.zh-CN.md)
 
-线上地址：<https://qubar.site>
+The web client for [Qubar](https://github.com/l0sgAi/qubar), an interest-based community similar to Baidu Tieba / Reddit.
+Built with Vue 3 (JavaScript), Naive UI and Vite, with a Chinese / English interface.
 
-## 技术栈
+Live site: <https://qubar.site>
 
-- **Vue 3** - 渐进式 JavaScript 框架
-- **Vite** - 下一代前端构建工具
-- **Vue Router** - 官方路由管理器
-- **Naive UI** - 优秀的 Vue 3 组件库
-- **vue-i18n** - 国际化（中/英双语）
-- **axios** - HTTP 请求封装
-- **md-editor-v3** - Markdown 编辑器
-- **cropperjs** - 图片裁剪
+## ✨ Features
 
-## 项目结构
+- **Accounts** – Email/password registration with verification codes, password reset, and OAuth login
+  (Google / GitHub / Azure AD) via a one-time code exchange. The same account can stay signed in on several
+  devices at once.
+- **Guest mode** – Feeds, posts, circles, user pages and search are readable without an account; actions such as
+  liking or commenting prompt the visitor to log in.
+- **Feeds and discovery** – Home feed, trending page, discover page, and full-text search across posts, circles and users.
+- **Posts and comments** – Markdown editor with image upload, likes, favorites, and two-level comments with replies.
+  Posts held for review are flagged to their author until a circle moderator approves them.
+- **@mentions** – Mention picker in posts and comments; mentions are bound to user IDs and highlighted when rendered.
+- **Interest circles** – Create, join and browse circles. Owners and admins get management pages for members
+  (roles, mute, ban, join requests), circle profile editing, and a moderation queue for pending posts.
+- **AI bots** – Circle owners and admins manage the circle's own bots (up to 5 per circle); platform admins manage
+  site-wide bots.
+- **Message center** – Notification list with mark-read / mark-all-read. The unread badge is pushed over SSE and
+  falls back to 30-second polling when the stream is unavailable.
+- **Profile** – Public user pages, profile editing with avatar cropping, my posts, my circles, favorites and history.
+- **Mobile web view** – Screens up to 768px wide get a dedicated mobile layout with a top bar and bottom tab bar.
+  Management-heavy pages show a "not supported on mobile" page instead (see [Mobile view](#-mobile-view)).
+- **i18n** – Simplified Chinese and English, picked from the browser language and remembered locally.
 
-```bash
-qubar-frontend/
-├── src/
-│   ├── api/             # 后端接口封装（auth、post、comment、like、collect、circle、user 等）
-│   ├── assets/          # 静态资源（全局样式等）
-│   ├── components/      # 通用组件（帖子卡片、圈子卡片、侧边栏、弹窗等）
-│   ├── composables/     # 组合式函数（图片上传等）
-│   ├── locales/         # 国际化语言包（zh-CN / en-US）
-│   ├── router/          # 路由配置
-│   ├── utils/           # 工具函数（请求封装、鉴权、游客模式、节流等）
-│   ├── views/           # 页面组件
-│   │   ├── Home.vue          # 首页帖子流
-│   │   ├── Hot.vue           # 热门
-│   │   ├── Discover.vue      # 发现（圈子/帖子推荐）
-│   │   ├── SearchResults.vue # 搜索结果
-│   │   ├── CreatePost.vue    # 发布帖子
-│   │   ├── PostDetail.vue    # 帖子详情
-│   │   ├── CircleDetail.vue  # 圈子详情
-│   │   ├── UserDetail.vue    # 用户主页
-│   │   ├── UserProfile.vue   # 个人资料
-│   │   ├── Login.vue         # 登录/注册
-│   │   └── ...               # Success / Terms / Privacy 等
-│   ├── App.vue          # 根组件
-│   └── main.js          # 应用入口
-├── public/              # 不经过构建的静态文件（CNAME、favicon 等）
-├── scripts/             # 构建检查脚本
-├── tests/               # 单元测试（Vitest），目录结构与 src/ 对应
-├── index.html           # HTML 模板
-├── vite.config.js       # Vite 配置
-├── vitest.config.js     # 测试配置（复用 vite.config.js）
-└── package.json         # 项目配置
-```
+## 🛠 Tech Stack
 
-## 使用方式
+| Library | Purpose |
+|---------|---------|
+| [Vue 3](https://vuejs.org/) | UI framework (`<script setup>` SFCs) |
+| [Vite](https://vite.dev/) | Dev server and build |
+| [Vue Router](https://router.vuejs.org/) | Routing, auth guard, per-route mobile config |
+| [Naive UI](https://www.naiveui.com/) | Component library (dark theme) |
+| [vue-i18n](https://vue-i18n.intlify.dev/) | zh-CN / en-US translations |
+| [axios](https://axios-http.com/) | HTTP client with a shared request wrapper |
+| [md-editor-v3](https://github.com/imzbf/md-editor-v3) | Markdown editor |
+| [cropperjs](https://github.com/fengyuanchen/cropperjs) | Image cropping |
+| [Vitest](https://vitest.dev/) + [Vue Test Utils](https://test-utils.vuejs.org/) | Unit tests (jsdom) |
 
-使用`vscode`打开项目，在终端运行命令：
+## 🚀 Quick Start
+
+### Requirements
+
+- **Node.js 20** (the version CI uses) and npm
+- A running [Qubar backend](https://github.com/l0sgAi/qubar), local or remote
+
+### Install and run
 
 ```bash
+git clone https://github.com/l0sgAi/qubar-frontend.git
+cd qubar-frontend
 npm install
-
 npm run dev
 ```
 
-注：需要 `NodeJS`环境。
+The dev server starts at <http://localhost:5173> and opens a browser tab.
 
-如果成功，会出现如下提示，此时访问[前端网页](http://localhost:5173/ "前端地址")即可。
+| Command | What it does |
+|---------|--------------|
+| `npm run dev` | Start the Vite dev server (uses `.env.development`) |
+| `npm run build` | Production build into `dist/` (uses `.env.production`) |
+| `npm run preview` | Serve the production build locally |
+| `npm test` | Run all unit tests once |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:coverage` | Run tests with coverage; fails below the thresholds |
+| `npm run check` | Pre-commit self-check: coverage tests + production build |
 
-```bash
- VITE v6.3.5  ready in 381 ms
+### Environment variables
 
+The backend address is **not** hard-coded. Vite reads it from `.env.*` at the repo root, and
+[src/config/index.js](src/config/index.js) exposes it to the rest of the app as `API_BASE` / `APP_DOWNLOAD_URL`.
 
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `VITE_API_BASE` | Yes | Base URL of the Qubar backend API, used for every backend call (axios wrapper, SSE notification stream, OAuth login) |
+| `VITE_APP_DOWNLOAD_URL` | No | App download link shown on the mobile "not supported" page; the link is hidden when empty |
 
-  ➜  Local:   http://localhost:5173/
+- `.env.development` is loaded by `npm run dev`; `.env.production` is baked into the bundle by `npm run build`.
+- To point your local dev server somewhere else without touching the committed file, create
+  `.env.development.local` (`*.local` files are git-ignored) and set `VITE_API_BASE` there.
+- Only variables prefixed with `VITE_` reach the browser bundle, so never put secrets in these files.
 
-  ➜  Network: use --host to expose
+## 📱 Mobile View
 
-  ➜  press h + enter to show help
+- The breakpoint and the master switch live in [src/constants/breakpoints.js](src/constants/breakpoints.js):
+  `BP_MOBILE_MAX = 768` and `MOBILE_SHELL_ENABLED`. With the switch on, screens ≤ 768px render the mobile shell
+  (`MobileTopBar` / `MobileTabBar` in `src/components/layout/mobile/`); turning it off falls back to the desktop layout.
+  CSS media queries can't read JS constants, so `@media` rules repeat the same `768px` by hand.
+- Each route can set `meta.mobile` (defaults and helpers in [src/router/mobileMeta.js](src/router/mobileMeta.js)):
+  - `supported` – `false` renders `MobileUnsupported.vue` in place of the page on mobile, without changing the URL
+  - `topBar` – `main` (logo + search) or `back` (back button + title)
+  - `tabBar` – whether to show the bottom tab bar
+- Pages currently unsupported on mobile: create post, circle members / edit / bots / moderation, and bot admin.
+- Design and scope: [docs/mobile-adaptation-plan.md](docs/mobile-adaptation-plan.md).
+
+## 📁 Project Structure
+
+```
+qubar-frontend/
+├── src/
+│   ├── api/            # One module per backend domain (auth, post, comment, circle, notice, agent, moderation, ...)
+│   ├── assets/         # main.css: global styles and design tokens
+│   ├── components/     # Reusable components, grouped by area
+│   │   ├── layout/     #   App shell, header, side nav, sidebar; mobile/ holds the mobile top bar and tab bar
+│   │   ├── common/     #   Shared building blocks (AppDropdown, SmartLink, image cropper, ...)
+│   │   └── ...         #   auth/, feed/, post/, circle/, user/, agent/
+│   ├── composables/    # Composition functions (SSE unread count, breakpoints, mentions, uploads, like/favorite toggles, ...)
+│   ├── config/         # Runtime config read from VITE_* env vars
+│   ├── constants/      # Shared constants (breakpoints, circle roles, moderation enums)
+│   ├── locales/        # zh-CN / en-US messages
+│   ├── router/         # Routes, auth guard, meta.mobile helpers
+│   ├── utils/          # Request wrapper, auth/token storage, guest access, sanitizing, mention parsing, ...
+│   ├── views/          # Route pages: auth/, feed/, post/, circle/, user/, admin/, plus Notifications and fallback pages
+│   ├── App.vue
+│   └── main.js
+├── tests/              # Vitest specs, mirroring src/
+├── public/             # Copied as-is: CNAME, favicon, standalone landing page (/landing)
+├── docs/               # Design and integration notes (Chinese)
+├── scripts/            # Build diagnostics script
+├── .github/workflows/  # CI, deploy, Claude review
+├── .env.development    # Dev env vars
+├── .env.production     # Production env vars
+├── vite.config.js
+└── vitest.config.js    # Reuses vite.config.js; coverage thresholds
 ```
 
-### 构建生产版本
+## 🧪 Testing and CI
 
 ```bash
-npm run build
+npm test        # all unit tests
+npm run check   # coverage tests + production build, same as CI
 ```
 
-### 预览生产构建
+- Specs live in `tests/` with the same layout as `src/` and are named `*.spec.js`. Coverage is measured on
+  `src/utils`, `src/composables` and `src/router`; thresholds are in [vitest.config.js](vitest.config.js).
+- After editing `src/locales/`, run `npm test`: [tests/i18n.spec.js](tests/i18n.spec.js) compiles every message with
+  the production compiler and checks that both languages have the same keys and placeholders.
+- See [CONTRIBUTING.md](CONTRIBUTING.md#testing) for how to write tests.
 
-```bash
-npm run preview
-```
+Workflows in [.github/workflows](.github/workflows):
 
-项目部署于 GitHub Pages，线上地址为 <https://qubar.site>（域名配置见 `public/CNAME`），后端 API 地址为 `https://api.qubar.site`。
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| `ci.yml` | PRs to `main` (also called by `deploy.yml`) | Two checks: `unit` (tests + coverage thresholds) and `build` (production build) |
+| `deploy.yml` | Push to `main` | Runs the same CI first, then builds and deploys to GitHub Pages |
+| `claude-review.yml` | Non-draft PRs to `main` from this repo | Automatic Claude code review (inline comments + a summary comment) |
+| `claude.yml` | `@claude` in an issue / PR comment or review | Runs Claude on request; only users with write access can trigger it |
 
-## 测试与 CI
+## 🌐 Deployment
 
-### 本地运行
+The site is deployed to GitHub Pages by `deploy.yml` on every push to `main`. The custom domain is set in
+`public/CNAME`, and the build copies `index.html` to `404.html` so deep links work as an SPA.
+Pages setup, branch protection and troubleshooting are covered in [DEPLOY.md](DEPLOY.md).
 
-```bash
-npm test               # 运行全部单元测试
-npm run test:watch     # 监听模式，改代码自动重跑
-npm run test:coverage  # 带覆盖率报告（coverage/index.html），低于门槛会失败
-npm run check          # 提交前一键自检：覆盖率测试 + 生产构建
-```
+## 📚 Documentation
 
-### 编写测试
+Docs in this repo are written in Chinese.
 
-- 测试放在 `tests/` 下，按 `src/` 的目录结构组织，文件名 `*.spec.js`；可直接用 `@/` 别名导入源码。
-- 运行环境为 jsdom；每个用例结束后自动清空 `localStorage` / `sessionStorage`、恢复真实定时器和 `vi.spyOn` / `vi.stubGlobal`（见 `tests/setup.js`）。
-- 涉及定时器（防抖、重试等）的用例一律使用 `vi.useFakeTimers()`，不要依赖真实时间。
-- HTTP：测试 `src/utils/request.js` 本身时用 `axios-mock-adapter` 挂在真实实例上；测试业务模块时直接 `vi.mock('@/api/xxx')`。
-- 修改 `src/locales/` 后务必跑 `npm test`：`tests/i18n.spec.js` 会用生产环境同款编译器编译全部文案，并校验中英文 key、插值占位符一致。vue-i18n 在 dev 模式下会吞掉编译错误，只有这里能提前发现。
-- 覆盖率门槛配置在 `vitest.config.js`，只升不降：新增用例使覆盖率提高后，请同步调高门槛。
+| Document | Contents |
+|----------|----------|
+| [DEPLOY.md](DEPLOY.md) | GitHub Pages deployment, CI checks and branch protection |
+| [OAUTH_CALLBACK.md](OAUTH_CALLBACK.md) | OAuth login callback and one-time code exchange |
+| [HANDOFF.md](HANDOFF.md) | Point-in-time handover notes from the mobile portal work (October 2026); not kept up to date |
+| [docs/mobile-adaptation-plan.md](docs/mobile-adaptation-plan.md) | Mobile web portal plan: scope, breakpoints, `meta.mobile`, per-page checklist |
+| [docs/mobile-circle-card-plan.md](docs/mobile-circle-card-plan.md) | Compact "joined circles" cards on mobile |
+| [docs/testing-ci-implementation-plan.md](docs/testing-ci-implementation-plan.md) | Test setup, coverage thresholds and CI gates |
+| [docs/like-collect-idempotent-integration-plan.md](docs/like-collect-idempotent-integration-plan.md) | Integrating the idempotent like / favorite APIs |
+| [docs/mention-backend-requirements.md](docs/mention-backend-requirements.md) | Backend requirements for precise @mention binding |
+| [docs/mention-user-ids-integration.md](docs/mention-user-ids-integration.md) | Persisting and returning `mention_user_ids` |
+| [docs/notice-sse-backend-requirements.md](docs/notice-sse-backend-requirements.md) | Backend requirements for the SSE unread-count stream |
+| [docs/comment-locate-backend-requirements.md](docs/comment-locate-backend-requirements.md) | Backend requirements for jumping from a notification to its comment |
 
-### CI
+Backend:
 
-- `.github/workflows/ci.yml`：每个指向 `main` 的 PR 自动运行 `unit`（单测 + 覆盖率门槛）和 `build`（生产构建）两个检查，覆盖率摘要显示在 Actions 运行页。
-- `.github/workflows/deploy.yml`：push `main` 时先调用同一套 CI，全部通过后才构建并部署 GitHub Pages。
-- 建议仓库管理员为 `main` 开启分支保护，并把 `unit`、`build` 设为必需检查（详见 [DEPLOY.md](DEPLOY.md#ci-检查与分支保护)）。
+- [l0sgAi/qubar](https://github.com/l0sgAi/qubar) – the Go backend
+- [Backend docs on `develop`](https://github.com/l0sgAi/qubar/tree/develop/docs) – the source of truth for APIs.
+  Frontend integration docs are the `*-frontend-api.md` files there and the
+  [`docs/api/`](https://github.com/l0sgAi/qubar/tree/develop/docs/api) directory.
 
-## 功能特性
+## 🤝 Contributing
 
-- ✨ 优雅的 UI 设计，采用玻璃态效果
-- 🎨 动态背景装饰，提供流畅的视觉体验
-- 🔐 Google 账号登录与邮箱密码登录/注册（含找回密码）
-- 📝 帖子发布、点赞、收藏、评论，支持 Markdown 编辑与图片上传
-- 🌀 兴趣圈子：创建圈子、浏览圈子详情与圈子内帖子
-- 🔍 发现页、热门榜与全文搜索
-- 👤 用户主页与个人资料编辑（头像裁剪上传）
-- 👀 游客模式：未登录可浏览内容，操作时引导登录
-- 🌐 中/英文双语切换
-- 💾 本地存储 Token 管理
-- 📱 响应式设计，适配各种设备
-- 🎯 使用 NaiveUI 组件库，开箱即用
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, conventions,
+testing and the PR workflow.
 
-## 后端配置
+## 📄 License
 
-请求封装位于 [src/utils/request.js](src/utils/request.js)，`baseURL` 默认为线上后端 `https://api.qubar.site`，如需切换到本地开发后端，请修改该文件。
+[MIT License](LICENSE)
