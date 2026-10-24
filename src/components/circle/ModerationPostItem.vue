@@ -52,6 +52,10 @@
       <div class="ai-title">
         <NIcon size="15"><RobotIcon /></NIcon>
         <span>{{ t('circle.moderation.ai.title') }}</span>
+        <!-- AI 分流结果（被举报列表常见 publish / review_publish / fail_open）；fail_open 通常同时带 error_msg -->
+        <NTag v-if="decision" size="small" round :bordered="false" class="ai-decision">
+          {{ t(`circle.moderation.decision.${decision}`) }}
+        </NTag>
       </div>
 
       <p v-if="state === 'pending'" class="ai-note">{{ t('circle.moderation.ai.pending') }}</p>
@@ -129,7 +133,7 @@ import SmartLink from '@/components/common/SmartLink.vue'
 import MentionPreview from '@/components/post/detail/MentionPreview.vue'
 import { useFormatTime } from '@/utils/i18n'
 import {
-  HAZARD_KEYS, CARE_HAZARD, toPercent, severityLevel, verdictState, needsCare
+  HAZARD_KEYS, CARE_HAZARD, toPercent, severityLevel, verdictState, needsCare, decisionKey
 } from '@/constants/moderation'
 
 const props = defineProps({
@@ -150,6 +154,7 @@ const images = computed(() => (Array.isArray(props.post.media_extra) ? props.pos
 
 const verdict = computed(() => props.post.ai_verdict || null)
 const state = computed(() => verdictState(verdict.value))
+const decision = computed(() => decisionKey(verdict.value?.decision))
 const hazards = computed(() => verdict.value?.hazards || {})
 const hitHazards = computed(() => (Array.isArray(verdict.value?.hit_hazards) ? verdict.value.hit_hazards : []))
 const level = computed(() => severityLevel(verdict.value?.severity))
@@ -309,6 +314,11 @@ const hazardLabel = (key) => (te(`circle.moderation.hazards.${key}`) ? t(`circle
   font-size: 0.82rem;
   font-weight: 600;
   color: #8af0d0;
+}
+
+.ai-decision {
+  margin-left: auto;
+  font-weight: 400;
 }
 
 .ai-note {

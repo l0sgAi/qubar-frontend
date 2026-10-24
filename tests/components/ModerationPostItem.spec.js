@@ -89,4 +89,16 @@ describe('ModerationPostItem', () => {
     expect(wrapper.find('.mod-actions .act').text()).toBe('p1')
     expect(wrapper.find('.extra').text()).toBe('标题')
   })
+
+  it('decision 标签：review_publish / fail_open 显示文案（fail_open 带 error_msg 也显示），review 不显示', () => {
+    expect(mountItem({ ai_verdict: { ...readyVerdict, decision: 'review_publish' } }).find('.ai-decision').text())
+      .toBe('AI 存疑，已自动发布')
+    const failOpen = mountItem({
+      ai_verdict: { decision: 'fail_open', hit_hazards: [], hazards: {}, severity: null, error_msg: 'timeout' }
+    })
+    expect(failOpen.find('.ai-decision').text()).toBe('AI 不可用，已直接发布')
+    expect(failOpen.find('.ai-note--warn').exists()).toBe(true)
+    expect(mountItem({ ai_verdict: readyVerdict }).find('.ai-decision').exists()).toBe(false)
+    expect(mountItem().find('.ai-decision').exists()).toBe(false)
+  })
 })

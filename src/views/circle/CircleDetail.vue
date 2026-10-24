@@ -317,7 +317,7 @@ import { requireLogin } from '@/utils/guest-action'
 import { useCircleMeta } from '@/composables/useCircleMeta'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { isManager, MEMBER_PAGE_SIZE } from '@/constants/circle'
-import { getModerationPosts } from '@/api/moderation'
+import { getModerationPosts, getModerationReports } from '@/api/moderation'
 import { MODERATION_PAGE_SIZE } from '@/constants/moderation'
 import { Bell as BellIcon, BellOff as BellOffIcon, Edit as EditIcon, DotsVertical as MoreIcon } from '@vicons/tabler'
 import { User as UserIcon, FileText as FileTextIcon, Flame as FlameIcon } from '@vicons/tabler'
@@ -671,11 +671,11 @@ const handleMobileShare = async () => {
 
 const canManage = computed(() => isManager(circleDetail.value.member_role))
 
-// 待处理角标（入口提示）：入圈待审（status=0）与待审帖子各拉一页 size=20，两者相加；任一满页显示「20+」。
-// 两个请求互不影响，单个失败按 0 计
+// 待处理角标（入口提示）：入圈待审（status=0）、待审帖子、被举报帖子各拉一页 size=20，三者相加；任一满页显示「20+」。
+// 请求互不影响，单个失败按 0 计
 const pendingModCount = ref(0)
 const pendingModFull = ref(false)
-// 入口落点：只有待审帖子、没有入圈待审时直接进内容审核页，否则进成员管理
+// 入口落点：只有待审 / 被举报帖子、没有入圈待审时直接进内容审核页，否则进成员管理
 const manageTarget = ref('members')
 
 // 世代守卫：切换圈子后旧请求的响应直接丢弃，防止角标被上一个圈子的数据覆盖
@@ -685,15 +685,19 @@ const fetchPendingModCount = async () => {
   const gen = ++pendingModGen
   if (!canManage.value) return
   const circleId = circleDetail.value.id
-  const [members, posts] = await Promise.allSettled([
+  const [members, posts, reports] = await Promise.allSettled([
     getCircleMembers({ circle_id: circleId, status: '0', size: MEMBER_PAGE_SIZE }),
-    getModerationPosts({ circle_id: circleId, size: MODERATION_PAGE_SIZE })
+    getModerationPosts({ circle_id: circleId, size: MODERATION_PAGE_SIZE }),
+    getModerationReports({ circle_id: circleId, size: MODERATION_PAGE_SIZE })
   ])
   if (gen !== pendingModGen) return
   const memberCount = members.status === 'fulfilled' ? members.value.data?.members?.length || 0 : 0
-  const postCount = posts.status === 'fulfilled' ? posts.value.data?.posts?.length || 0 : 0
+  const pendingPostCount = posts.status === 'fulfilled' ? posts.value.data?.posts?.length || 0 : 0
+  const reportedCount = reports.status === 'fulfilled' ? reports.value.data?.posts?.length || 0 : 0
+  const postCount = pendingPostCount + reportedCount
   pendingModCount.value = memberCount + postCount
-  pendingModFull.value = memberCount >= MEMBER_PAGE_SIZE || postCount >= MODERATION_PAGE_SIZE
+  pendingModFull.value = memberCount >= MEMBER_PAGE_SIZE ||
+    pendingPostCount >= MODERATION_PAGE_SIZE || reportedCount >= MODERATION_PAGE_SIZE
   manageTarget.value = memberCount === 0 && postCount > 0 ? 'moderation' : 'members'
 }
 

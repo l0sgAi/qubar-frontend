@@ -370,7 +370,8 @@ export default {
       title: 'Moderation',
       noPermissionVisit: "You don't have permission to access moderation.",
       tabs: {
-        pending: 'Pending review'
+        pending: 'Pending review',
+        reported: 'Reported'
       },
       empty: 'No posts waiting for review.',
       loadFailed: 'Failed to load posts pending review',
@@ -408,6 +409,11 @@ export default {
         severe: 'Severe',
         extreme: 'Extreme'
       },
+      decision: {
+        publish: 'Passed by AI',
+        review_publish: 'Uncertain, auto-published',
+        fail_open: 'AI unavailable, published'
+      },
       actions: {
         approve: 'Approve',
         reject: 'Reject'
@@ -430,6 +436,32 @@ export default {
         noPermission: "You don't have permission to do this.",
         badRequest: 'Invalid request',
         generic: 'Something went wrong. Please try again later.'
+      },
+      reported: {
+        empty: 'No reported posts.',
+        loadFailed: 'Failed to load reported posts',
+        reportCount: 'Reported {n} times',
+        reportCountOne: 'Reported once',
+        firstReportAt: 'First reported {time}',
+        autoHidden: 'Auto-hidden',
+        autoHiddenHint: 'Only visible to the author. Keeping it will make it public again.',
+        reasonsTitle: 'Report reasons',
+        onlyRecent: 'Showing the {n} most recent reports',
+        actions: {
+          keep: 'Keep',
+          remove: 'Remove'
+        },
+        confirm: {
+          keepTitle: 'Keep post',
+          keepContent: 'Keep "{title}"? All open reports on it will be closed, and it stays public.',
+          removeTitle: 'Remove post',
+          removeContent: 'Remove "{title}"? Removed posts are only visible to the author, who will be notified.'
+        },
+        success: {
+          kept: 'Kept. Closed {n} reports.',
+          keptOne: 'Kept. Closed 1 report.',
+          removed: 'Removed.'
+        }
       }
     },
     edit: {

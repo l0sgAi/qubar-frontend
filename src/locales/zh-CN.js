@@ -370,7 +370,8 @@ export default {
       title: '内容审核',
       noPermissionVisit: '无权限访问内容审核',
       tabs: {
-        pending: '待审帖子'
+        pending: '待审帖子',
+        reported: '被举报'
       },
       empty: '暂无待审帖子',
       loadFailed: '待审帖子加载失败',
@@ -408,6 +409,11 @@ export default {
         severe: '严重',
         extreme: '极端'
       },
+      decision: {
+        publish: 'AI 放行',
+        review_publish: 'AI 存疑，已自动发布',
+        fail_open: 'AI 不可用，已直接发布'
+      },
       actions: {
         approve: '通过',
         reject: '驳回'
@@ -430,6 +436,32 @@ export default {
         noPermission: '无权限执行该操作',
         badRequest: '请求参数有误',
         generic: '操作失败，请稍后重试'
+      },
+      reported: {
+        empty: '暂无被举报的帖子',
+        loadFailed: '被举报帖子加载失败',
+        reportCount: '被举报 {n} 次',
+        reportCountOne: '被举报 1 次',
+        firstReportAt: '首次举报于 {time}',
+        autoHidden: '已自动屏蔽',
+        autoHiddenHint: '仅作者可见，保留后恢复公开',
+        reasonsTitle: '举报理由',
+        onlyRecent: '仅显示最近 {n} 条',
+        actions: {
+          keep: '保留',
+          remove: '下架'
+        },
+        confirm: {
+          keepTitle: '保留帖子',
+          keepContent: '确定保留「{title}」吗？将关闭本轮全部举报，帖子继续公开。',
+          removeTitle: '下架帖子',
+          removeContent: '确定下架「{title}」吗？下架后仅作者可见，作者会收到通知。'
+        },
+        success: {
+          kept: '已保留，关闭 {n} 条举报',
+          keptOne: '已保留，关闭 1 条举报',
+          removed: '已下架'
+        }
       }
     },
     edit: {
