@@ -23,6 +23,14 @@
       <div v-if="$slots.meta" class="m-meta-extra">
         <slot name="meta" />
       </div>
+      <!-- 「…」更多菜单（信息流开启；举报：已发布且不是自己的帖子才显示），抬层盖住封面链接 -->
+      <PostMoreMenu
+        v-if="moreMenu"
+        class="m-more"
+        :post-id="postId"
+        :author-id="authorId"
+        :status="status"
+      />
     </header>
 
     <div class="m-body">
@@ -60,6 +68,7 @@ import {
   Photo as PhotoIcon
 } from '@vicons/tabler'
 import SmartLink from '@/components/common/SmartLink.vue'
+import PostMoreMenu from '@/components/post/PostMoreMenu.vue'
 import { useFormatNumber } from '@/utils/i18n'
 
 defineProps({
@@ -83,7 +92,11 @@ defineProps({
   // 通栏：去掉圆角与左右边框，用于左右无边距的列表（如「我的」页）
   flush: { type: Boolean, default: false },
   // 状态色调（「我的帖子」里驳回 = warning / 屏蔽 = error）：左侧色条 + 正文降低不透明度
-  tone: { type: String, default: '', validator: (v) => ['', 'warning', 'error'].includes(v) }
+  tone: { type: String, default: '', validator: (v) => ['', 'warning', 'error'].includes(v) },
+  // 头部右侧「…」更多菜单（信息流卡片开启；「我的帖子」等作者自己的列表不开）
+  moreMenu: { type: Boolean, default: false },
+  authorId: { type: String, default: null },
+  status: { type: Number, default: null }
 })
 
 const { t } = useI18n()
@@ -202,6 +215,15 @@ a.m-secondary {
   gap: 4px;
   flex-shrink: 0;
   margin-left: auto;
+}
+
+/* 更多菜单：贴右，按钮 28px，负边距不撑高单行头部（22px） */
+.m-more {
+  margin: -3px -6px -3px auto;
+}
+
+.m-meta-extra ~ .m-more {
+  margin-left: 0;
 }
 
 .m-body {

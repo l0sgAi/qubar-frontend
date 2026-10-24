@@ -14,6 +14,7 @@
         <div class="post-main-column">
             <PostHeaderAndContent
               :post="post"
+              :post-id="route.params.id"
               :language="language"
               :is-author="isAuthor"
               :review-slow="reviewSlow"

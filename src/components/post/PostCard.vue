@@ -14,6 +14,9 @@
     :view-count="viewCount"
     :like-count="likeCount"
     :comment-count="commentCount"
+    more-menu
+    :author-id="userId"
+    :status="status"
   />
   <NCard v-else class="post-card" :bordered="false">
     <!-- 整卡封面链接（stretched-link）：铺满卡片承担帖子跳转，hover 任意位置显示
@@ -40,6 +43,7 @@
           </div>
         </div>
       </SmartLink>
+      <PostMoreMenu :post-id="postId" :author-id="userId" :status="status" />
     </div>
     <div v-else class="post-header">
       <SmartLink class="author-info" :to="userId ? `/user/${userId}` : null">
@@ -53,6 +57,8 @@
           </div>
         </div>
       </SmartLink>
+      <div class="header-spacer"></div>
+      <PostMoreMenu :post-id="postId" :author-id="userId" :status="status" />
     </div>
 
     <!-- 帖子内容 -->
@@ -113,6 +119,7 @@ import { useI18n } from 'vue-i18n'
 import ImageCarousel from '@/components/common/ImageCarousel.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
 import MobilePostItem from '@/components/post/MobilePostItem.vue'
+import PostMoreMenu from '@/components/post/PostMoreMenu.vue'
 import { useMobileShell } from '@/composables/useAppShell'
 import { useFormatNumber, useFormatTime } from '@/utils/i18n'
 
@@ -200,6 +207,11 @@ const props = defineProps({
   showCircle: {
     type: Boolean,
     default: true
+  },
+  // 帖子状态：信息流 / 搜索 / 圈子列表只返回已发布的帖子，未传按已发布处理（决定是否显示「举报」）
+  status: {
+    type: Number,
+    default: 1
   }
 })
 

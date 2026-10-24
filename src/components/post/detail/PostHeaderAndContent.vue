@@ -9,8 +9,17 @@
         <NTag v-if="post.is_lock" type="error" size="small" round>{{ t('post.badges.locked') }}</NTag>
       </div>
 
-      <!-- 标题 -->
-      <h1 class="post-title">{{ post.title }}</h1>
+      <!-- 标题 + 右侧「…」更多菜单（举报：已发布且不是自己的帖子才显示） -->
+      <div class="post-title-row">
+        <h1 class="post-title">{{ post.title }}</h1>
+        <PostMoreMenu
+          class="post-more"
+          :post-id="postId || post.id"
+          :author-id="post.author_id"
+          :status="post.status"
+          size="medium"
+        />
+      </div>
       <!-- 状态标签 -->
       <NTag
         v-if="post.status !== 1"
@@ -145,6 +154,7 @@ import { useI18n } from 'vue-i18n'
 import MentionPreview from '@/components/post/detail/MentionPreview.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
 import PostStatusBanner from '@/components/post/detail/PostStatusBanner.vue'
+import PostMoreMenu from '@/components/post/PostMoreMenu.vue'
 import { isPostPublished } from '@/composables/usePostReview'
 import { usePostStatus } from '@/composables/usePostStatus'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
@@ -153,6 +163,11 @@ defineProps({
   post: {
     type: Object,
     required: true
+  },
+  // 帖子 id（详情页取路由参数，post.id 兜底）
+  postId: {
+    type: String,
+    default: ''
   },
   language: {
     type: String,
@@ -200,6 +215,26 @@ const STATS_COUNT_CAP = 100_000_000
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+.post-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.post-title-row .post-title {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+  word-break: break-word;
+}
+
+.post-more {
+  /* 与首行标题垂直居中（32px 字号 × 1.4 行高） */
+  margin-top: 6px;
+  margin-right: -6px;
 }
 
 .post-title {
@@ -340,6 +375,10 @@ const STATS_COUNT_CAP = 100_000_000
 
   .post-title {
     font-size: 22px;
+  }
+
+  .post-more {
+    margin-top: 0;
   }
 
   .post-stats {

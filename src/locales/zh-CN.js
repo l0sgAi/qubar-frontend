@@ -208,6 +208,24 @@ export default {
       published: '审核通过，帖子已发布',
       slow: '审核时间较长，结果会通过消息中心通知你'
     },
+    // 举报帖子（POST /post/report）；理由文案见顶层 report.reasons
+    report: {
+      action: '举报',
+      reported: '已举报',
+      more: '更多操作',
+      title: '举报帖子',
+      reasonLabel: '举报理由',
+      detailPlaceholder: '补充说明（选填）',
+      anonymousNote: '举报人信息不会透露给作者',
+      // 选「自伤轻生」时的关怀提示（文案待产品确认）
+      selfHarmHint: '如果你或身边的人正处在困境中，请尽快联系信任的人或当地心理援助热线，你并不孤单。',
+      submit: '提交举报',
+      success: '举报已提交，感谢反馈',
+      already: '你已经举报过这个帖子',
+      tooOften: '举报太频繁，请稍后再试',
+      unavailable: '帖子不存在或暂不可举报',
+      failed: '举报失败，请稍后重试'
+    },
     validation: {
       circleRequired: '请选择所属圈子',
       titleRequired: '请输入帖子标题',
@@ -967,6 +985,18 @@ export default {
   },
 
   // 搜索结果页
+  report: {
+    reasons: {
+      spam: '垃圾广告 / 引流',
+      sexual: '色情低俗',
+      harassment: '辱骂骚扰',
+      illegal: '违法违规',
+      violence: '暴力恐怖',
+      privacy: '泄露隐私',
+      selfHarm: '自伤轻生',
+      other: '其他'
+    }
+  },
   search: {
     emptyKeyword: '请输入搜索关键词',
     unknownCircle: '未知圈子',
