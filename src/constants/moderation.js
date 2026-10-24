@@ -84,3 +84,15 @@ export const REPORTS_SHOWN_MAX = 10
 export function decisionKey(decision) {
   return VERDICT_DECISIONS.includes(decision) ? decision : null
 }
+
+// 通知跳转 ?focus= 定位被举报帖子时最多翻的页数（含首页），仍找不到视为已被他人处理
+export const FOCUS_MAX_PAGES = 3
+
+/**
+ * 解析 summary 接口（#156）响应为 { reported, pending }；字段缺失 / 非数值返回 null（按接口不可用处理）
+ */
+export function parseModerationSummary(data) {
+  const { report_pending: reported, review_pending: pending } = data || {}
+  if (!Number.isFinite(reported) || !Number.isFinite(pending)) return null
+  return { reported: Math.max(reported, 0), pending: Math.max(pending, 0) }
+}

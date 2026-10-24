@@ -30,8 +30,9 @@ const props = defineProps({
 
 const router = useRouter()
 
-// router.resolve 把对象形式也归一成真实 href，右键"复制链接地址"拿到的是完整 URL
-const href = computed(() => router.resolve(props.to).href)
+// router.resolve 把对象形式也归一成真实 href，右键"复制链接地址"拿到的是完整 URL。
+// to 为空时不能交给 resolve（会解析成当前页地址），直接降级
+const href = computed(() => (props.to ? router.resolve(props.to).href : ''))
 
 // 修饰键 / 非左键交给浏览器默认行为（新标签页），普通左键走 SPA 路由。
 // 路由守卫中止导航时 push 会 reject，这里静默兜底避免未处理的 promise rejection。
