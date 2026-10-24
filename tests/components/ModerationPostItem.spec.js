@@ -56,7 +56,7 @@ describe('ModerationPostItem', () => {
 
   it('ai_verdict 为 null：提示可直接人工处理', () => {
     const wrapper = mountItem()
-    expect(wrapper.find('.ai-note').text()).toBe('AI 尚未给出结论，可直接人工处理')
+    expect(wrapper.find('.ai-note').text()).toBe('暂无 AI 结论，可直接人工处理')
     expect(wrapper.find('.ai-care').exists()).toBe(false)
   })
 

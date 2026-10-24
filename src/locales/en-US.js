@@ -447,6 +447,10 @@ export default {
         autoHiddenHint: 'Only visible to the author. Keeping it will make it public again.',
         reasonsTitle: 'Report reasons',
         onlyRecent: 'Showing the {n} most recent reports',
+        reasonCount: '{label} ×{n}',
+        showReports: 'Show report details',
+        hideReports: 'Hide report details',
+        focusHandled: 'This report has already been handled',
         actions: {
           keep: 'Keep',
           remove: 'Remove'
@@ -978,6 +982,7 @@ export default {
     readAllFailed: 'Operation failed, please retry',
     targetDeleted: 'Content has been deleted',
     locateFailed: 'Failed to locate the comment, please retry later',
+    reportTargetGone: 'This post has been handled or is no longer visible',
     someone: 'Someone',
     // Text templates: {actor}=trigger user, {snippet}=content snippet
     templates: {
@@ -988,7 +993,10 @@ export default {
       replyComment: '{actor} replied to your comment: {snippet}',
       mention: '{actor} mentioned you: {snippet}',
       postApproved: 'Your post "{snippet}" has been approved',
-      postRejected: 'Your post "{snippet}" didn\'t pass review'
+      postRejected: 'Your post "{snippet}" didn\'t pass review',
+      postReported: 'A post in your circle, "{snippet}", was reported. Please review it.',
+      postSelfHarm: 'A post by {actor} in your circle, "{snippet}", may show signs of self-harm. Please check in.',
+      postRemoved: 'Your post "{snippet}" was reported and removed after review by a circle owner / admin'
     },
     mention: {
       button: 'Mention',

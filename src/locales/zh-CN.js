@@ -382,7 +382,7 @@ export default {
       hideContent: '收起全文',
       ai: {
         title: 'AI 审核结论',
-        pending: 'AI 尚未给出结论，可直接人工处理',
+        pending: '暂无 AI 结论，可直接人工处理',
         failed: 'AI 未能给出结论',
         noHit: '未命中风险',
         hazardTag: '{label} {percent}%',
@@ -447,6 +447,11 @@ export default {
         autoHiddenHint: '仅作者可见，保留后恢复公开',
         reasonsTitle: '举报理由',
         onlyRecent: '仅显示最近 {n} 条',
+        reasonCount: '{label} ×{n}',
+        showReports: '查看举报详情',
+        hideReports: '收起举报详情',
+        // 通知跳转 ?focus= 定位不到（已被其他管理员处理）
+        focusHandled: '该举报已处理',
         actions: {
           keep: '保留',
           remove: '下架'
@@ -977,6 +982,8 @@ export default {
     readAllFailed: '操作失败，请重试',
     targetDeleted: '内容已被删除',
     locateFailed: '评论定位失败，请稍后再试',
+    // 举报通知（9）查不到所属圈子：帖子已下架 / 屏蔽 / 删除
+    reportTargetGone: '该帖子已被处理或不可见',
     someone: '有人',
     // 文案模板：{actor}=触发人，{snippet}=摘要快照
     templates: {
@@ -987,7 +994,10 @@ export default {
       replyComment: '{actor} 回复了你的评论：{snippet}',
       mention: '{actor} 在帖子/评论中提到了你：{snippet}',
       postApproved: '你的帖子《{snippet}》已通过审核',
-      postRejected: '你的帖子《{snippet}》未通过审核'
+      postRejected: '你的帖子《{snippet}》未通过审核',
+      postReported: '本圈帖子《{snippet}》被举报，请及时复核',
+      postSelfHarm: '本圈 {actor} 的帖子《{snippet}》疑似有自伤 / 轻生倾向，请关注',
+      postRemoved: '你的帖子《{snippet}》被举报，经圈主 / 管理员复核已下架'
     },
     mention: {
       button: '提及',

@@ -6,7 +6,10 @@ import {
   NOTICE_TEMPLATE_KEYS,
   isSystemNotice,
   renderNoticeText,
-  noticeTarget
+  noticeTarget,
+  needsCircleLookup,
+  reportedQueueTarget,
+  REVIEW_NOTICE_TYPES
 } from '@/utils/noticeDisplay'
 
 // 用真实文案编译，顺带校验模板 key 与占位符对得上
@@ -55,18 +58,32 @@ describe('noticeDisplay', () => {
       expect(renderNoticeText({ notice_type: 99 }, zh)).toBe('')
     })
 
-    it('第二期类型 9–11 暂不映射模板，按未知类型兜底', () => {
-      for (const type of [9, 10, 11]) {
-        expect(NOTICE_TEMPLATE_KEYS[type]).toBeUndefined()
-        expect(renderNoticeText({ notice_type: type, snippet: '标题' }, zh)).toBe('标题')
+    it('9 / 11：举报、下架（无 actor）', () => {
+      expect(renderNoticeText({ notice_type: 9, snippet: '帖' }, zh)).toBe('本圈帖子《帖》被举报，请及时复核')
+      expect(renderNoticeText({ notice_type: 11, snippet: '帖' }, zh))
+        .toBe('你的帖子《帖》被举报，经圈主 / 管理员复核已下架')
+      expect(renderNoticeText({ notice_type: 9, snippet: 'P' }, en)).toBe('A post in your circle, "P", was reported. Please review it.')
+    })
+
+    it('10：疑似自伤，actor 为帖子作者', () => {
+      expect(renderNoticeText({ notice_type: 10, actor: { username: 'Bob' }, snippet: '帖' }, zh))
+        .toBe('本圈 Bob 的帖子《帖》疑似有自伤 / 轻生倾向，请关注')
+    })
+
+    it('1–11 都有模板，且 zh / en 都能编译', () => {
+      for (let type = 1; type <= 11; type++) {
+        expect(NOTICE_TEMPLATE_KEYS[type]).toBeTruthy()
+        for (const t of [zh, en]) {
+          expect(renderNoticeText({ notice_type: type, snippet: 'S' }, t)).toContain('S')
+        }
       }
     })
   })
 
   describe('isSystemNotice', () => {
-    it('7/8 为系统通知，其余类型（含 actor 缺省的 1–6）不是', () => {
-      expect(isSystemNotice({ notice_type: 7 })).toBe(true)
-      expect(isSystemNotice({ notice_type: 8 })).toBe(true)
+    it('7/8/9/11 为系统通知，其余类型（含 actor 缺省的 1–6、带作者的 10）不是', () => {
+      for (const type of [7, 8, 9, 11]) expect(isSystemNotice({ notice_type: type })).toBe(true)
+      expect(isSystemNotice({ notice_type: 10 })).toBe(false)
       expect(isSystemNotice({ notice_type: 1 })).toBe(false)
       expect(isSystemNotice({ notice_type: 6 })).toBe(false)
       expect(isSystemNotice({ notice_type: 99 })).toBe(false)
@@ -74,9 +91,33 @@ describe('noticeDisplay', () => {
   })
 
   describe('noticeTarget', () => {
-    it('7/8 跳帖子详情，不带 comment_id', () => {
+    it('7 / 10 跳帖子详情，不带 comment_id', () => {
       expect(noticeTarget({ notice_type: 7, post_id: 'p1' })).toEqual({ path: '/post/p1', query: {} })
-      expect(noticeTarget({ notice_type: 8, post_id: 'p2' })).toEqual({ path: '/post/p2', query: {} })
+      expect(noticeTarget({ notice_type: 10, post_id: 'p3' })).toEqual({ path: '/post/p3', query: {} })
+    })
+
+    it('8 / 11 跳「我的帖子」（帖子对他人不可见）', () => {
+      const myPosts = { path: '/profile', query: { tab: 'posts' } }
+      expect(noticeTarget({ notice_type: 8, post_id: 'p2' })).toEqual(myPosts)
+      expect(noticeTarget({ notice_type: 11, post_id: 'p2' })).toEqual(myPosts)
+    })
+
+    it('9 带 circle_id 直达审核页被举报 tab 并定位；缺 circle_id 返回 null 等点击时解析', () => {
+      expect(noticeTarget({ notice_type: 9, post_id: 'p1', circle_id: 'c1' }))
+        .toEqual({ path: '/circle/c1/moderation', query: { tab: 'reported', focus: 'p1' } })
+      expect(needsCircleLookup({ notice_type: 9, post_id: 'p1', circle_id: 'c1' })).toBe(false)
+      expect(noticeTarget({ notice_type: 9, post_id: 'p1' })).toBeNull()
+      expect(needsCircleLookup({ notice_type: 9, post_id: 'p1' })).toBe(true)
+      expect(needsCircleLookup({ notice_type: 7, post_id: 'p1' })).toBe(false)
+      expect(needsCircleLookup({ notice_type: 9 })).toBe(false)
+    })
+
+    it('reportedQueueTarget 不带帖子时不加 focus', () => {
+      expect(reportedQueueTarget('c1')).toEqual({ path: '/circle/c1/moderation', query: { tab: 'reported' } })
+    })
+
+    it('「审核」tab 过滤值只含数字 7–11', () => {
+      expect(REVIEW_NOTICE_TYPES).toBe('7,8,9,10,11')
     })
 
     it('带 comment_id 时附带定位参数', () => {
