@@ -148,8 +148,13 @@ export default {
       normal: 'Normal',
       draft: 'Draft',
       reviewing: 'Reviewing',
-      rejected: 'Rejected',
-      blocked: 'Blocked'
+      rejected: 'Not approved',
+      blocked: 'Hidden, pending review',
+      // Status tag explanations (hover / tap); rejected / blocked are also the author's banner on post detail
+      hint: {
+        rejected: "Only you can see this post. It didn't pass AI review or was rejected / removed by a circle admin. Check Notifications for details.",
+        blocked: 'This post was reported several times and is temporarily hidden while a circle admin reviews it.'
+      }
     },
     badges: {
       pinned: 'Pinned',
@@ -198,10 +203,6 @@ export default {
       refresh: 'Refresh',
       published: 'Approved. Your post is now public.',
       slow: "Review is taking longer than usual. We'll notify you in Notifications when it's done."
-    },
-    // Rejected banner shown to the author (shared by post detail and My Posts)
-    rejected: {
-      banner: "This post didn't pass review and is only visible to you."
     },
     validation: {
       circleRequired: 'Please select a circle',

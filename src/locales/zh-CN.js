@@ -148,8 +148,13 @@ export default {
       normal: '正常',
       draft: '草稿',
       reviewing: '审核中',
-      rejected: '驳回',
-      blocked: '屏蔽'
+      rejected: '未通过审核',
+      blocked: '已屏蔽，等待复核',
+      // 状态标签的说明（悬停 / 点按显示），驳回 / 屏蔽同时用作详情页作者提示条
+      hint: {
+        rejected: '仅你自己可见。帖子未通过 AI 审核或被圈主 / 管理员驳回 / 下架，结果已通过消息中心通知你',
+        blocked: '帖子被多次举报，已暂时对他人隐藏，等待圈主 / 管理员复核'
+      }
     },
     badges: {
       pinned: '置顶',
@@ -198,10 +203,6 @@ export default {
       refresh: '刷新',
       published: '审核通过，帖子已发布',
       slow: '审核时间较长，结果会通过消息中心通知你'
-    },
-    // 作者本人看到的驳回提示条（详情页与「我的帖子」共用）
-    rejected: {
-      banner: '帖子未通过审核，仅你自己可见'
     },
     validation: {
       circleRequired: '请选择所属圈子',

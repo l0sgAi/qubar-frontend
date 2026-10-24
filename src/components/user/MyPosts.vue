@@ -61,14 +61,16 @@
               :view-count="post.views"
               :like-count="post.likes"
               :comment-count="post.comments"
+              :tone="post.tone"
               flush>
               <template v-if="post.status !== undefined && post.status !== 1" #meta>
-                <NTag size="tiny" round :type="statusType(post.status)">{{ statusText(post.status) }}</NTag>
+                <PostStatusTag :status="post.status" />
               </template>
             </MobilePostItem>
           <NCard
             v-else
             class="post-card"
+            :class="post.tone && `is-tone-${post.tone}`"
             :bordered="false"
             hoverable>
             <!-- 整卡封面链接（stretched-link）：铺满卡片承担帖子跳转，
@@ -86,13 +88,7 @@
                 </div>
               </div>
               <div class="header-right">
-                <NTag
-                  v-if="post.status !== undefined && post.status !== 1"
-                  size="tiny"
-                  round
-                  :type="statusType(post.status)">
-                  {{ statusText(post.status) }}
-                </NTag>
+                <PostStatusTag v-if="post.status !== undefined && post.status !== 1" :status="post.status" />
                 <AppDropdown v-if="!readonly && !mobileShell" :options="getPostMenuOptions()" @select="(key) => handleAction(key, post)">
                   <NButton quaternary circle size="small">
                     <template #icon>
@@ -177,12 +173,15 @@ import ImageCarousel from '@/components/common/ImageCarousel.vue'
 import MobilePostItem from '@/components/post/MobilePostItem.vue'
 import AppDropdown from '@/components/common/AppDropdown.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
+import PostStatusTag from '@/components/post/PostStatusTag.vue'
+import { usePostStatus } from '@/composables/usePostStatus'
 import { useMobileShell } from '@/composables/useAppShell'
 
 const message = useMessage()
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
 const { formatNumber } = useFormatNumber()
+const { getPostStatusInfo } = usePostStatus()
 
 const props = defineProps({
   // 目标用户 ID：
@@ -233,6 +232,7 @@ const transformPost = (p) => ({
   circleName: p.circle_name || '',
   images: p.images || [],
   status: p.status,
+  tone: getPostStatusInfo(p.status).tone,
   isPinned: p.is_pinned,
   isEssence: p.is_essence,
   timeText: formatTime(p.create_time || ''),
@@ -335,26 +335,6 @@ watch(() => props.active, (next, prev) => {
   if (prev && !next && searchKey.value) resetAndFetch()
 })
 
-// 状态文案 / 标签颜色
-const statusText = (status) => {
-  const map = {
-    0: 'post.status.draft',
-    1: 'post.status.normal',
-    2: 'post.status.reviewing',
-    3: 'post.status.rejected',
-    4: 'post.status.blocked'
-  }
-  return t(map[status] || 'post.status.normal')
-}
-
-const statusType = (status) => ({
-  0: 'default',
-  1: 'success',
-  2: 'info',
-  3: 'warning',
-  4: 'error'
-}[status] || 'default')
-
 const getPostMenuOptions = () => {
   return [
     { label: t('common.edit'), key: 'edit' },
@@ -433,6 +413,28 @@ onBeforeUnmount(() => {
   overflow: hidden;
   transition: all 0.3s ease;
   cursor: pointer;
+}
+
+/* 驳回 / 屏蔽（别人看不到）：左侧色条 + 正文变淡，状态标签与统计保持清晰；
+   色条用伪元素，避免与 NCard hoverable 的 box-shadow 互相覆盖 */
+.post-card[class*='is-tone-']::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  pointer-events: none;
+}
+
+.post-card.is-tone-warning::before {
+  background: #fbbf24;
+}
+
+.post-card.is-tone-error::before {
+  background: #f87171;
+}
+
+.post-card[class*='is-tone-'] :is(.post-title-row, .post-content, .post-carousel) {
+  opacity: 0.6;
 }
 
 @media (hover: hover) {

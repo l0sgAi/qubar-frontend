@@ -14,13 +14,13 @@
       <!-- 状态标签 -->
       <NTag
         v-if="post.status !== 1"
-        :type="getStatusTagType(post.status)"
+        :type="getPostStatusInfo(post.status).type"
         size="large"
         round
       >
-        {{ getStatusText(post.status) }}
+        {{ getPostStatusInfo(post.status).text }}
       </NTag>
-      <!-- 作者本人：审核中 / 驳回提示条（status=2 时带刷新按钮） -->
+      <!-- 作者本人：审核中 / 驳回 / 屏蔽提示条（status=2 时带刷新按钮）；说明已在提示条里，标签不再带气泡 -->
       <PostStatusBanner
         v-if="isAuthor"
         class="post-status-banner-slot"
@@ -146,6 +146,7 @@ import MentionPreview from '@/components/post/detail/MentionPreview.vue'
 import SmartLink from '@/components/common/SmartLink.vue'
 import PostStatusBanner from '@/components/post/detail/PostStatusBanner.vue'
 import { isPostPublished } from '@/composables/usePostReview'
+import { usePostStatus } from '@/composables/usePostStatus'
 import { useFormatTime, useFormatNumber } from '@/utils/i18n'
 
 defineProps({
@@ -178,31 +179,10 @@ defineEmits(['like', 'collect', 'refresh'])
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
 const { formatNumber } = useFormatNumber()
+const { getPostStatusInfo } = usePostStatus()
 
 const VIEW_COUNT_CAP = 1_000_000_000
 const STATS_COUNT_CAP = 100_000_000
-
-const getStatusText = (status) => {
-  const statusMap = {
-    0: t('post.status.draft'),
-    1: t('post.status.normal'),
-    2: t('post.status.reviewing'),
-    3: t('post.status.rejected'),
-    4: t('post.status.blocked')
-  }
-  return statusMap[status] || t('post.status.normal')
-}
-
-const getStatusTagType = (status) => {
-  const typeMap = {
-    0: 'default',
-    1: 'success',
-    2: 'info',
-    3: 'warning',
-    4: 'error'
-  }
-  return typeMap[status] || 'default'
-}
 </script>
 
 <style scoped>
