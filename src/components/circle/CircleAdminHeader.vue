@@ -73,7 +73,7 @@ import {
   ShieldCheck as ShieldCheckIcon
 } from '@vicons/tabler'
 import { getCircleMembers } from '@/api/circle'
-import { getModerationPosts } from '@/api/moderation'
+import { getModerationPosts, getModerationReports } from '@/api/moderation'
 import { useCircleMeta } from '@/composables/useCircleMeta'
 import { MEMBER_PAGE_SIZE, isManager } from '@/constants/circle'
 import { MODERATION_PAGE_SIZE } from '@/constants/moderation'
@@ -126,23 +126,18 @@ const refreshPendingBadge = async () => {
   }
 }
 
-// 内容审核角标：同上，拉一页待审帖子 size=20，满页显示「20+」；审核页处理后经 ref 调 refreshModerationBadge 同步
+// 内容审核角标：同上，被举报帖子与待审帖子各拉一页 size=20，两者相加；任一满页显示「20+」。
+// 两个请求互不影响，单个失败按 0 计；审核页处理后经 ref 调 refreshModerationBadge 同步
 const moderationBadgeCount = ref(0)
 const moderationBadgeFull = ref(false)
 
 const refreshModerationBadge = async () => {
   if (!isManager(myRole.value)) return
-  try {
-    const res = await getModerationPosts({
-      circle_id: route.params.id,
-      size: MODERATION_PAGE_SIZE
-    })
-    moderationBadgeCount.value = res.data?.posts?.length || 0
-    moderationBadgeFull.value = moderationBadgeCount.value >= MODERATION_PAGE_SIZE
-  } catch {
-    moderationBadgeCount.value = 0
-    moderationBadgeFull.value = false
-  }
+  const params = { circle_id: route.params.id, size: MODERATION_PAGE_SIZE }
+  const results = await Promise.allSettled([getModerationReports(params), getModerationPosts(params)])
+  const counts = results.map(r => (r.status === 'fulfilled' ? r.value.data?.posts?.length || 0 : 0))
+  moderationBadgeCount.value = counts.reduce((a, b) => a + b, 0)
+  moderationBadgeFull.value = counts.some(n => n >= MODERATION_PAGE_SIZE)
 }
 
 onMounted(() => {

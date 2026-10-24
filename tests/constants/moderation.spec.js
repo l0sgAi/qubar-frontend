@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  HAZARD_KEYS, SEVERITY_LEVELS, toPercent, severityLevel, verdictState, needsCare
+  HAZARD_KEYS, SEVERITY_LEVELS, VERDICT_DECISIONS, toPercent, severityLevel, verdictState, needsCare, decisionKey
 } from '@/constants/moderation'
 import zhCN from '@/locales/zh-CN'
 import enUS from '@/locales/en-US'
@@ -47,5 +47,16 @@ describe('constants/moderation', () => {
     expect(needsCare({ hit_hazards: ['spam_ad'] })).toBe(false)
     expect(needsCare({ hit_hazards: null })).toBe(false)
     expect(needsCare(null)).toBe(false)
+  })
+
+  it('decisionKey：publish / review_publish / fail_open 有文案，其余不标注', () => {
+    expect(decisionKey('publish')).toBe('publish')
+    expect(decisionKey('review_publish')).toBe('review_publish')
+    expect(decisionKey('fail_open')).toBe('fail_open')
+    expect(decisionKey('review')).toBeNull()
+    expect(decisionKey(undefined)).toBeNull()
+    for (const messages of [zhCN, enUS]) {
+      VERDICT_DECISIONS.forEach(k => expect(typeof messages.circle.moderation.decision[k], k).toBe('string'))
+    }
   })
 })

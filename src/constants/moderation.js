@@ -66,3 +66,21 @@ export function verdictState(verdict) {
 export function needsCare(verdict) {
   return Array.isArray(verdict?.hit_hazards) && verdict.hit_hazards.includes(CARE_HAZARD)
 }
+
+// AI 结论 decision 中有展示文案的取值（circle.moderation.decision.<key>）；
+// 被举报列表常见 publish / review_publish / fail_open，待审列表的 review 不单独标注
+export const VERDICT_DECISIONS = ['publish', 'review_publish', 'fail_open']
+
+// 举报复核动作（POST /circle/moderation/reports/resolve 的 action）
+export const RESOLVE_ACTION = {
+  DISMISS: 'dismiss',
+  REMOVE: 'remove'
+}
+
+// 被举报列表每帖最多返回的举报条数（最近 10 条，新→旧）；report_count 超过时注明「仅显示最近 10 条」
+export const REPORTS_SHOWN_MAX = 10
+
+/** decision → 文案 key；无文案的取值（含 review / 空）返回 null */
+export function decisionKey(decision) {
+  return VERDICT_DECISIONS.includes(decision) ? decision : null
+}

@@ -43,3 +43,41 @@ export function reviewModerationPost(data) {
     data
   })
 }
+
+// ==================== 举报复核（#153）====================
+// 404（code=204）：帖子不存在 / 不在该圈 / 没有待处理举报（含已被他人处理）
+
+/**
+ * 获取本圈被举报帖子列表：有待处理举报、且帖子已发布（1）或已被自动屏蔽（4），按本轮首次举报时间倒序
+ * @param {Object} params - 查询参数，同 getModerationPosts（circle_id / size / cursor）
+ * @returns {Promise} data: { posts: ReportedPost[], size: number, cursor: string }
+ *   cursor 为空字符串 = 没有更多；posts[] 在待审列表字段基础上另带：
+ *   report_count（本轮待处理举报总数）/ first_report_time（本轮首次举报时间）/
+ *   reports（最近 10 条待处理举报，新→旧，每条 { reason_type: 1–8, reason, create_time }，不含举报人）。
+ *   status 为 4 时帖子已被自动屏蔽（仅作者可见）；ai_verdict 可能为 null（关闭审核或审核上线前发的帖子）
+ */
+export function getModerationReports(params) {
+  return request({
+    url: '/circle/moderation/reports',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 处理被举报帖子：保留（dismiss，关闭本轮全部举报，被屏蔽的帖子恢复为 1）或下架（remove，→ status=3，通知作者）。
+ * 并发处理同一帖子只有一次生效，其余返回 204。
+ * @param {Object} data - 处理数据
+ * @param {string} data.circle_id - 帖子所在圈子 ID
+ * @param {string} data.post_id - 被举报帖子 ID
+ * @param {'dismiss'|'remove'} data.action - 其他值返回 201
+ * @param {string} [data.reason] - 备注，≤200 字符；只记入审核日志，不展示给作者
+ * @returns {Promise} data: { post_id: string, status: number, closed_reports: number }
+ */
+export function resolveModerationReport(data) {
+  return request({
+    url: '/circle/moderation/reports/resolve',
+    method: 'post',
+    data
+  })
+}
