@@ -193,3 +193,24 @@ export function getHomeFeed(params) {
     params
   })
 }
+
+/**
+ * 举报帖子（需登录；与 moderation.enabled 无关，始终可用）
+ * 只能举报已发布（status=1）且不是自己的帖子；同一帖子每人只能举报一次（处理后也不能再举报）；
+ * 每人 24 小时内最多举报 moderation.report_daily_limit 次（默认 20）。举报人对作者不可见。
+ * 文档：后端 docs/api/post-moderation-review-api.md 第六、九节
+ * @param {Object} data - 请求体
+ * @param {string} data.post_id - 被举报帖子 ID（UUIDv7）
+ * @param {number} data.reason_type - 举报理由 1–8（见 src/constants/report.js 的 REPORT_REASON_TYPES）
+ * @param {string} [data.reason] - 补充说明（可选，≤200 字符，见 REPORT_REASON_MAX）
+ * @returns {Promise<{ data: null }>} 失败时 reject（error.status 为 HTTP 状态，error.code 为信封 code）：
+ *   400 / 201 请求非法、reason_type 越界、举报自己的帖子（三者只能靠英文 message 区分，前端统一兜底）；
+ *   404 / 204 帖子不存在或未发布；409 / 207 已举报过；429 / 208 超过 24 小时举报上限；401 / 202 未登录
+ */
+export function reportPost(data) {
+  return request({
+    url: '/post/report',
+    method: 'post',
+    data
+  })
+}

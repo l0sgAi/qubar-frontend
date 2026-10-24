@@ -208,6 +208,24 @@ export default {
       published: 'Approved. Your post is now public.',
       slow: "Review is taking longer than usual. We'll notify you in Notifications when it's done."
     },
+    // Report a post (POST /post/report); reason labels live in top-level report.reasons
+    report: {
+      action: 'Report',
+      reported: 'Reported',
+      more: 'More actions',
+      title: 'Report post',
+      reasonLabel: 'Reason',
+      detailPlaceholder: 'Add details (optional)',
+      anonymousNote: "The author won't see who reported this post.",
+      // Care hint shown when "Self-harm" is picked (copy pending product review)
+      selfHarmHint: "If you or someone you know is going through a hard time, please reach out to someone you trust or a local crisis line. You're not alone.",
+      submit: 'Submit report',
+      success: 'Report submitted. Thanks for letting us know.',
+      already: "You've already reported this post.",
+      tooOften: "You're reporting too often. Please try again later.",
+      unavailable: "This post doesn't exist or can't be reported.",
+      failed: "Couldn't submit the report. Please try again later."
+    },
     validation: {
       circleRequired: 'Please select a circle',
       titleRequired: 'Please enter a title',
@@ -968,6 +986,18 @@ export default {
   },
 
   // Search results page
+  report: {
+    reasons: {
+      spam: 'Spam / ads',
+      sexual: 'Sexual content',
+      harassment: 'Harassment',
+      illegal: 'Illegal activity',
+      violence: 'Violence / terrorism',
+      privacy: 'Privacy violation',
+      selfHarm: 'Self-harm',
+      other: 'Other'
+    }
+  },
   search: {
     emptyKeyword: 'Please enter a search keyword',
     unknownCircle: 'Unknown circle',

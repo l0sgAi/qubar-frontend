@@ -829,3 +829,33 @@ body {
   overflow: hidden;
   overscroll-behavior: contain;
 }
+
+/* =========================================================
+ * 移动端举报抽屉（ReportPostModal 的 NDrawer.report-sheet）
+ * 与评论输入抽屉同一套玻璃样式；内联 bottom / max-height 随键盘调整，
+ * 抽屉与内容包裹层都是纵向 flex，面板中段（理由 + 说明）在内部滚动。
+ * ========================================================= */
+.n-drawer-container:has(.report-sheet) > .n-drawer-mask {
+  background: rgba(8, 8, 18, 0.5);
+  touch-action: none;
+}
+
+.n-drawer.report-sheet {
+  display: flex;
+  flex-direction: column;
+  background: rgba(22, 22, 38, 0.92);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.n-drawer.report-sheet > .n-drawer-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}

@@ -3,13 +3,21 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { h } from 'vue'
 import { NTag } from 'naive-ui'
 
+const mocks = vi.hoisted(() => ({ getUserInfo: vi.fn(), requireLogin: vi.fn() }))
+
 vi.mock('naive-ui', async (importOriginal) => ({
   ...(await importOriginal()),
   useMessage: () => ({ info: vi.fn() })
 }))
+vi.mock('@/api/auth', () => ({ getUserInfo: mocks.getUserInfo }))
+vi.mock('@/utils/guest-action', () => ({ requireLogin: mocks.requireLogin }))
 import MobilePostItem from '@/components/post/MobilePostItem.vue'
 import PostCard from '@/components/post/PostCard.vue'
 import PostStatusTag from '@/components/post/PostStatusTag.vue'
+import PostMoreMenu from '@/components/post/PostMoreMenu.vue'
+import ReportPostModal from '@/components/post/ReportPostModal.vue'
+import AppDropdown from '@/components/common/AppDropdown.vue'
+import { markPostReported, __resetPostReport } from '@/composables/usePostReport'
 import { __resetBreakpoint } from '@/composables/useBreakpoint'
 import { setMatchMedia } from '../setup'
 import { createTestI18n, createTestRouter } from '../helpers/plugins'
@@ -199,5 +207,101 @@ describe('PostCard 移动端切换', () => {
     setMatchMedia(false)
     await wrapper.vm.$nextTick()
     expect(wrapper.find('.post-card').exists()).toBe(true)
+  })
+})
+
+describe('MobilePostItem 更多菜单（举报）', () => {
+  beforeEach(() => {
+    __resetPostReport()
+    __resetBreakpoint()
+    mocks.getUserInfo.mockReset().mockResolvedValue({ data: { id: 'me' } })
+    mocks.requireLogin.mockReset()
+  })
+
+  const login = () => {
+    localStorage.setItem('qubar_token', 'tok')
+    localStorage.setItem('qubar_token_expire', String(Date.now() + 60_000))
+  }
+
+  const mountWithMenu = async (props = {}) => {
+    const wrapper = mountItem({ moreMenu: true, authorId: 'u2', status: 1, ...props })
+    await flushPromises()
+    return wrapper
+  }
+
+  const menuOptions = (wrapper) => wrapper.findComponent(AppDropdown).props('options')
+
+  it('默认不开（「我的帖子」/ 收藏 / 浏览历史不显示）', () => {
+    expect(mountItem({ authorId: 'u2', status: 1 }).find('.post-more-menu').exists()).toBe(false)
+  })
+
+  it('访客：已发布的帖子在头部右侧显示「…」，菜单只有「举报」', async () => {
+    const wrapper = await mountWithMenu()
+    const menu = wrapper.find('.m-meta .post-more-menu')
+    expect(menu.exists()).toBe(true)
+    expect(menu.classes()).toContain('m-more')
+    expect(wrapper.find('.post-more-btn').attributes('aria-label')).toBe('更多操作')
+    expect(menuOptions(wrapper)).toEqual([{ key: 'report', label: '举报', disabled: false }])
+    expect(mocks.getUserInfo).not.toHaveBeenCalled()
+  })
+
+  it('点击菜单不冒泡到列表项（不触发整项跳转）', async () => {
+    const wrapper = await mountWithMenu()
+    const onItemClick = vi.fn()
+    wrapper.element.addEventListener('click', onItemClick)
+    await wrapper.find('.post-more-btn').trigger('click')
+    expect(onItemClick).not.toHaveBeenCalled()
+  })
+
+  it('访客点「举报」：弹登录引导，不打开举报弹窗', async () => {
+    const wrapper = await mountWithMenu()
+    wrapper.findComponent(AppDropdown).vm.$emit('select', 'report')
+    await flushPromises()
+    expect(mocks.requireLogin).toHaveBeenCalledTimes(1)
+    expect(wrapper.findComponent(ReportPostModal).exists()).toBe(false)
+  })
+
+  it('已登录点「举报」：打开该帖子的举报弹窗', async () => {
+    login()
+    const wrapper = await mountWithMenu()
+    wrapper.findComponent(AppDropdown).vm.$emit('select', 'report')
+    await flushPromises()
+    const modal = wrapper.findComponent(ReportPostModal)
+    expect(modal.exists()).toBe(true)
+    expect(modal.props()).toMatchObject({ show: true, postId: 'p1' })
+    expect(mocks.requireLogin).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('自己的帖子不显示；别人的帖子显示', async () => {
+    login()
+    expect((await mountWithMenu({ authorId: 'me' })).find('.post-more-menu').exists()).toBe(false)
+    expect((await mountWithMenu({ authorId: 'u2' })).find('.post-more-menu').exists()).toBe(true)
+    expect(mocks.getUserInfo).toHaveBeenCalledTimes(1)
+  })
+
+  it('未发布的帖子不显示', async () => {
+    for (const status of [2, 3, 4]) {
+      expect((await mountWithMenu({ status })).find('.post-more-menu').exists()).toBe(false)
+    }
+  })
+
+  it('本次会话已举报过：菜单项置灰为「已举报」', async () => {
+    login()
+    markPostReported('p1')
+    const wrapper = await mountWithMenu()
+    expect(menuOptions(wrapper)).toEqual([{ key: 'report', label: '已举报', disabled: true }])
+  })
+
+  it('PostCard：移动端列表项与桌面卡片都带菜单，作者取 userId，状态默认已发布', async () => {
+    const props = { postId: 'p1', circleId: 'c1', circleName: '圈子A', userId: 'u1', userName: '作者B', title: '标题', postTime: Date.now() }
+    const desktop = mount(PostCard, { props, global: { plugins: plugins() } })
+    expect(desktop.find('.post-card .post-header .post-more-menu').exists()).toBe(true)
+    expect(desktop.findComponent(PostMoreMenu).props()).toMatchObject({ postId: 'p1', authorId: 'u1', status: 1 })
+
+    setMatchMedia(true)
+    const mobile = mount(PostCard, { props, global: { plugins: plugins() } })
+    expect(mobile.find('.m-post-item .m-meta .post-more-menu').exists()).toBe(true)
+    expect(mobile.findComponent(MobilePostItem).props()).toMatchObject({ moreMenu: true, authorId: 'u1', status: 1 })
   })
 })
