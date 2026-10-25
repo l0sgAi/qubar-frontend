@@ -151,6 +151,8 @@ const submit = async () => {
       done = true
     } else if (key === 'tooOften') {
       message.warning(t('post.report.tooOften'))
+    } else if (key === 'invalid') {
+      message.error(t('post.report.invalid'))
     } else {
       message.error(t('post.report.failed'))
     }

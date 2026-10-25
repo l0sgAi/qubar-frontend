@@ -62,12 +62,14 @@
               <span>{{ t('agent.circleList.members', { count: circle.member_count }) }}</span>
               <span class="dot">·</span>
               <span>{{ t('agent.circleList.posts', { count: circle.post_count }) }}</span>
-              <span class="dot">·</span>
-              <span class="agent-quota">{{ t('agent.circleList.agentsBound', { count: circle.agent_count ?? 0 }) }}</span>
+              <template v-if="target === 'agents'">
+                <span class="dot">·</span>
+                <span class="agent-quota">{{ t('agent.circleList.agentsBound', { count: circle.agent_count ?? 0 }) }}</span>
+              </template>
             </div>
           </div>
         </template>
-        {{ circle.status === 0 ? t('agent.circleList.statusPending') : t('agent.circleList.statusBanned') }}
+        {{ t(`${STATUS_TIP_PREFIX[target]}${circle.status === 0 ? 'statusPending' : 'statusBanned'}`) }}
       </NTooltip>
     </div>
 
@@ -97,6 +99,17 @@ import { useI18n } from 'vue-i18n'
 import { LayoutGrid as AlbumsIcon } from '@vicons/tabler'
 import { getManagedCircles } from '@/api/circle'
 import { useDebounceFn } from '@/utils/throttle'
+
+// 选中圈子后进入的管理页：agents → 机器人管理（默认），moderation → 内容审核（举报通知兜底跳转）
+const props = defineProps({
+  target: {
+    type: String,
+    default: 'agents',
+    validator: v => ['agents', 'moderation'].includes(v)
+  }
+})
+const TARGET_ROUTES = { agents: 'circle-agents', moderation: 'circle-moderation' }
+const STATUS_TIP_PREFIX = { agents: 'agent.circleList.', moderation: 'circle.managed.' }
 
 const { t } = useI18n()
 const message = useMessage()
@@ -160,7 +173,7 @@ const avatarFallbackStyle = {
 // status!==1（审核中/封禁）置灰禁点：存量代理管理入口暂停，但保留展示
 const handleSelect = circle => {
   if (circle.status !== 1) return
-  router.push({ name: 'circle-agents', params: { id: circle.id } })
+  router.push({ name: TARGET_ROUTES[props.target], params: { id: circle.id } })
 }
 </script>
 

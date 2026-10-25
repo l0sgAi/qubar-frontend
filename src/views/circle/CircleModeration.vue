@@ -43,7 +43,13 @@
                   class="list-empty"
                 />
 
-                <ModerationPostItem v-for="p in tabState[tab.key].posts" :key="p.id" :post="p">
+                <ModerationPostItem
+                  v-for="p in tabState[tab.key].posts"
+                  :key="p.id"
+                  :post="p"
+                  :data-post-id="p.id"
+                  :class="{ 'is-focused': focusedId === p.id }"
+                >
                   <template v-if="tab.key === 'reported'" #badges>
                     <NTag v-if="p.status === POST_STATUS.BLOCKED" size="small" round type="warning" class="hidden-tag">
                       {{ t('circle.moderation.reported.autoHidden') }}
@@ -160,13 +166,15 @@ import ModerationPostItem from '@/components/circle/ModerationPostItem.vue'
 import ModerationReportSummary from '@/components/circle/ModerationReportSummary.vue'
 import { getCircleDetail } from '@/api/circle'
 import {
-  getModerationPosts, reviewModerationPost, getModerationReports, resolveModerationReport
+  getModerationPosts, reviewModerationPost, getModerationReports, resolveModerationReport,
+  getModerationSummary
 } from '@/api/moderation'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { POST_STATUS } from '@/composables/usePostReview'
 import { isManager } from '@/constants/circle'
 import {
-  REVIEW_ACTION, REVIEW_REASON_MAX, MODERATION_PAGE_SIZE, RESOLVE_ACTION
+  REVIEW_ACTION, REVIEW_REASON_MAX, MODERATION_PAGE_SIZE, RESOLVE_ACTION, FOCUS_MAX_PAGES,
+  parseModerationSummary
 } from '@/constants/moderation'
 
 const route = useRoute()
@@ -209,22 +217,38 @@ const LOAD_FAILED = {
   pending: 'circle.moderation.loadFailed'
 }
 
-// 支持 ?tab= 定位子 Tab（通知跳转用，如 ?tab=reported），非法值回落默认 Tab
-const resolveTab = (tab) => (typeof tab === 'string' && tab in QUEUES ? tab : DEFAULT_TAB)
+// 支持 ?tab= 定位子 Tab（通知跳转用，如 ?tab=reported）；兼容对接文档里的写法（reports / review），非法值回落默认 Tab
+const TAB_ALIASES = { reports: 'reported', review: 'pending' }
+const normalizeTab = (tab) => {
+  if (typeof tab !== 'string') return ''
+  const key = TAB_ALIASES[tab] || tab
+  return key in QUEUES ? key : ''
+}
+const resolveTab = (tab) => normalizeTab(tab) || DEFAULT_TAB
 // URL 显式指定了合法 Tab 时不做「被举报为空 → 自动切到待审」
-const hasTabQuery = () => typeof route.query.tab === 'string' && route.query.tab in QUEUES
+const hasTabQuery = () => !!normalizeTab(route.query.tab)
 const activeTab = ref(resolveTab(route.query.tab))
 
-const emptyTabState = () => ({ posts: [], cursor: '', hasMore: true, loading: false, loaded: false })
+// pages：本轮（自上次刷新起）已成功加载的页数，focus 定位按它限制翻页
+const emptyTabState = () => ({ posts: [], cursor: '', hasMore: true, loading: false, loaded: false, pages: 0 })
 const tabState = reactive(Object.fromEntries(Object.keys(QUEUES).map(k => [k, emptyTabState()])))
 
 // 加载世代：刷新 Tab 后旧请求的响应直接丢弃，防止覆盖新列表
 const genMap = Object.fromEntries(Object.keys(QUEUES).map(k => [k, 0]))
 
-const loadTab = async (key, isRefresh = false) => {
-  const state = tabState[key]
-  if (!isRefresh && (state.loading || !state.hasMore)) return
+// 在途的翻页请求：重复触发（无限滚动 + focus 定位同时翻页）时复用同一个 promise，调用方可 await 到真正加载完
+const inflight = {}
 
+const loadTab = (key, isRefresh = false) => {
+  const state = tabState[key]
+  if (!isRefresh && state.loading) return inflight[key] || Promise.resolve()
+  if (!isRefresh && !state.hasMore) return Promise.resolve()
+  inflight[key] = fetchTab(key, isRefresh)
+  return inflight[key]
+}
+
+const fetchTab = async (key, isRefresh) => {
+  const state = tabState[key]
   const gen = ++genMap[key]
   state.loading = true
   let succeeded = false
@@ -241,6 +265,7 @@ const loadTab = async (key, isRefresh = false) => {
     state.cursor = res.data?.cursor || ''
     state.hasMore = state.cursor !== ''
     state.loaded = true
+    state.pages = isRefresh ? 1 : state.pages + 1
     succeeded = true
   } catch (error) {
     if (gen !== genMap[key]) return
@@ -278,8 +303,22 @@ const reloadTab = async (key) => {
 // 共享页头（含内容审核角标），处理后经 ref 同步角标
 const adminHeaderRef = ref(null)
 
-// 子 Tab 角标：两个队列在进页时各拉首页（size=20），满页（或已翻过页）显示「20+」，处理后随本地移除递减
+// 待处理数（l0sgAi/qubar#156 的 summary 接口）：{ reported, pending }；接口未上线 / 失败时为 null，角标回落到列表估算
+const summary = ref(null)
+
+const refreshSummary = async () => {
+  try {
+    const res = await getModerationSummary({ circle_id: circleId.value })
+    summary.value = parseModerationSummary(res.data)
+  } catch {
+    summary.value = null
+  }
+}
+
+// 子 Tab 角标：有 summary 用准确数字；否则两个队列在进页时各拉首页（size=20），满页（或已翻过页）显示「20+」。
+// 两种来源处理后都随本地移除递减
 const tabBadge = (key) => {
+  if (summary.value) return summary.value[key] || ''
   const state = tabState[key]
   if (!state.loaded) return ''
   if (state.hasMore || state.posts.length >= MODERATION_PAGE_SIZE) return t('circle.manage.badgeFull')
@@ -330,25 +369,16 @@ const cleanupObservers = () => {
 
 // ---------- 权限 ----------
 
-const refreshRoleAndGuard = async () => {
-  try {
-    const res = await getCircleDetail(circleId.value)
-    if (res.data) circle.value = res.data
-    if (!isManager(circle.value.member_role)) {
-      message.warning(t('circle.manage.error.roleDemoted'))
-      router.replace(`/circle/${circleId.value}`)
-    }
-  } catch {
-    // 详情拉取失败不打断当前页
-  }
-}
-
-// 403：提示无权限并重查角色。两个队列同时加载可能同时 403，重查进行中时不重复提示
-let guarding = null
+// 403：提示无权限并退回圈子详情。后端对角色降级、禁言 / 拉黑中的管理员一律 403，
+// 此时本地 member_role 可能仍 >= 20，不能靠重查角色判断，直接离开本页。
+// 两个队列同时加载可能同时 403，只提示一次
+let leaving = false
 const handleNoPermission = () => {
-  if (guarding) return
+  if (leaving) return
+  leaving = true
+  reviewVisible.value = false
   message.error(t('circle.moderation.error.noPermission'))
-  guarding = refreshRoleAndGuard().finally(() => { guarding = null })
+  router.replace(`/circle/${circleId.value}`)
 }
 
 // ---------- 处理：通过 / 驳回（待审）、保留 / 下架（被举报） ----------
@@ -416,18 +446,24 @@ const openAction = (post, action) => {
 const removeLocal = (key, postId) => {
   const state = tabState[key]
   state.posts = state.posts.filter(p => p.id !== postId)
+  if (summary.value) summary.value[key] = Math.max(summary.value[key] - 1, 0)
   if (state.posts.length === 0 && state.hasMore) {
     loadTab(key)
   }
 }
 
 // 按 error.code 渲染自有文案，不展示后端英文 message；202 未登录已由 axios 拦截器统一处理
+const HANDLED = {
+  reported: 'circle.moderation.reported.handled',
+  pending: 'circle.moderation.error.handled'
+}
 const handleReviewError = (error, key) => {
   const code = error?.code
   if (code === 204) {
     // 帖子已被他人（或 AI worker）处理 / 已删除 / 不在本圈 / 已没有待处理举报 → 刷新列表
-    message.warning(t('circle.moderation.error.handled'))
+    message.warning(t(HANDLED[key]))
     reloadTab(key)
+    if (summary.value) refreshSummary()
     adminHeaderRef.value?.refreshModerationBadge()
     return
   }
@@ -467,6 +503,39 @@ const confirmReview = async () => {
   }
 }
 
+// ---------- 通知跳转定位：?focus=<post_id> ----------
+
+// 在「被举报」列表里找到该帖子：滚动到它并高亮；首页没有就继续翻（含首页最多 FOCUS_MAX_PAGES 页），
+// 仍找不到说明已被其他管理员处理（同帖通知不会随之变成已读）
+const focusedId = ref('')
+let focusTimer = null
+
+const locateFocus = async (postId) => {
+  const key = 'reported'
+  const state = tabState[key]
+  const found = () => state.posts.some(p => p.id === postId)
+  while (!found() && state.loaded && state.hasMore && state.pages < FOCUS_MAX_PAGES) {
+    const before = state.pages
+    await loadTab(key)
+    if (state.pages === before) break // 翻页失败（已提示），不再重试
+  }
+  // 一次性参数：定位完从 URL 去掉，刷新页面不再重复定位 / 提示
+  // 同时写回 tab：切 Tab 的 watcher 也在 replace，避免拿到旧 query 把 tab 覆盖回去
+  const { focus, ...rest } = route.query
+  if (focus !== undefined) router.replace({ query: { ...rest, tab: key } })
+  if (!state.loaded) return // 列表本身加载失败，已有错误提示
+  if (!found()) {
+    message.info(t('circle.moderation.reported.focusHandled'))
+    return
+  }
+  focusedId.value = postId
+  await nextTick()
+  const el = [...document.querySelectorAll('[data-post-id]')].find(node => node.dataset.postId === postId)
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  clearTimeout(focusTimer)
+  focusTimer = setTimeout(() => { focusedId.value = '' }, 3000)
+}
+
 // ---------- 初始化 ----------
 
 const initPage = async () => {
@@ -487,8 +556,14 @@ const initPage = async () => {
     // 两个队列同时拉首页：既是各自 Tab 的角标，也用于下面的默认 Tab 判断
     pageLoading.value = false
     await nextTick()
-    const autoSwitch = !hasTabQuery()
-    await Promise.all(Object.keys(QUEUES).map(key => loadTab(key, true)))
+    const focusId = typeof route.query.focus === 'string' ? route.query.focus : ''
+    if (focusId) activeTab.value = 'reported'
+    const autoSwitch = !hasTabQuery() && !focusId
+    await Promise.all([refreshSummary(), ...Object.keys(QUEUES).map(key => loadTab(key, true))])
+    if (focusId) {
+      locateFocus(focusId)
+      return
+    }
     // 未指定 ?tab= 时：被举报为空、待审有数据 → 自动切到待审（用户已手动切过则不动）
     const reported = tabState.reported
     if (autoSwitch && activeTab.value === DEFAULT_TAB && reported.loaded && reported.posts.length === 0 &&
@@ -511,7 +586,10 @@ onMounted(initPage)
 watch(() => route.params.id, (newId, oldId) => {
   if (!newId || newId === oldId) return
   cleanupObservers()
+  leaving = false
   circle.value = {}
+  summary.value = null
+  focusedId.value = ''
   reviewVisible.value = false
   Object.keys(tabState).forEach((key) => {
     tabState[key] = emptyTabState()
@@ -521,7 +599,10 @@ watch(() => route.params.id, (newId, oldId) => {
   initPage()
 })
 
-onUnmounted(cleanupObservers)
+onUnmounted(() => {
+  cleanupObservers()
+  clearTimeout(focusTimer)
+})
 </script>
 
 <style scoped>
@@ -596,6 +677,22 @@ onUnmounted(cleanupObservers)
 
 .hidden-tag {
   flex-shrink: 0;
+}
+
+/* 通知跳转定位到的帖子：主题绿描边，3s 后淡出（作用于 ModerationPostItem 根元素） */
+.mod-item {
+  transition: box-shadow 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mod-item.is-focused {
+  box-shadow: 0 0 0 2px rgba(102, 234, 194, 0.55);
+  animation: focus-pulse 1.2s cubic-bezier(0.4, 0, 0.2, 1) 2;
+}
+
+@keyframes focus-pulse {
+  50% {
+    box-shadow: 0 0 0 6px rgba(102, 234, 194, 0.18);
+  }
 }
 
 /* 骨架屏：页面级骨架占满内容区宽度；列表内骨架铺满面板 */

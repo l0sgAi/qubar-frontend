@@ -56,7 +56,7 @@ describe('ModerationPostItem', () => {
 
   it('ai_verdict 为 null：提示可直接人工处理', () => {
     const wrapper = mountItem()
-    expect(wrapper.find('.ai-note').text()).toBe('AI 尚未给出结论，可直接人工处理')
+    expect(wrapper.find('.ai-note').text()).toBe('暂无 AI 结论，可直接人工处理')
     expect(wrapper.find('.ai-care').exists()).toBe(false)
   })
 
@@ -92,7 +92,7 @@ describe('ModerationPostItem', () => {
 
   it('decision 标签：review_publish / fail_open 显示文案（fail_open 带 error_msg 也显示），review 不显示', () => {
     expect(mountItem({ ai_verdict: { ...readyVerdict, decision: 'review_publish' } }).find('.ai-decision').text())
-      .toBe('AI 存疑，已自动发布')
+      .toBe('AI 判断存疑，已自动发布')
     const failOpen = mountItem({
       ai_verdict: { decision: 'fail_open', hit_hazards: [], hazards: {}, severity: null, error_msg: 'timeout' }
     })

@@ -99,6 +99,7 @@ export default {
     adminAgents: 'Agent Management',
     circleAgents: 'Circle Agents',
     circleModeration: 'Moderation',
+    managedCircles: 'Circles I Manage',
     // Dynamic title templates: show concrete content after data loads (see utils/pageTitle.js)
     postDetailName: '{name}',
     circleDetailName: '{name}',
@@ -224,6 +225,7 @@ export default {
       already: "You've already reported this post.",
       tooOften: "You're reporting too often. Please try again later.",
       unavailable: "This post doesn't exist or can't be reported.",
+      invalid: "You can't report your own post, or the request is invalid.",
       failed: "Couldn't submit the report. Please try again later."
     },
     validation: {
@@ -366,6 +368,13 @@ export default {
         generic: 'Operation failed, please try again later'
       }
     },
+    // Circles I manage (fallback for report notices; pick a circle to moderate)
+    managed: {
+      title: 'Circles I Manage',
+      subtitle: 'Pick a circle to review its reported and pending posts',
+      statusPending: 'Circle under review; not manageable yet',
+      statusBanned: 'Circle banned; not manageable'
+    },
     moderation: {
       title: 'Moderation',
       noPermissionVisit: "You don't have permission to access moderation.",
@@ -411,7 +420,7 @@ export default {
       },
       decision: {
         publish: 'Passed by AI',
-        review_publish: 'Uncertain, auto-published',
+        review_publish: 'AI was unsure; auto-published',
         fail_open: 'AI unavailable, published'
       },
       actions: {
@@ -447,6 +456,11 @@ export default {
         autoHiddenHint: 'Only visible to the author. Keeping it will make it public again.',
         reasonsTitle: 'Report reasons',
         onlyRecent: 'Showing the {n} most recent reports',
+        reasonCount: '{label} ×{n}',
+        showReports: 'Show report details',
+        hideReports: 'Hide report details',
+        focusHandled: 'This report has already been handled',
+        handled: 'Another moderator has already handled this post.',
         actions: {
           keep: 'Keep',
           remove: 'Remove'
@@ -978,6 +992,7 @@ export default {
     readAllFailed: 'Operation failed, please retry',
     targetDeleted: 'Content has been deleted',
     locateFailed: 'Failed to locate the comment, please retry later',
+    reportTargetGone: 'This post has been handled or is no longer visible',
     someone: 'Someone',
     // Text templates: {actor}=trigger user, {snippet}=content snippet
     templates: {
@@ -988,7 +1003,10 @@ export default {
       replyComment: '{actor} replied to your comment: {snippet}',
       mention: '{actor} mentioned you: {snippet}',
       postApproved: 'Your post "{snippet}" has been approved',
-      postRejected: 'Your post "{snippet}" didn\'t pass review'
+      postRejected: 'Your post "{snippet}" didn\'t pass review',
+      postReported: 'A post in your circle, "{snippet}", was reported. Please review it.',
+      postSelfHarm: 'A post by {actor} in your circle, "{snippet}", may show signs of self-harm. Please check in.',
+      postRemoved: 'Your post "{snippet}" was reported and removed after review by a circle owner / admin'
     },
     mention: {
       button: 'Mention',

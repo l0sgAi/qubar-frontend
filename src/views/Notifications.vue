@@ -43,16 +43,19 @@
               class="notice-item"
               :class="{ unread: !item.is_read }"
               :to="noticeTarget(item)"
-              @click="markReadAndBump(item)"
+              v-bind="lookupAttrs(item)"
+              @click="handleItemClick(item)"
+              @keydown.enter="needsCircleLookup(item) && handleItemClick(item)"
             >
-              <!-- 系统类通知（审核结果等）无 actor：用系统图标代替首字母兜底 -->
+              <!-- 系统类通知（审核结果、举报、下架）无 actor：用系统图标代替首字母兜底 -->
               <NAvatar
                 v-if="isSystemNotice(item)"
                 round
                 :size="40"
                 class="notice-avatar system-avatar"
               >
-                <NIcon :size="22" :component="item.notice_type === 8 ? ShieldX : ShieldCheck" />
+                <NSpin v-if="resolvingId === item.id" :size="18" />
+                <NIcon v-else :size="22" :component="systemIcon(item)" />
               </NAvatar>
               <NAvatar
                 v-else
@@ -93,16 +96,23 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { NAvatar, NButton, NEmpty, NIcon, NSpin, useMessage } from 'naive-ui'
-import { ShieldCheck, ShieldX } from '@vicons/tabler'
+import { Flag, ShieldCheck, ShieldX } from '@vicons/tabler'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AppShell from '@/components/layout/AppShell.vue'
 import { useAppShell } from '@/composables/useAppShell'
 import SmartLink from '@/components/common/SmartLink.vue'
 import { getNoticeList, markNoticesRead, markAllNoticesRead } from '@/api/notice'
+import { getPostDetail } from '@/api/post'
+import { getManagedCircles } from '@/api/circle'
 import { useFormatTime } from '@/utils/i18n'
-import { renderNoticeText, noticeTarget, isSystemNotice } from '@/utils/noticeDisplay'
+import {
+  renderNoticeText, noticeTarget, isSystemNotice, needsCircleLookup, reportedQueueTarget, MANAGED_CIRCLES_TARGET,
+  NOTICE_TYPE, REVIEW_NOTICE_TYPES
+} from '@/utils/noticeDisplay'
 
 const message = useMessage()
+const router = useRouter()
 const { t } = useI18n()
 const { formatTime } = useFormatTime()
 
@@ -111,7 +121,7 @@ const { offset, contentStyle } = useAppShell()
 
 // 类型过滤 Tab：type 对应后端 notice_type，空/0=全部
 // 接口支持逗号分隔多值过滤（notice_type IN (...)），帖子被赞(1)与评论被赞(2)同属「点赞」tab
-// 「审核」tab 目前只含 7/8：后端 l0sgAi/qubar#154 上线前，type 带 9–11 会返回 400
+// 「审核」tab 含 7–11（作者侧审核结果 / 下架 + 圈管侧举报 / 自伤关注）；type 只接受数字，传 'review' 等字符串会 400
 const tabs = computed(() => [
   { type: 0, label: t('notice.tabs.all') },
   { type: '1,2', label: t('notice.tabs.like') },
@@ -119,7 +129,7 @@ const tabs = computed(() => [
   { type: 4, label: t('notice.tabs.comment') },
   { type: 5, label: t('notice.tabs.reply') },
   { type: 6, label: t('notice.tabs.mention') },
-  { type: '7,8', label: t('notice.tabs.review') }
+  { type: REVIEW_NOTICE_TYPES, label: t('notice.tabs.review') }
 ])
 const activeType = ref(0)
 
@@ -196,6 +206,61 @@ const markReadAndBump = async (item) => {
   } catch (error) {
     console.error('标记已读失败:', error)
   }
+}
+
+// 系统通知图标：举报 → 旗标，驳回 / 下架 → 盾牌叉，通过 → 盾牌勾
+const SYSTEM_ICONS = {
+  [NOTICE_TYPE.POST_REPORTED]: Flag,
+  [NOTICE_TYPE.POST_REJECTED]: ShieldX,
+  [NOTICE_TYPE.POST_REMOVED]: ShieldX
+}
+const systemIcon = (item) => SYSTEM_ICONS[item.notice_type] || ShieldCheck
+
+// 类型 9 缺 circle_id 时 SmartLink 降级为 div：补上链接语义，键盘可聚焦、回车触发
+const lookupAttrs = (item) => (needsCircleLookup(item) ? { role: 'link', tabindex: 0 } : {})
+
+const handleItemClick = (item) => {
+  markReadAndBump(item)
+  if (needsCircleLookup(item)) openReportedNotice(item)
+}
+
+// 举报通知兜底跳转（后端 l0sgAi/qubar#156 上线前列表项不带 circle_id）：
+// 查帖子详情拿 circle_id → 审核页定位；查不到（已下架 / 屏蔽 / 删除）→ 提示后去可管理圈子
+const resolvingId = ref('')
+const openReportedNotice = async (item) => {
+  if (resolvingId.value) return
+  resolvingId.value = item.id
+  try {
+    let circleId = ''
+    try {
+      const res = await getPostDetail(item.post_id)
+      circleId = res.data?.circle_id || ''
+    } catch {
+      // 非 1 状态的帖子对非作者一律 404，与不存在不作区分
+    }
+    if (circleId) {
+      await router.push(reportedQueueTarget(circleId, item.post_id))
+      return
+    }
+    message.warning(t('notice.reportTargetGone'))
+    await router.push(await managedCirclesTarget())
+  } catch (error) {
+    console.error('举报通知跳转失败:', error)
+  } finally {
+    resolvingId.value = ''
+  }
+}
+
+// 「我管理的圈子」：只管一个圈子时直接进它的被举报列表；多个（或查询失败）进「我管理的圈子」页自选
+const managedCirclesTarget = async () => {
+  try {
+    const res = await getManagedCircles({ page: 1, size: 2 })
+    const circles = res.data ?? []
+    if (circles.length === 1) return reportedQueueTarget(circles[0].id)
+  } catch (error) {
+    console.error('获取可管理圈子失败:', error)
+  }
+  return MANAGED_CIRCLES_TARGET
 }
 
 // 全部已读：本地清零角标 + 列表样式

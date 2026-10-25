@@ -1,7 +1,18 @@
 // 消息中心展示用的纯函数：文案渲染与跳转目标，供 Notifications.vue 使用
 
+// 审核类通知（l0sgAi/qubar#118、#153）
+export const NOTICE_TYPE = {
+  POST_APPROVED: 7, // 作者：审核通过
+  POST_REJECTED: 8, // 作者：审核驳回
+  POST_REPORTED: 9, // 圈主 / 管理员：本圈帖子被举报
+  POST_SELF_HARM: 10, // 圈主 / 管理员：本圈帖子疑似自伤（actor = 帖子作者）
+  POST_REMOVED: 11 // 作者：被举报经复核下架
+}
+
+// 消息中心「审核」tab 的 type 过滤值（后端只接受数字 1–11，逗号分隔）
+export const REVIEW_NOTICE_TYPES = '7,8,9,10,11'
+
 // 文案模板按 notice_type 映射到 notice.templates.*
-// 7/8 为审核结果通知（l0sgAi/qubar#118），9–11 待后端 l0sgAi/qubar#154 上线后再加
 export const NOTICE_TEMPLATE_KEYS = {
   1: 'likePost',
   2: 'likeComment',
@@ -10,11 +21,20 @@ export const NOTICE_TEMPLATE_KEYS = {
   5: 'replyComment',
   6: 'mention',
   7: 'postApproved',
-  8: 'postRejected'
+  8: 'postRejected',
+  9: 'postReported',
+  10: 'postSelfHarm',
+  11: 'postRemoved'
 }
 
-// 系统类通知：后端恒不返回 actor（不暴露审核人），头像用系统图标而不是首字母兜底
-export const SYSTEM_NOTICE_TYPES = [7, 8]
+// 系统类通知：后端恒不返回 actor（不暴露审核人 / 举报人 / 处理人），头像用系统图标而不是首字母兜底。
+// 10 带 actor（帖子作者），按普通通知渲染头像
+export const SYSTEM_NOTICE_TYPES = [
+  NOTICE_TYPE.POST_APPROVED,
+  NOTICE_TYPE.POST_REJECTED,
+  NOTICE_TYPE.POST_REPORTED,
+  NOTICE_TYPE.POST_REMOVED
+]
 
 export const isSystemNotice = (item) => SYSTEM_NOTICE_TYPES.includes(item.notice_type)
 
@@ -26,12 +46,38 @@ export const renderNoticeText = (item, t) => {
   return t(`notice.templates.${key}`, { actor, snippet: item.snippet || '' })
 }
 
-// 跳转目标：帖子详情（有 comment_id 带上定位参数）；无 post_id 时返回 null，降级为普通块。
-// 7/8 不带 comment_id，直接进详情；8 的驳回状态与帖子不可用空态由详情页处理
+// 「我的帖子」：驳回 / 下架的帖子对他人不可见，作者在这里看到状态
+export const MY_POSTS_TARGET = { path: '/profile', query: { tab: 'posts' } }
+
+// 「我管理的圈子」：举报通知找不到帖子所属圈子时的兜底落点
+export const MANAGED_CIRCLES_TARGET = { path: '/circle/managed' }
+
+// 圈子管理 → 内容审核 →「被举报」tab，focus 定位该帖子（见 CircleModeration.vue）
+export const reportedQueueTarget = (circleId, postId) => ({
+  path: `/circle/${circleId}/moderation`,
+  query: postId ? { tab: 'reported', focus: postId } : { tab: 'reported' }
+})
+
+// 类型 9 缺 circle_id（后端 l0sgAi/qubar#156 上线前）：没有可直接渲染的链接，点击时再查帖子详情拿圈子
+export const needsCircleLookup = (item) =>
+  item.notice_type === NOTICE_TYPE.POST_REPORTED && !!item.post_id && !item.circle_id
+
+// 跳转目标；无 post_id 或需要异步解析时返回 null（降级为普通块，点击由页面处理）
+// - 9：审核页被举报 tab 并定位（优先用 item.circle_id）
+// - 8 / 11：「我的帖子」（帖子对他人不可见）
+// - 其余（含 7、10）：帖子详情，有 comment_id 带上定位参数
 export const noticeTarget = (item) => {
   if (!item.post_id) return null
-  return {
-    path: `/post/${item.post_id}`,
-    query: item.comment_id ? { comment_id: item.comment_id } : {}
+  switch (item.notice_type) {
+    case NOTICE_TYPE.POST_REPORTED:
+      return item.circle_id ? reportedQueueTarget(item.circle_id, item.post_id) : null
+    case NOTICE_TYPE.POST_REJECTED:
+    case NOTICE_TYPE.POST_REMOVED:
+      return MY_POSTS_TARGET
+    default:
+      return {
+        path: `/post/${item.post_id}`,
+        query: item.comment_id ? { comment_id: item.comment_id } : {}
+      }
   }
 }

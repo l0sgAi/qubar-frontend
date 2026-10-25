@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { MODERATION_PAGE_SIZE, parseModerationSummary } from '@/constants/moderation'
 
 // ==================== 圈内内容审核（/circle/moderation）====================
 // 权限：本圈圈主（30）/ 管理员（20）且成员状态正常；其余一律 403（code=203），不区分原因。
@@ -80,4 +81,40 @@ export function resolveModerationReport(data) {
     method: 'post',
     data
   })
+}
+
+/**
+ * 审核待处理数（l0sgAi/qubar#156，未上线时接口不存在 → reject，调用方回落到「拉列表首页」估算）
+ * @param {Object} params
+ * @param {string} params.circle_id - 圈子 ID
+ * @returns {Promise} data: { review_pending: number, report_pending: number }
+ */
+export function getModerationSummary(params) {
+  return request({
+    url: '/circle/moderation/summary',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 两个审核队列的待处理数（管理入口 / 页头角标用）：优先 summary 接口的准确数字；
+ * 接口未上线 / 失败时回落为各拉一页（size=20）计数，任一满页 full=true（显示「20+」）。
+ * 回落时两个列表请求互不影响，单个失败按 0 计
+ * @param {string} circleId - 圈子 ID
+ * @returns {Promise<{ reported: number, pending: number, full: boolean }>}
+ */
+export async function getModerationCounts(circleId) {
+  try {
+    const summary = parseModerationSummary((await getModerationSummary({ circle_id: circleId })).data)
+    if (summary) return { ...summary, full: false }
+  } catch {
+    // 回落到列表计数
+  }
+  const params = { circle_id: circleId, size: MODERATION_PAGE_SIZE }
+  const [reports, posts] = await Promise.allSettled([getModerationReports(params), getModerationPosts(params)])
+  const count = (r) => (r.status === 'fulfilled' ? r.value.data?.posts?.length || 0 : 0)
+  const reported = count(reports)
+  const pending = count(posts)
+  return { reported, pending, full: reported >= MODERATION_PAGE_SIZE || pending >= MODERATION_PAGE_SIZE }
 }

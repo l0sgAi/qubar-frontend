@@ -32,7 +32,8 @@ const PROTECTED = [
   '/circle/1/members',
   '/circle/1/edit',
   '/circle/1/agents',
-  '/circle/1/moderation'
+  '/circle/1/moderation',
+  '/circle/managed'
 ]
 
 const PUBLIC = [
@@ -55,6 +56,14 @@ describe('路由表', () => {
     const actual = routes.filter(r => r.meta?.requiresAuth).map(r => r.path).sort()
     const expected = PROTECTED.map(p => router.resolve(p).matched[0].path).sort()
     expect(actual).toEqual(expected)
+  })
+
+  it('/circle/:id/manage 重定向到内容审核页并保留 query', () => {
+    const router = createRouter({ history: createMemoryHistory(), routes })
+    const to = router.resolve('/circle/1/manage?tab=reports&focus=p1')
+    expect(to.matched[0].redirect).toBeTypeOf('function')
+    const target = router.resolve(to.matched[0].redirect(to))
+    expect(target.fullPath).toBe('/circle/1/moderation?tab=reports&focus=p1')
   })
 })
 

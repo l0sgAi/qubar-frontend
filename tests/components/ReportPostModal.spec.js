@@ -189,12 +189,12 @@ describe('ReportPostModal', () => {
     expect(isPostReported('p1')).toBe(false)
   })
 
-  it('400（code 201）：通用失败提示，不展示后端英文 message', async () => {
+  it('400（code 201）：提示不能举报自己或参数有误，不展示后端英文 message', async () => {
     mocks.reportPost.mockRejectedValue(httpError(400, 201, 'You cannot report your own post'))
     await mountModal()
     await pickReason(6)
     await clickSubmit()
-    expect(mocks.message.error).toHaveBeenCalledWith('举报失败，请稍后重试')
+    expect(mocks.message.error).toHaveBeenCalledWith('不能举报自己的帖子，或参数有误')
     const shown = Object.values(mocks.message).flatMap(fn => fn.mock.calls.flat())
     expect(shown.join()).not.toMatch(/report/i)
     expect(wrapper.emitted('update:show')).toBeUndefined()
