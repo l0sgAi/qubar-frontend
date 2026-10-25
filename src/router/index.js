@@ -116,6 +116,18 @@ export const routes = [
     meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleModeration', mobile: { supported: false } }
   },
   {
+    // 对接文档里的入口写法（/circle/:id/manage?tab=reports&focus=）：重定向到内容审核页，tab 别名由页面解析
+    path: '/circle/:id/manage',
+    redirect: to => ({ name: 'circle-moderation', params: to.params, query: to.query })
+  },
+  {
+    // 我管理的圈子：选圈子进入内容审核（举报通知找不到帖子所属圈子时的兜底落点）；静态段优先于 /circle/:id
+    path: '/circle/managed',
+    name: 'managed-circles',
+    component: () => import('@/views/circle/ManagedCircles.vue'),
+    meta: { requiresAuth: true, pageFade: true, titleKey: 'title.managedCircles', mobile: { supported: false } }
+  },
+  {
     // 帖子详情：访客可读（/post/detail/:id 已开放 anonymous）
     // pageFade：进出该页时启用页面级淡入淡出（见 App.vue）
     path: '/post/:id',

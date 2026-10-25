@@ -32,7 +32,7 @@ const NOTICES = [
 let router
 const mountPage = async () => {
   router = createTestRouter([
-    { path: '/notifications' }, { path: '/post/:id' }, { path: '/profile' }, { path: '/circle/:id/moderation' }
+    { path: '/notifications' }, { path: '/post/:id' }, { path: '/profile' }, { path: '/circle/managed' }, { path: '/circle/:id/moderation' }
   ])
   await router.push('/notifications')
   const wrapper = mount(Notifications, { global: { plugins: [router, createTestI18n()] } })
@@ -120,12 +120,12 @@ describe('Notifications', () => {
     expect(router.currentRoute.value.fullPath).toBe('/circle/c1/moderation?tab=reported')
   })
 
-  it('9 缺 circle_id 且帖子不可见：管理多个圈子时进「我的圈子」', async () => {
+  it('9 缺 circle_id 且帖子不可见：管理多个圈子时进「我管理的圈子」', async () => {
     api.getPostDetail = vi.fn(() => Promise.reject(new Error('x')))
     const wrapper = await mountWith([REPORTED])
     await wrapper.find('.notice-item').trigger('keydown', { key: 'Enter' })
     await flushPromises()
     expect(msg.warning).toHaveBeenCalledWith('该帖子已被处理或不可见')
-    expect(router.currentRoute.value.fullPath).toBe('/profile?tab=groups')
+    expect(router.currentRoute.value.fullPath).toBe('/circle/managed')
   })
 })

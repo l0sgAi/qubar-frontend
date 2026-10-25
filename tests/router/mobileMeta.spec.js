@@ -45,6 +45,7 @@ describe('路由表 meta.mobile', () => {
       '/circle/:id/edit',
       '/circle/:id/members',
       '/circle/:id/moderation',
+      '/circle/managed',
       '/create-post'
     ])
   })

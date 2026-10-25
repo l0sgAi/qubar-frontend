@@ -49,6 +49,9 @@ export const renderNoticeText = (item, t) => {
 // 「我的帖子」：驳回 / 下架的帖子对他人不可见，作者在这里看到状态
 export const MY_POSTS_TARGET = { path: '/profile', query: { tab: 'posts' } }
 
+// 「我管理的圈子」：举报通知找不到帖子所属圈子时的兜底落点
+export const MANAGED_CIRCLES_TARGET = { path: '/circle/managed' }
+
 // 圈子管理 → 内容审核 →「被举报」tab，focus 定位该帖子（见 CircleModeration.vue）
 export const reportedQueueTarget = (circleId, postId) => ({
   path: `/circle/${circleId}/moderation`,

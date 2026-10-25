@@ -99,6 +99,7 @@ export default {
     adminAgents: '机器人管理',
     circleAgents: '圈子机器人管理',
     circleModeration: '内容审核',
+    managedCircles: '我管理的圈子',
     // 动态标题模板：详情页数据加载成功后展示具体内容（见 utils/pageTitle.js）
     postDetailName: '{name}',
     circleDetailName: '{name}',
@@ -224,6 +225,7 @@ export default {
       already: '你已经举报过这个帖子',
       tooOften: '举报太频繁，请稍后再试',
       unavailable: '帖子不存在或暂不可举报',
+      invalid: '不能举报自己的帖子，或参数有误',
       failed: '举报失败，请稍后重试'
     },
     validation: {
@@ -366,6 +368,13 @@ export default {
         generic: '操作失败，请稍后重试'
       }
     },
+    // 我管理的圈子（举报通知兜底落点，选圈子进入内容审核）
+    managed: {
+      title: '我管理的圈子',
+      subtitle: '选择圈子，进入内容审核处理被举报和待审的帖子',
+      statusPending: '圈子审核中，暂不可管理',
+      statusBanned: '圈子已被封禁，暂不可管理'
+    },
     moderation: {
       title: '内容审核',
       noPermissionVisit: '无权限访问内容审核',
@@ -411,7 +420,7 @@ export default {
       },
       decision: {
         publish: 'AI 放行',
-        review_publish: 'AI 存疑，已自动发布',
+        review_publish: 'AI 判断存疑，已自动发布',
         fail_open: 'AI 不可用，已直接发布'
       },
       actions: {
@@ -452,6 +461,8 @@ export default {
         hideReports: '收起举报详情',
         // 通知跳转 ?focus= 定位不到（已被其他管理员处理）
         focusHandled: '该举报已处理',
+        // 复核 404：没有待处理举报（含已被其他管理员处理）
+        handled: '该帖子已被其他管理员处理',
         actions: {
           keep: '保留',
           remove: '下架'

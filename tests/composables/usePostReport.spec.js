@@ -110,7 +110,8 @@ describe('usePostReport', () => {
       [{ code: 208 }, 'tooOften'],
       [{ code: 204, status: 404 }, 'unavailable'],
       [{ status: 404 }, 'unavailable'],
-      [{ code: 201, status: 400 }, 'failed'],
+      [{ code: 201, status: 400 }, 'invalid'],
+      [{ status: 400 }, 'invalid'],
       [new Error('Network Error'), 'failed'],
       [undefined, 'failed']
     ])('%o → %s', (error, key) => {

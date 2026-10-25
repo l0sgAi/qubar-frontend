@@ -107,7 +107,7 @@ import { getPostDetail } from '@/api/post'
 import { getManagedCircles } from '@/api/circle'
 import { useFormatTime } from '@/utils/i18n'
 import {
-  renderNoticeText, noticeTarget, isSystemNotice, needsCircleLookup, reportedQueueTarget,
+  renderNoticeText, noticeTarget, isSystemNotice, needsCircleLookup, reportedQueueTarget, MANAGED_CIRCLES_TARGET,
   NOTICE_TYPE, REVIEW_NOTICE_TYPES
 } from '@/utils/noticeDisplay'
 
@@ -251,7 +251,7 @@ const openReportedNotice = async (item) => {
   }
 }
 
-// 「我管理的圈子」：只管一个圈子时直接进它的被举报列表；多个（或查询失败）进「我的圈子」自选
+// 「我管理的圈子」：只管一个圈子时直接进它的被举报列表；多个（或查询失败）进「我管理的圈子」页自选
 const managedCirclesTarget = async () => {
   try {
     const res = await getManagedCircles({ page: 1, size: 2 })
@@ -260,7 +260,7 @@ const managedCirclesTarget = async () => {
   } catch (error) {
     console.error('获取可管理圈子失败:', error)
   }
-  return { path: '/profile', query: { tab: 'groups' } }
+  return MANAGED_CIRCLES_TARGET
 }
 
 // 全部已读：本地清零角标 + 列表样式

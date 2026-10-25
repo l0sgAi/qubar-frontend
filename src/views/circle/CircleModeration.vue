@@ -217,10 +217,16 @@ const LOAD_FAILED = {
   pending: 'circle.moderation.loadFailed'
 }
 
-// 支持 ?tab= 定位子 Tab（通知跳转用，如 ?tab=reported），非法值回落默认 Tab
-const resolveTab = (tab) => (typeof tab === 'string' && tab in QUEUES ? tab : DEFAULT_TAB)
+// 支持 ?tab= 定位子 Tab（通知跳转用，如 ?tab=reported）；兼容对接文档里的写法（reports / review），非法值回落默认 Tab
+const TAB_ALIASES = { reports: 'reported', review: 'pending' }
+const normalizeTab = (tab) => {
+  if (typeof tab !== 'string') return ''
+  const key = TAB_ALIASES[tab] || tab
+  return key in QUEUES ? key : ''
+}
+const resolveTab = (tab) => normalizeTab(tab) || DEFAULT_TAB
 // URL 显式指定了合法 Tab 时不做「被举报为空 → 自动切到待审」
-const hasTabQuery = () => typeof route.query.tab === 'string' && route.query.tab in QUEUES
+const hasTabQuery = () => !!normalizeTab(route.query.tab)
 const activeTab = ref(resolveTab(route.query.tab))
 
 // pages：本轮（自上次刷新起）已成功加载的页数，focus 定位按它限制翻页
@@ -363,25 +369,16 @@ const cleanupObservers = () => {
 
 // ---------- 权限 ----------
 
-const refreshRoleAndGuard = async () => {
-  try {
-    const res = await getCircleDetail(circleId.value)
-    if (res.data) circle.value = res.data
-    if (!isManager(circle.value.member_role)) {
-      message.warning(t('circle.manage.error.roleDemoted'))
-      router.replace(`/circle/${circleId.value}`)
-    }
-  } catch {
-    // 详情拉取失败不打断当前页
-  }
-}
-
-// 403：提示无权限并重查角色。两个队列同时加载可能同时 403，重查进行中时不重复提示
-let guarding = null
+// 403：提示无权限并退回圈子详情。后端对角色降级、禁言 / 拉黑中的管理员一律 403，
+// 此时本地 member_role 可能仍 >= 20，不能靠重查角色判断，直接离开本页。
+// 两个队列同时加载可能同时 403，只提示一次
+let leaving = false
 const handleNoPermission = () => {
-  if (guarding) return
+  if (leaving) return
+  leaving = true
+  reviewVisible.value = false
   message.error(t('circle.moderation.error.noPermission'))
-  guarding = refreshRoleAndGuard().finally(() => { guarding = null })
+  router.replace(`/circle/${circleId.value}`)
 }
 
 // ---------- 处理：通过 / 驳回（待审）、保留 / 下架（被举报） ----------
@@ -456,11 +453,15 @@ const removeLocal = (key, postId) => {
 }
 
 // 按 error.code 渲染自有文案，不展示后端英文 message；202 未登录已由 axios 拦截器统一处理
+const HANDLED = {
+  reported: 'circle.moderation.reported.handled',
+  pending: 'circle.moderation.error.handled'
+}
 const handleReviewError = (error, key) => {
   const code = error?.code
   if (code === 204) {
     // 帖子已被他人（或 AI worker）处理 / 已删除 / 不在本圈 / 已没有待处理举报 → 刷新列表
-    message.warning(t('circle.moderation.error.handled'))
+    message.warning(t(HANDLED[key]))
     reloadTab(key)
     if (summary.value) refreshSummary()
     adminHeaderRef.value?.refreshModerationBadge()
@@ -585,6 +586,7 @@ onMounted(initPage)
 watch(() => route.params.id, (newId, oldId) => {
   if (!newId || newId === oldId) return
   cleanupObservers()
+  leaving = false
   circle.value = {}
   summary.value = null
   focusedId.value = ''

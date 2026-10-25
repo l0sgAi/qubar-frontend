@@ -184,6 +184,11 @@ describe('CircleModeration：被举报 Tab（#31）', () => {
     expect(wrapper.find('.list-empty').text()).toBe('暂无被举报的帖子')
   })
 
+  it.each([['reports', 'reported'], ['review', 'pending']])('?tab=%s（对接文档写法）映射到 %s', async (tab, key) => {
+    await mountPage(`?tab=${tab}`)
+    expect(wrapper.find('.n-tabs-tab--active').attributes('data-name')).toBe(key)
+  })
+
   it('?tab=pending 定位到待审 Tab', async () => {
     await mountPage('?tab=pending')
     expect(wrapper.find('.n-tabs-tab--active').attributes('data-name')).toBe('pending')
@@ -233,25 +238,23 @@ describe('CircleModeration：被举报 Tab（#31）', () => {
     expect(msg.success).toHaveBeenCalledWith('已保留，关闭 1 条举报')
   })
 
-  it('404（204）：提示已被处理并刷新被举报列表', async () => {
+  it('404（204）：提示已被其他管理员处理并刷新被举报列表', async () => {
     api.resolveModerationReport = vi.fn(() => fail(204))
     await mountPage()
     api.getModerationReports.mockClear()
     await clickAction(0, 0)
     await confirm()
-    expect(msg.warning).toHaveBeenCalledWith('该帖子已被处理')
+    expect(msg.warning).toHaveBeenCalledWith('该帖子已被其他管理员处理')
     expect(api.getModerationReports).toHaveBeenCalledWith({ circle_id: CIRCLE_ID, size: 20 })
     expect(api.getModerationPosts).toHaveBeenCalledTimes(1)
   })
 
-  it('403（203）：提示无权限，重查角色，已降级则退回圈子详情', async () => {
+  it('403（203）：提示无权限并退回圈子详情（本地角色仍是管理员，如被禁言）', async () => {
     api.resolveModerationReport = vi.fn(() => fail(203))
     await mountPage()
-    api.getCircleDetail = vi.fn(() => Promise.resolve({ data: { id: CIRCLE_ID, member_role: 10 } }))
     await clickAction(0, 1)
     await confirm()
     expect(msg.error).toHaveBeenCalledWith('无权限执行该操作')
-    expect(api.getCircleDetail).toHaveBeenCalledTimes(1)
     expect(router.currentRoute.value.path).toBe(`/circle/${CIRCLE_ID}`)
   })
 

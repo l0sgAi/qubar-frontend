@@ -68,14 +68,15 @@ export function canReportPost({ status, authorId }) {
 
 /**
  * 举报失败 → post.report.* 文案 key。后端 message 是英文，一律不展示。
- * 三种 400（参数非法 / reason_type 越界 / 举报自己）共用 code=201，统一兜底。
+ * 三种 400（参数非法 / reason_type 越界 / 举报自己）共用 code=201，合并为 invalid。
  * @param {Error & { code?: number, status?: number }} error
- * @returns {'already'|'tooOften'|'unavailable'|'failed'}
+ * @returns {'already'|'tooOften'|'unavailable'|'invalid'|'failed'}
  */
 export function reportErrorKey(error) {
   if (error?.code === 207 || error?.status === 409) return 'already'
   if (error?.code === 208 || error?.status === 429) return 'tooOften'
   if (error?.code === 204 || error?.status === 404) return 'unavailable'
+  if (error?.code === 201 || error?.status === 400) return 'invalid'
   return 'failed'
 }
 
