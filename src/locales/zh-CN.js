@@ -292,6 +292,31 @@ export default {
     statusPending: '待审核',
     statusBanned: '已拉黑',
     statusExited: '已退出',
+    // 个人中心 / 他人主页「加入的圈子」列表
+    joinedList: {
+      roleAll: '全部',
+      roleOwner: '圈主',
+      roleAdmin: '管理',
+      roleMember: '成员',
+      muted: '禁言中',
+      mutedUntil: '禁言中 · 至 {time}',
+      loadFailed: '圈子列表加载失败',
+      retry: '重试',
+      empty: {
+        mine: {
+          all: '还没有加入圈子',
+          owner: '你还不是任何圈子的圈主',
+          admin: '你还不是任何圈子的管理员',
+          member: '你还没有以普通成员身份加入的圈子'
+        },
+        others: {
+          all: 'TA 还没有加入圈子',
+          owner: 'TA 还不是任何圈子的圈主',
+          admin: 'TA 还不是任何圈子的管理员',
+          member: 'TA 还没有以普通成员身份加入的圈子'
+        }
+      }
+    },
     manage: {
       title: '成员管理',
       entry: '管理',

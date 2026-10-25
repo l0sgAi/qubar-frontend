@@ -19,9 +19,14 @@ export function getCircles(params) {
 /**
  * 获取用户已加入的圈子列表（用于发帖时选择圈子）
  * @param {Object} params - 查询参数
+ * 列表项：id / name / avatar_url / member_count / slug（无则省略）/ role（30 圈主 / 20 管理员 / 10 成员）
+ * / member_status（1 正常 / 2 禁言）/ mute_end_time（RFC3339，仅禁言生效中返回）
+ * @param {Object} params - 查询参数
  * @param {string} params.keyword - 搜索关键词（可选）
+ * @param {number} params.role - 角色筛选：30 / 20 / 10；0 或不传 = 全部（可选，其他值 400）
  * @param {number} params.size - 每页数量，默认20，最大100
- * @param {string} params.search_after - 深度分页参数（JSON字符串，可选）
+ * @param {string} params.search_after - 上一页响应返回的游标（原样透传，可选）；
+ *   keyword / role 变化后必须丢弃旧游标，否则返回 400 Invalid search_after parameter
  * @returns {Promise}
  */
 export function getMyCircles(params) {
@@ -68,9 +73,11 @@ export function getRandomCircles(params) {
  * 与 /circle/my 的区别：目标用户来自 user_id 查询参数（任意已登录用户均可查看他人加入的圈子）。
  * 响应结构与 /circle/my 一致（circles / total / size / search_after，搜索模式额外可能含 truncated）。
  * 注意：搜索模式（keyword 非空）下 total 恒为 0，前端不应展示总数。
+ * 列表项同 /circle/my（含 slug / role），但不返回 member_status / mute_end_time（禁言属个人隐私）。
  * @param {string} userId - 目标用户 ID（UUIDv7，必填）
  * @param {Object} params - 查询参数
  * @param {string} params.keyword - 关键字，模糊匹配圈子 name（权重×3）与 description（权重×1）（可选）
+ * @param {number} params.role - 角色筛选：30 / 20 / 10；0 或不传 = 全部（可选）
  * @param {number} params.size - 每页数量，默认20，<=0 或 >100 时后端回退为20
  * @param {string} params.search_after - 上一页响应返回的游标（base64 不透明串，原样透传，可选）
  * @returns {Promise}

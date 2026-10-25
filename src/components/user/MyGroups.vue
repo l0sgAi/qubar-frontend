@@ -8,8 +8,7 @@
         clearable
         round
         class="tab-search"
-        @keyup.enter="handleSearch"
-        @clear="handleSearchClear">
+        @keyup.enter="handleSearch">
         <template #prefix>
           <NIcon>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -32,9 +31,33 @@
       </NButton>
     </div>
 
+    <!-- 角色筛选（单选）：切换即丢弃游标，从首页重新拉取 -->
+    <div class="role-filter" role="tablist">
+      <button
+        v-for="opt in roleOptions"
+        :key="opt.value"
+        type="button"
+        role="tab"
+        class="role-filter__item"
+        :class="{ 'role-filter__item--active': role === opt.value }"
+        :aria-selected="role === opt.value"
+        @click="selectRole(opt.value)">
+        {{ opt.label }}
+        <span v-if="roleCount(opt.value) !== null" class="role-filter__count">
+          {{ formatNumber(roleCount(opt.value)) }}
+        </span>
+      </button>
+    </div>
+
     <NSpin :show="loading">
-      <div class="groups-grid" :class="{ 'groups-grid--loading': loading && !displayedGroups.length }">
-        <div v-if="displayedGroups.length === 0 && !loading" class="empty-state">
+      <div class="groups-grid" :class="{ 'groups-grid--loading': loading && !circles.length }">
+        <div v-if="loadError && !circles.length" class="empty-state">
+          <p class="empty-text">{{ t('circle.joinedList.loadFailed') }}</p>
+          <NButton round size="small" class="retry-btn" @click="reload">
+            {{ t('circle.joinedList.retry') }}
+          </NButton>
+        </div>
+        <div v-else-if="circles.length === 0 && !loading" class="empty-state">
           <NIcon size="64" :depth="3">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -43,26 +66,45 @@
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
           </NIcon>
-          <p class="empty-text">{{ t('circle.noCircles') }}</p>
-          <!-- 查看他人主页时不展示「创建圈子」引导 -->
-          <p v-if="!userId" class="empty-hint">{{ t('circle.createCircle') }}</p>
+          <p class="empty-text">{{ emptyText }}</p>
+          <!-- 查看他人主页、筛选角色或搜索时不展示「创建圈子」引导 -->
+          <p v-if="isMine && !keyword && role === ROLE_ALL" class="empty-hint">{{ t('circle.createCircle') }}</p>
         </div>
         <NCard
-          v-for="group in displayedGroups"
+          v-for="group in circles"
           :key="group.id"
           class="group-card"
           :bordered="false"
           hoverable>
           <!-- 整卡封面链接（stretched-link）：铺满卡片承担圈子跳转，
-               右键/中键可新标签页打开 -->
+               右键/中键可新标签页打开。圈子路由目前只认 id（详情接口按 id 查），slug 仅展示 -->
           <SmartLink class="post-cover-link" :to="`/circle/${group.id}`" :aria-label="group.name" />
+          <!-- 管理入口：叠在整卡链接上层；管理页不支持移动端，移动端不显示 -->
+          <SmartLink
+            v-if="canManage(group)"
+            class="group-manage"
+            :to="{ name: 'circle-moderation', params: { id: group.id } }">
+            {{ t('circle.manage.entry') }}
+          </SmartLink>
           <div class="group-info">
             <NAvatar round :size="avatarSize" :src="group.avatar">
               <div v-if="!group.avatar">{{ (group.name || '').charAt(0) }}</div>
             </NAvatar>
-            <!-- 名称 + 成员数：移动端横排时作为右侧文字列（min-width:0 让省略号生效）-->
+            <!-- 名称 + slug + 成员数：移动端横排时作为右侧文字列（min-width:0 让省略号生效）-->
             <div class="group-meta">
-              <h3 class="group-name">{{ group.name }}</h3>
+              <div class="group-title">
+                <h3 class="group-name">{{ group.name }}</h3>
+                <NTag
+                  v-if="roleBadge(group)"
+                  class="group-role"
+                  size="tiny"
+                  round
+                  :bordered="false"
+                  :type="roleBadge(group).type">
+                  {{ roleBadge(group).text }}
+                </NTag>
+              </div>
+              <span v-if="group.slug" class="group-slug">c/{{ group.slug }}</span>
               <span class="group-stat">
                 <NIcon size="14">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -72,12 +114,28 @@
                 </NIcon>
                 {{ formatNumber(group.members) }}
               </span>
+              <NTag
+                v-if="isMuted(group)"
+                class="group-muted"
+                size="tiny"
+                round
+                :bordered="false"
+                type="error">
+                {{ muteText(group) }}
+              </NTag>
             </div>
           </div>
         </NCard>
-        <!-- 无限滚动哨兵：仅在拉取模式下生效 -->
-        <div v-if="isFetchMode" ref="sentinel" class="scroll-sentinel"></div>
-        <!-- 搜索模式被截断提示（扫满上限仍未集齐 size 条，可能还有更深的命中）-->
+        <!-- 无限滚动哨兵 -->
+        <div ref="sentinel" class="scroll-sentinel"></div>
+        <!-- 翻页失败：保留已加载的列表，就地重试 -->
+        <div v-if="loadError && circles.length" class="load-more-error">
+          {{ t('circle.joinedList.loadFailed') }}
+          <NButton text type="primary" size="small" class="retry-btn" @click="fetchCircles(true)">
+            {{ t('circle.joinedList.retry') }}
+          </NButton>
+        </div>
+        <!-- 搜索模式被截断提示（扫满上限仍未集齐 size 条，继续翻页仍能取到结果）-->
         <div v-if="truncated" class="truncated-hint">
           {{ t('circle.resultsMayBeIncomplete') }}
         </div>
@@ -88,42 +146,32 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { NCard, NAvatar, NIcon, NInput, NButton, NSpin, useMessage } from 'naive-ui'
+import { NCard, NAvatar, NIcon, NInput, NButton, NSpin, NTag } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useFormatNumber } from '@/utils/i18n'
 import { getMyCircles, getUserCircles } from '@/api/post'
 import SmartLink from '@/components/common/SmartLink.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useCircleMeta } from '@/composables/useCircleMeta'
+import { CIRCLE_ROLE, MEMBER_STATUS, isManager } from '@/constants/circle'
 
-const message = useMessage()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { formatNumber } = useFormatNumber()
 const { isMobile } = useBreakpoint()
+const { getRoleInfo } = useCircleMeta()
 
 // 头像尺寸用 prop 切换：NAvatar 以内联 CSS 变量定尺寸，CSS 覆盖需 !important
 const avatarSize = computed(() => (isMobile.value ? 40 : 60))
 
 const props = defineProps({
-  // 外部注入的圈子数据（兜底/无接口场景）
-  groups: {
-    type: Array,
-    default: () => []
-  },
-  // 自动拉取模式：开启后组件自行调用 /circle/my（服务端搜索 + 游标分页 + 无限滚动）。
-  // 默认 false 以保持对旧调用方（外部传 groups）的兼容。
-  autoFetch: {
-    type: Boolean,
-    default: false
-  },
   // 目标用户 ID：
-  // - 为空：查看「我加入的圈子」，走 /circle/my（autoFetch=true 时生效）
-  // - 传值：查看该用户加入的圈子，走 /circle/user?user_id=...（任意已登录用户均可查看）
-  //        传值后强制进入自动拉取模式，忽略外部 groups。
+  // - 为空：查看「我加入的圈子」，走 /circle/my
+  // - 传值：查看该用户加入的圈子，走 /circle/user?user_id=...（访客可读；不返回禁言信息）
   userId: {
     type: String,
     default: ''
   },
-  // 当前 Tab 是否激活：离开时清空关键字搜索，切回即为干净的全量列表
+  // 当前 Tab 是否激活：离开时清空关键字与角色筛选，切回即为干净的全量列表
   active: {
     type: Boolean,
     default: false
@@ -132,71 +180,112 @@ const props = defineProps({
 
 const emit = defineEmits(['total-change'])
 
-const searchKey = ref('')
-const loading = ref(false)
+const isMine = computed(() => !props.userId)
 
-// 是否走接口拉取：查看他人（userId）或我的圈子（autoFetch）
-const isFetchMode = computed(() => props.autoFetch || !!props.userId)
-
-// === 自动拉取模式状态（与 MyPosts 保持一致的分页结构）===
 const PAGE_SIZE = 20
+const SEARCH_DEBOUNCE = 300
+
+// 角色筛选：ROLE_ALL 表示不传 role
+const ROLE_ALL = 0
+const ROLE_KEYS = {
+  [ROLE_ALL]: 'all',
+  [CIRCLE_ROLE.OWNER]: 'owner',
+  [CIRCLE_ROLE.ADMIN]: 'admin',
+  [CIRCLE_ROLE.MEMBER]: 'member'
+}
+const roleOptions = computed(() => [
+  { value: ROLE_ALL, label: t('circle.joinedList.roleAll') },
+  { value: CIRCLE_ROLE.OWNER, label: t('circle.joinedList.roleOwner') },
+  { value: CIRCLE_ROLE.ADMIN, label: t('circle.joinedList.roleAdmin') },
+  { value: CIRCLE_ROLE.MEMBER, label: t('circle.joinedList.roleMember') }
+])
+
+// searchKey 是输入框内容；keyword / role 是当前列表实际对应的查询条件
+const searchKey = ref('')
+const keyword = ref('')
+const role = ref(ROLE_ALL)
+// 各角色 Tab 的总数：取该 Tab 首屏（无关键字）响应的 total，切到哪个记哪个，不预取
+const roleTotals = ref({})
+
 const circles = ref([])
 const searchAfter = ref('')
 const hasMore = ref(false)
-const sentinel = ref(null)
+const loading = ref(false)
+const loadError = ref(false)
 // 搜索模式可能被服务端截断（扫满上限仍未集齐 size 条）
 const truncated = ref(false)
+const sentinel = ref(null)
 let observer = null
+// 请求序号：查询条件变化后旧请求作废，晚到的响应直接丢弃，避免旧条件的结果/游标串进新列表
+let requestSeq = 0
 
 // 后端 snake_case → 组件 camelCase
-// /circle/my 仅返回：id / name / avatar_url / member_count
+// /circle/user 不返回 member_status / mute_end_time；mute_end_time 仅禁言生效中返回
 const transformCircle = (c) => ({
   id: c.id,
   name: c.name || t('circle.interestCircle'),
   avatar: c.avatar_url || '',
-  members: c.member_count || 0
+  slug: c.slug || '',
+  members: c.member_count || 0,
+  role: c.role || CIRCLE_ROLE.MEMBER,
+  memberStatus: c.member_status ?? MEMBER_STATUS.ACTIVE,
+  muteEndTime: c.mute_end_time || ''
 })
 
-// 拉取圈子：append=true 表示追加下一页
-// 数据源由 userId 决定 —— /circle/user?user_id=（他人）或 /circle/my（我的）
+// 游标与当前查询条件不匹配时后端返回 400 Invalid search_after parameter
+const isCursorError = (error) => error?.code === 400 && /search_after/i.test(error?.message || '')
+
+// 拉取圈子：append=true 表示用游标追加下一页
 const fetchCircles = async (append = false) => {
-  if (loading.value) return
+  if (append && (loading.value || !searchAfter.value)) return
+  const seq = ++requestSeq
+  const query = { keyword: keyword.value, role: role.value }
   loading.value = true
+  loadError.value = false
   try {
     const params = { size: PAGE_SIZE }
-    if (searchKey.value) params.keyword = searchKey.value
-    if (append && searchAfter.value) {
-      // 游标原样透传，不解析/不修改（base64 不透明串）
-      params.search_after = searchAfter.value
-    }
+    if (query.keyword) params.keyword = query.keyword
+    if (query.role !== ROLE_ALL) params.role = query.role
+    // 游标原样透传，不解析/不修改（不透明串）
+    if (append) params.search_after = searchAfter.value
 
     const res = props.userId
       ? await getUserCircles(props.userId, params)
       : await getMyCircles(params)
+    if (seq !== requestSeq) return
 
     const data = res.data || {}
     const list = (data.circles || []).map(transformCircle)
     circles.value = append ? [...circles.value, ...list] : list
-
+    // 单页可能不满 size（已封禁 / 删除的圈子被过滤），只以 search_after 判断是否到底
     searchAfter.value = data.search_after || ''
-    hasMore.value = !!data.search_after
+    hasMore.value = !!searchAfter.value
     truncated.value = !!data.truncated
 
-    // 仅在「非追加 + 无关键字」时上报真实总数，避免搜索结果数污染 Tab 徽标
-    if (!append && !searchKey.value) {
-      emit('total-change', data.total || 0)
+    // total 只在无关键字时有意义（关键字模式恒为 0）
+    if (!append && !query.keyword) {
+      const total = data.total || 0
+      roleTotals.value = { ...roleTotals.value, [query.role]: total }
+      // 父页面 Tab 上的总数只取「全部」，避免被角色筛选的数量覆盖
+      if (query.role === ROLE_ALL) emit('total-change', total)
     }
   } catch (error) {
+    if (seq !== requestSeq) return
+    // 游标失效：丢弃游标，从首页重新加载
+    if (append && isCursorError(error)) {
+      reload()
+      return
+    }
     console.error('获取圈子列表失败:', error)
-    message.error(error.message || t('common.operationFailed'))
+    // 401 已由 request 拦截器统一跳登录，这里不再展示错误
+    if (error?.code !== 401) loadError.value = true
   } finally {
-    loading.value = false
+    if (seq === requestSeq) loading.value = false
   }
 }
 
-// 重置列表并从首页重新拉取（切换目标用户 / 离开 Tab 清搜索时使用）
-const resetAndFetch = () => {
-  searchKey.value = ''
+// 丢弃游标与旧列表，按当前查询条件从首页重新拉取
+const reload = () => {
   searchAfter.value = ''
   hasMore.value = false
   truncated.value = false
@@ -204,46 +293,104 @@ const resetAndFetch = () => {
   fetchCircles(false)
 }
 
-// === 搜索 ===
-// 自动拉取模式：服务端关键字匹配（按钮 / 回车主动触发）；外部数据模式：本地过滤（响应式）
-const handleSearch = () => {
-  if (!isFetchMode.value) return
-  searchAfter.value = ''
-  hasMore.value = false
-  fetchCircles(false)
+// === 关键字搜索：输入防抖，回车 / 按钮 / 清空立即生效 ===
+let searchTimer = null
+const cancelPendingSearch = () => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+    searchTimer = null
+  }
 }
 
-const handleSearchClear = () => {
-  if (!isFetchMode.value) return
-  searchAfter.value = ''
-  hasMore.value = false
-  fetchCircles(false)
+const applyKeyword = () => {
+  cancelPendingSearch()
+  const next = searchKey.value.trim()
+  // 条件未变时不重复请求；上次失败则允许重试
+  if (next === keyword.value && !loadError.value) return
+  keyword.value = next
+  reload()
 }
 
-// 外部数据模式的本地过滤
-const filteredGroups = computed(() => {
-  if (!searchKey.value) return props.groups
-  const key = searchKey.value.toLowerCase()
-  return props.groups.filter(group =>
-    (group.name || '').toLowerCase().includes(key)
-  )
+const handleSearch = () => applyKeyword()
+
+watch(searchKey, (value) => {
+  cancelPendingSearch()
+  if (!(value || '').trim()) {
+    applyKeyword()
+    return
+  }
+  searchTimer = setTimeout(applyKeyword, SEARCH_DEBOUNCE)
 })
 
-// 实际渲染列表：拉取模式用 circles，否则用外部传入数据
-const displayedGroups = computed(() => (isFetchMode.value ? circles.value : filteredGroups.value))
+// === 角色筛选 ===
+const selectRole = (value) => {
+  if (role.value === value) return
+  role.value = value
+  // 输入框里尚未生效的关键字一并应用，保证列表与输入框一致
+  cancelPendingSearch()
+  keyword.value = searchKey.value.trim()
+  reload()
+}
 
-// === 无限滚动（仅拉取模式）===
+const roleCount = (value) => (keyword.value ? null : roleTotals.value[value] ?? null)
+
+// 清空关键字与角色筛选并重拉首页（切换目标用户 / 离开 Tab 时使用）。
+// 先清 keyword 再清 searchKey：searchKey 的 watch 看到条件未变，不会重复请求
+const resetFilters = () => {
+  cancelPendingSearch()
+  keyword.value = ''
+  searchKey.value = ''
+  role.value = ROLE_ALL
+  reload()
+}
+
+const emptyText = computed(() => {
+  if (keyword.value) return t('circle.noCircleResults')
+  const scope = isMine.value ? 'mine' : 'others'
+  return t(`circle.joinedList.empty.${scope}.${ROLE_KEYS[role.value]}`)
+})
+
+// === 卡片展示 ===
+// 普通成员不显示徽标，避免满屏「成员」
+const roleBadge = (group) => (isManager(group.role) ? getRoleInfo(group.role) : null)
+
+// 管理入口：仅「我的圈子」里圈主 / 管理员可见；管理页不支持移动端
+const canManage = (group) => isMine.value && !isMobile.value && isManager(group.role)
+
+// 当前时间（每分钟刷新）：停留在页面上时，禁言到期后标签自动消失
+const now = ref(Date.now())
+let clockTimer = null
+
+const isMuted = (group) => {
+  if (!isMine.value || group.memberStatus !== MEMBER_STATUS.MUTED) return false
+  if (!group.muteEndTime) return true
+  return new Date(group.muteEndTime).getTime() > now.value
+}
+
+const formatMuteEnd = (time) => {
+  const date = new Date(time)
+  const options = { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }
+  // 禁言最长 30 天，可能跨年：跨年时补上年份
+  if (date.getFullYear() !== new Date(now.value).getFullYear()) options.year = 'numeric'
+  return date.toLocaleString(locale.value, options)
+}
+
+const muteText = (group) => (group.muteEndTime
+  ? t('circle.joinedList.mutedUntil', { time: formatMuteEnd(group.muteEndTime) })
+  : t('circle.joinedList.muted'))
+
+// === 无限滚动 ===
+// 翻页失败时停止自动加载，改由用户点「重试」，避免哨兵可见时反复请求
 const setupObserver = () => {
-  if (!isFetchMode.value) return
   if (observer) {
     observer.disconnect()
     observer = null
   }
-  if (!sentinel.value || !hasMore.value || loading.value) return
+  if (!sentinel.value || !hasMore.value || loading.value || loadError.value) return
 
   observer = new IntersectionObserver(
     (entries) => {
-      if (entries[0].isIntersecting && hasMore.value && !loading.value) {
+      if (entries[0].isIntersecting && hasMore.value && !loading.value && !loadError.value) {
         fetchCircles(true)
       }
     },
@@ -252,22 +399,19 @@ const setupObserver = () => {
   observer.observe(sentinel.value)
 }
 
-watch([sentinel, hasMore, loading], setupObserver)
+watch([sentinel, hasMore, loading, loadError], setupObserver)
 
-// 切换目标用户（路由参数变化）时重置并重新拉取首页
+// 切换目标用户（路由参数变化）时清空筛选与各 Tab 总数，重新拉取首页
 watch(() => props.userId, (next, prev) => {
-  if (next !== prev) resetAndFetch()
+  if (next === prev) return
+  roleTotals.value = {}
+  resetFilters()
 })
 
-// 离开本 Tab：若存在关键字搜索则清空。
-// 接口模式需重新拉取全量首页；外部数据模式仅清关键字（filteredGroups 自动反应）
+// 离开本 Tab：存在关键字或角色筛选时清空，切回即为干净的全量列表
 watch(() => props.active, (next, prev) => {
-  if (prev && !next && searchKey.value) {
-    if (isFetchMode.value) {
-      resetAndFetch()
-    } else {
-      searchKey.value = ''
-    }
+  if (prev && !next && (keyword.value || searchKey.value || role.value !== ROLE_ALL)) {
+    resetFilters()
   }
 })
 
@@ -275,13 +419,18 @@ watch(() => props.active, (next, prev) => {
 // 支持 hover URL / 右键新标签页；此处不再监听点击（旧版 emit+push 会双跳转）
 
 onMounted(() => {
-  if (isFetchMode.value) {
-    nextTick(() => fetchCircles(false))
+  nextTick(() => fetchCircles(false))
+  if (isMine.value) {
+    clockTimer = setInterval(() => {
+      now.value = Date.now()
+    }, 60_000)
   }
 })
 
 onBeforeUnmount(() => {
   if (observer) observer.disconnect()
+  cancelPendingSearch()
+  if (clockTimer) clearInterval(clockTimer)
 })
 </script>
 
@@ -304,6 +453,49 @@ onBeforeUnmount(() => {
   margin-right: 3dvw;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
+}
+
+/* 角色筛选：单选胶囊组，选中态用主题绿 */
+.role-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.role-filter__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (hover: hover) {
+  .role-filter__item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+  }
+}
+
+.role-filter__item--active,
+.role-filter__item--active:hover {
+  background: rgba(102, 234, 194, 0.14);
+  border-color: rgba(102, 234, 194, 0.35);
+  color: #8af0d0;
+}
+
+.role-filter__count {
+  font-size: 0.75rem;
+  opacity: 0.75;
 }
 
 /* 每行 3 个圈子卡片（紧凑）*/
@@ -370,12 +562,12 @@ onBeforeUnmount(() => {
   transform: translate(-50%, -50%) !important;
 }
 
-/* 桌面端与原布局等价：名称、成员数纵向居中，间距同 .group-info 的 10px */
+/* 桌面端：名称、slug、成员数、禁言标签纵向居中；行数变多，间距收到 6px */
 .group-meta {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   max-width: 100%;
 }
 
@@ -390,12 +582,65 @@ onBeforeUnmount(() => {
   max-width: 100%;
 }
 
+/* 名称 + 角色徽标同一行：名称可省略，徽标不收缩 */
+.group-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.group-role {
+  flex-shrink: 0;
+}
+
+.group-slug {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
 .group-stat {
   display: flex;
   align-items: center;
   gap: 4px;
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.7);
+}
+
+/* 管理入口：叠在整卡链接（z-index:1）之上，右上角小胶囊 */
+.group-manage {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  padding: 2px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: #8af0d0;
+  background: rgba(102, 234, 194, 0.1);
+  text-decoration: none;
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.group-manage:hover {
+  background: rgba(102, 234, 194, 0.2);
+}
+
+.load-more-error {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
 }
 
 .scroll-sentinel {
@@ -527,6 +772,28 @@ onBeforeUnmount(() => {
 
   .group-name {
     font-size: 0.95rem;
+  }
+
+  .group-title {
+    justify-content: flex-start;
+  }
+
+  .group-slug {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .group-muted {
+    margin-top: 2px;
+  }
+
+  .role-filter {
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .role-filter__item {
+    padding: 5px 12px;
   }
 
   .group-info :deep(.n-avatar) {

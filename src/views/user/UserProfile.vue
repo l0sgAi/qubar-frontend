@@ -51,7 +51,7 @@
                   <NTag size="small" :bordered="false" round>{{ groupsTotal }}</NTag>
                 </NSpace>
               </template>
-              <MyGroups :auto-fetch="true" :active="activeTab === 'groups'" @total-change="handleGroupsTotalChange"/>
+              <MyGroups :active="activeTab === 'groups'" @total-change="handleGroupsTotalChange"/>
             </NTabPane>
 
             <!-- 我的收藏 Tab -->

@@ -292,6 +292,31 @@ export default {
     statusPending: 'Pending',
     statusBanned: 'Banned',
     statusExited: 'Exited',
+    // Joined circles list (my profile / user profile)
+    joinedList: {
+      roleAll: 'All',
+      roleOwner: 'Owner',
+      roleAdmin: 'Admin',
+      roleMember: 'Member',
+      muted: 'Muted',
+      mutedUntil: 'Muted · until {time}',
+      loadFailed: 'Failed to load circles',
+      retry: 'Retry',
+      empty: {
+        mine: {
+          all: "You haven't joined any circles yet",
+          owner: "You don't own any circles yet",
+          admin: "You aren't an admin of any circle yet",
+          member: "You haven't joined any circles as a regular member yet"
+        },
+        others: {
+          all: "They haven't joined any circles yet",
+          owner: "They don't own any circles yet",
+          admin: "They aren't an admin of any circle yet",
+          member: "They haven't joined any circles as a regular member yet"
+        }
+      }
+    },
     manage: {
       title: 'Member Management',
       entry: 'Manage',
