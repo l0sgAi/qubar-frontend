@@ -43,9 +43,6 @@
         :aria-selected="role === opt.value"
         @click="selectRole(opt.value)">
         {{ opt.label }}
-        <span v-if="roleCount(opt.value) !== null" class="role-filter__count">
-          {{ formatNumber(roleCount(opt.value)) }}
-        </span>
       </button>
     </div>
 
@@ -211,8 +208,6 @@ const roleOptions = computed(() => [
 const searchKey = ref('')
 const keyword = ref('')
 const role = ref(ROLE_ALL)
-// 各角色 Tab 的总数：取该 Tab 首屏（无关键字）响应的 total，切到哪个记哪个，不预取
-const roleTotals = ref({})
 
 const circles = ref([])
 const searchAfter = ref('')
@@ -269,12 +264,10 @@ const fetchCircles = async (append = false) => {
     hasMore.value = !!searchAfter.value
     truncated.value = !!data.truncated
 
-    // total 只在无关键字时有意义（关键字模式恒为 0）
-    if (!append && !query.keyword) {
-      const total = data.total || 0
-      roleTotals.value = { ...roleTotals.value, [query.role]: total }
-      // 父页面 Tab 上的总数只取「全部」，避免被角色筛选的数量覆盖
-      if (query.role === ROLE_ALL) emit('total-change', total)
+    // 父页面 Tab 上的总数只取「全部」首屏：关键字模式 total 恒为 0，角色筛选的数量会覆盖总数。
+    // 角色 Tab 不显示数量：各 Tab 的数量要切过去才知道，只显示部分 Tab 的数字反而让人困惑
+    if (!append && !query.keyword && query.role === ROLE_ALL) {
+      emit('total-change', data.total || 0)
     }
   } catch (error) {
     if (seq !== requestSeq) return
@@ -338,8 +331,6 @@ const selectRole = (value) => {
   keyword.value = searchKey.value.trim()
   reload()
 }
-
-const roleCount = (value) => (keyword.value ? null : roleTotals.value[value] ?? null)
 
 // 清空关键字与角色筛选并重拉首页（切换目标用户 / 离开 Tab 时使用）。
 // 先清 keyword 再清 searchKey：searchKey 的 watch 看到条件未变，不会重复请求
@@ -408,10 +399,9 @@ const setupObserver = () => {
 
 watch([sentinel, hasMore, loading, loadError], setupObserver)
 
-// 切换目标用户（路由参数变化）时清空筛选与各 Tab 总数，重新拉取首页
+// 切换目标用户（路由参数变化）时清空筛选，重新拉取首页
 watch(() => props.userId, (next, prev) => {
   if (next === prev) return
-  roleTotals.value = {}
   resetFilters()
 })
 
@@ -498,11 +488,6 @@ onBeforeUnmount(() => {
   background: rgba(102, 234, 194, 0.14);
   border-color: rgba(102, 234, 194, 0.35);
   color: #8af0d0;
-}
-
-.role-filter__count {
-  font-size: 0.75rem;
-  opacity: 0.75;
 }
 
 /* 每行 3 个圈子卡片；align-items:start 让卡片按自身内容定高，不被同行最高的卡片拉伸 */

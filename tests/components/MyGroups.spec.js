@@ -108,7 +108,8 @@ describe('MyGroups', () => {
     expect(member.find('.post-cover-link').attributes('href')).toBe('/circle/c3')
 
     expect(wrapper.emitted('total-change')).toEqual([[3]])
-    expect(roleTab('全部').text()).toBe('全部 3')
+    // 角色 Tab 不显示数量，总数只上报给父页面的「兴趣圈」Tab
+    expect(wrapper.findAll('.role-filter__item').map(b => b.text())).toEqual(['全部', '圈主', '管理', '成员'])
   })
 
   it('我的圈子：圈主 / 管理员有「管理」入口（跳内容审核页），普通成员没有；移动端隐藏', async () => {
@@ -174,7 +175,7 @@ describe('MyGroups', () => {
     expect(wrapper.find('.empty-text').text()).toBe('TA 还不是任何圈子的圈主')
   })
 
-  it('切换角色 Tab：丢弃旧游标从首页请求，Tab 显示该角色总数，不覆盖父页面总数', async () => {
+  it('切换角色 Tab：丢弃旧游标从首页请求，Tab 不显示数量，不覆盖父页面总数', async () => {
     mocks.getMyCircles.mockReturnValueOnce(page([circle()], { total: 30, search_after: 'cursor-all' }))
     await mountGroups()
 
@@ -184,8 +185,8 @@ describe('MyGroups', () => {
 
     expect(lastParams(mocks.getMyCircles)).toEqual({ size: 20, role: 30 })
     expect(cards()).toHaveLength(1)
-    expect(roleTab('圈主').text()).toBe('圈主 2')
-    expect(roleTab('全部').text()).toBe('全部 30')
+    expect(roleTab('圈主').text()).toBe('圈主')
+    expect(roleTab('全部').text()).toBe('全部')
     expect(wrapper.emitted('total-change')).toEqual([[30]])
 
     // 翻页带的是本角色的游标
@@ -195,7 +196,7 @@ describe('MyGroups', () => {
     expect(cards()).toHaveLength(2)
   })
 
-  it('关键字输入防抖后从首页请求，可与角色组合；关键字模式不显示总数', async () => {
+  it('关键字输入防抖后从首页请求，可与角色组合；关键字模式不上报总数', async () => {
     vi.useFakeTimers(FAKE_TIMERS)
     mocks.getMyCircles.mockReturnValueOnce(page([circle()], { total: 30, search_after: 'cursor-all' }))
     await mountGroups()
@@ -212,7 +213,6 @@ describe('MyGroups', () => {
     await flushPromises()
     expect(mocks.getMyCircles).toHaveBeenCalledTimes(2)
     expect(lastParams(mocks.getMyCircles)).toEqual({ size: 20, keyword: '摄影' })
-    expect(roleTab('全部').text()).toBe('全部')
 
     await roleTab('管理').trigger('click')
     await flushPromises()
