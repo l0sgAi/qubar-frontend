@@ -79,18 +79,11 @@
           <!-- 整卡封面链接（stretched-link）：铺满卡片承担圈子跳转，
                右键/中键可新标签页打开。圈子路由目前只认 id（详情接口按 id 查），slug 仅展示 -->
           <SmartLink class="post-cover-link" :to="`/circle/${group.id}`" :aria-label="group.name" />
-          <!-- 管理入口：叠在整卡链接上层；管理页不支持移动端，移动端不显示 -->
-          <SmartLink
-            v-if="canManage(group)"
-            class="group-manage"
-            :to="{ name: 'circle-moderation', params: { id: group.id } }">
-            {{ t('circle.manage.entry') }}
-          </SmartLink>
           <div class="group-info">
             <NAvatar round :size="avatarSize" :src="group.avatar">
               <div v-if="!group.avatar">{{ (group.name || '').charAt(0) }}</div>
             </NAvatar>
-            <!-- 名称 + slug + 成员数：移动端横排时作为右侧文字列（min-width:0 让省略号生效）-->
+            <!-- 头像右侧文字列，两行：名称 + 徽标 / slug · 成员数 · 管理 · 禁言（min-width:0 让省略号生效）-->
             <div class="group-meta">
               <div class="group-title">
                 <h3 class="group-name">{{ group.name }}</h3>
@@ -104,25 +97,39 @@
                   {{ roleBadge(group).text }}
                 </NTag>
               </div>
-              <span v-if="group.slug" class="group-slug">c/{{ group.slug }}</span>
-              <span class="group-stat">
-                <NIcon size="14">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                  </svg>
-                </NIcon>
-                {{ formatNumber(group.members) }}
-              </span>
-              <NTag
-                v-if="isMuted(group)"
-                class="group-muted"
-                size="tiny"
-                round
-                :bordered="false"
-                type="error">
-                {{ muteText(group) }}
-              </NTag>
+              <!-- slug · 成员数 · 管理 不换行（slug 先省略）；禁言标签放不下时整体换到下一行 -->
+              <div class="group-sub">
+                <span class="group-sub-main">
+                  <span v-if="group.slug" class="group-slug">c/{{ group.slug }}</span>
+                  <span v-if="group.slug" class="group-dot" aria-hidden="true">·</span>
+                  <span class="group-stat">
+                    <NIcon size="13">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                      </svg>
+                    </NIcon>
+                    {{ formatNumber(group.members) }}
+                  </span>
+                  <!-- 管理入口：第二行右端，叠在整卡链接上层（放名称行会把三列卡片的名称挤到两三个字）。
+                       管理页不支持移动端，移动端不显示 -->
+                  <SmartLink
+                    v-if="canManage(group)"
+                    class="group-manage"
+                    :to="{ name: 'circle-moderation', params: { id: group.id } }">
+                    {{ t('circle.manage.entry') }}
+                  </SmartLink>
+                </span>
+                <NTag
+                  v-if="isMuted(group)"
+                  class="group-muted"
+                  size="tiny"
+                  round
+                  :bordered="false"
+                  type="error">
+                  {{ muteText(group) }}
+                </NTag>
+              </div>
             </div>
           </div>
         </NCard>
@@ -161,7 +168,7 @@ const { isMobile } = useBreakpoint()
 const { getRoleInfo } = useCircleMeta()
 
 // 头像尺寸用 prop 切换：NAvatar 以内联 CSS 变量定尺寸，CSS 覆盖需 !important
-const avatarSize = computed(() => (isMobile.value ? 40 : 60))
+const avatarSize = computed(() => (isMobile.value ? 40 : 44))
 
 const props = defineProps({
   // 目标用户 ID：
@@ -498,11 +505,12 @@ onBeforeUnmount(() => {
   opacity: 0.75;
 }
 
-/* 每行 3 个圈子卡片（紧凑）*/
+/* 每行 3 个圈子卡片；align-items:start 让卡片按自身内容定高，不被同行最高的卡片拉伸 */
 .groups-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  align-items: start;
+  gap: 12px;
 }
 
 /* 加载占位：列表为空时撑高容器，避免 NSpin 动画被裁剪、页面收缩跳动 */
@@ -514,7 +522,7 @@ onBeforeUnmount(() => {
   position: relative;
   background: rgba(255, 255, 255, 0.02) !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  border-radius: 16px !important;
+  border-radius: 14px !important;
   transition: all 0.3s ease;
   overflow: hidden;
   cursor: pointer;
@@ -524,7 +532,7 @@ onBeforeUnmount(() => {
   .group-card:hover {
     background: rgba(255, 255, 255, 0.04) !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
-    transform: translateY(-4px);
+    transform: translateY(-2px);
   }
 }
 
@@ -537,19 +545,25 @@ onBeforeUnmount(() => {
 
 .group-info {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 18px 12px;
-  text-align: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+/* 只保留一层内边距：清掉 NCard 内容区默认内边距。
+   多一层 .groups-grid 提高优先级：所在页 .tabs-card :deep(.n-card__content)
+   的 padding 会穿透到嵌套的圈子卡片 */
+.groups-grid .group-card :deep(.n-card__content) {
+  padding: 0;
 }
 
 /* 无头像时回退首字母样式（参考 CircleList）*/
 .group-info :deep(.n-avatar) {
+  flex-shrink: 0;
   color: #fff;
   font-weight: 700;
-  font-size: 1.5rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  font-size: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* 修正首字母居中：display-directive="show" 下兴趣圈 tab 初始 display:none 挂载，
@@ -562,66 +576,49 @@ onBeforeUnmount(() => {
   transform: translate(-50%, -50%) !important;
 }
 
-/* 桌面端：名称、slug、成员数、禁言标签纵向居中；行数变多，间距收到 6px */
+/* 头像右侧文字列：两行（名称行 / slug · 成员数 · 禁言） */
 .group-meta {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  max-width: 100%;
-}
-
-.group-name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
+  gap: 4px;
 }
 
 /* 名称 + 角色徽标同一行：名称可省略，徽标不收缩 */
 .group-title {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
-  max-width: 100%;
   min-width: 0;
+}
+
+.group-name {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .group-role {
   flex-shrink: 0;
 }
 
-.group-slug {
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.group-stat {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-/* 管理入口：叠在整卡链接（z-index:1）之上，右上角小胶囊 */
+/* 管理入口：第二行右端的小胶囊，z-index 叠在整卡链接（z-index:1）之上 */
 .group-manage {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+  position: relative;
   z-index: 2;
-  padding: 2px 10px;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 1px 8px;
   border-radius: 8px;
   font-size: 0.75rem;
+  line-height: 1.4;
   color: #8af0d0;
   background: rgba(102, 234, 194, 0.1);
   text-decoration: none;
@@ -630,6 +627,46 @@ onBeforeUnmount(() => {
 
 .group-manage:hover {
   background: rgba(102, 234, 194, 0.2);
+}
+
+/* 第二行：[slug · 成员数 · 管理入口] + 禁言标签；放不下时禁言标签整体换行 */
+.group-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-width: 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: var(--text-tertiary);
+}
+
+/* 主信息不换行：撑满所在行让管理入口靠右；宽度不够时 slug 先省略 */
+.group-sub-main {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.group-slug {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.group-muted {
+  flex-shrink: 0;
 }
 
 .load-more-error {
@@ -734,7 +771,7 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 移动端单列：卡片改横向紧凑行（头像左、名称+成员数右），单卡约 66px */
+/* 移动端单列：收紧间距，普通卡片约 64px（#20 / #48）*/
 @media (max-width: 768px) {
   .groups-grid {
     gap: 8px;
@@ -744,47 +781,29 @@ onBeforeUnmount(() => {
     border-radius: 12px !important;
   }
 
-  /* 多一层 .groups-grid 提高优先级：所在页 .tabs-card :deep(.n-card__content)
-     的移动端 padding（0 0 8px）会穿透到嵌套的圈子卡片 */
-  .groups-grid .group-card :deep(.n-card__content) {
-    padding: 0;
-  }
-
   .group-info {
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    text-align: left;
+    padding: 11px 14px;
   }
 
   .group-meta {
-    flex: 1;
-    min-width: 0;
-    align-items: flex-start;
-    gap: 2px;
-  }
-
-  .group-name,
-  .group-stat {
-    line-height: 1.3;
+    gap: 3px;
   }
 
   .group-name {
     font-size: 0.95rem;
   }
 
-  .group-title {
-    justify-content: flex-start;
-  }
-
-  .group-slug {
+  .group-sub {
     font-size: 0.75rem;
-    line-height: 1.3;
   }
 
-  .group-muted {
-    margin-top: 2px;
+  /* 移动端没有管理入口，主信息不必撑满整行：禁言标签紧跟成员数 */
+  .group-sub-main {
+    flex-grow: 0;
+  }
+
+  .group-info :deep(.n-avatar) {
+    font-size: 1.1rem;
   }
 
   .role-filter {
@@ -794,12 +813,6 @@ onBeforeUnmount(() => {
 
   .role-filter__item {
     padding: 5px 12px;
-  }
-
-  .group-info :deep(.n-avatar) {
-    flex-shrink: 0;
-    font-size: 1.1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 }
 </style>
