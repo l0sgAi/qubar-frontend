@@ -99,7 +99,12 @@ describe('MyGroups', () => {
     // 普通成员、无 slug、无头像：不渲染徽标与 slug，头像回退首字母
     expect(member.find('.group-role').exists()).toBe(false)
     expect(member.find('.group-slug').exists()).toBe(false)
+    expect(member.find('.group-dot').exists()).toBe(false)
     expect(member.find('.group-info').text()).toContain('读')
+    // 紧凑布局：slug 与成员数同一行（#48）
+    expect(owner.find('.group-sub .group-slug').text()).toBe('c/photo')
+    expect(owner.find('.group-sub .group-stat').text()).toBe('12')
+    expect(member.find('.group-sub').text().trim()).toBe('12')
     expect(member.find('.post-cover-link').attributes('href')).toBe('/circle/c3')
 
     expect(wrapper.emitted('total-change')).toEqual([[3]])
@@ -118,6 +123,9 @@ describe('MyGroups', () => {
     expect(links[0].attributes('href')).toBe('/circle/c1/moderation')
     expect(links[1].attributes('href')).toBe('/circle/c2/moderation')
     expect(links[2].exists()).toBe(false)
+    // 管理入口在第二行右端，不占名称行宽度、不再绝对定位压住名称（#48）
+    expect(cards()[0].find('.group-sub .group-manage').exists()).toBe(true)
+    expect(cards()[0].find('.group-title .group-manage').exists()).toBe(false)
 
     setMatchMedia(true)
     await flushPromises()
@@ -133,6 +141,8 @@ describe('MyGroups', () => {
     await mountGroups()
 
     expect(wrapper.find('.group-muted').text()).toMatch(/^禁言中 · 至 /)
+    // 禁言标签跟在第二行（slug · 成员数）末尾，不单独占一行
+    expect(wrapper.find('.group-sub .group-muted').exists()).toBe(true)
 
     vi.advanceTimersByTime(120_000)
     await flushPromises()
