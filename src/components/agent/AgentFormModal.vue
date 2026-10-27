@@ -220,6 +220,127 @@
           </NFormItem>
         </div>
       </div>
+
+      <!-- 分区四：自动回复高热度帖子 / 评论（auto_config.auto_reply）；
+           关闭时折叠其余字段，但保存时仍按整体替换语义提交完整对象 -->
+      <div class="form-section">
+        <div class="section-header">
+          <span class="section-dot" />
+          <span class="section-title">{{ t('agent.autoReply.section') }}</span>
+        </div>
+        <div class="auto-switch-row">
+          <NSwitch
+            :value="formData.auto_reply.enabled"
+            @update:value="toggleAutoReply"
+          />
+          <div class="auto-switch-text">
+            <div class="auto-switch-label">{{ t('agent.autoReply.enabled') }}</div>
+            <NText depth="3" class="auto-switch-hint">{{ t('agent.autoReply.enabledHint') }}</NText>
+          </div>
+        </div>
+
+        <template v-if="formData.auto_reply.enabled">
+          <NFormItem
+            :label="t('agent.autoReply.targets')"
+            path="auto_reply.targets"
+            :rule="autoReplyRule('targets')"
+          >
+            <NCheckboxGroup v-model:value="formData.auto_reply.targets">
+              <NSpace :size="20">
+                <NCheckbox value="post">{{ t('agent.autoReply.targetPost') }}</NCheckbox>
+                <NCheckbox value="comment">{{ t('agent.autoReply.targetComment') }}</NCheckbox>
+              </NSpace>
+            </NCheckboxGroup>
+          </NFormItem>
+
+          <NFormItem
+            v-if="formData.auto_reply.targets.includes('post')"
+            :label="t('agent.autoReply.postHotMin')"
+            path="auto_reply.post_hot_min"
+            :rule="autoReplyRule('post_hot_min')"
+          >
+            <NInputNumber
+              v-model:value="formData.auto_reply.post_hot_min"
+              :min="0"
+              :max="AUTO_REPLY_THRESHOLD_MAX"
+              :precision="0"
+              :placeholder="t('agent.autoReply.postHotMinPlaceholder')"
+              style="width: 100%"
+            />
+          </NFormItem>
+
+          <!-- 两个评论门槛满足任一即可，联合校验挂在同一个表单项上 -->
+          <NFormItem
+            v-if="formData.auto_reply.targets.includes('comment')"
+            :label="t('agent.autoReply.commentThreshold')"
+            path="auto_reply.comment_threshold"
+            :rule="autoReplyRule('comment_like_min', 'comment_reply_min', 'comment_threshold')"
+          >
+            <div class="rate-row auto-threshold-row">
+              <NInputNumber
+                v-model:value="formData.auto_reply.comment_like_min"
+                :min="0"
+                :max="AUTO_REPLY_THRESHOLD_MAX"
+                :precision="0"
+              >
+                <template #prefix><span class="llm-key">{{ t('agent.autoReply.commentLikeMin') }}</span></template>
+              </NInputNumber>
+              <NInputNumber
+                v-model:value="formData.auto_reply.comment_reply_min"
+                :min="0"
+                :max="AUTO_REPLY_THRESHOLD_MAX"
+                :precision="0"
+              >
+                <template #prefix><span class="llm-key">{{ t('agent.autoReply.commentReplyMin') }}</span></template>
+              </NInputNumber>
+            </div>
+          </NFormItem>
+
+          <div class="rate-row">
+            <NFormItem
+              :label="t('agent.autoReply.windowHours')"
+              path="auto_reply.window_hours"
+              :rule="autoReplyRule('window_hours')"
+            >
+              <NInputNumber
+                v-model:value="formData.auto_reply.window_hours"
+                :min="1"
+                :max="AUTO_REPLY_WINDOW_HOURS_MAX"
+                :precision="0"
+                :placeholder="t('agent.autoReply.windowHoursPlaceholder')"
+                style="width: 100%"
+              >
+                <template #suffix>{{ t('agent.autoReply.hours') }}</template>
+              </NInputNumber>
+            </NFormItem>
+            <NFormItem
+              :label="t('agent.autoReply.maxPerHour')"
+              path="auto_reply.max_per_hour"
+              :rule="autoReplyRule('max_per_hour')"
+            >
+              <NInputNumber
+                v-model:value="formData.auto_reply.max_per_hour"
+                :min="0"
+                :max="AUTO_REPLY_MAX_PER_HOUR_MAX"
+                :precision="0"
+                :placeholder="t('agent.autoReply.maxPerHourPlaceholder')"
+                style="width: 100%"
+              >
+                <template #suffix>{{ t('agent.form.perHour') }}</template>
+              </NInputNumber>
+            </NFormItem>
+          </div>
+        </template>
+
+        <NAlert
+          :title="t('agent.form.noteTitle')"
+          :bordered="false"
+          class="auto-note"
+        >
+          <div>{{ t('agent.autoReply.note') }}</div>
+          <div>{{ isCircle ? t('agent.autoReply.scopeCircle') : t('agent.autoReply.scopeGlobal') }}</div>
+        </NAlert>
+      </div>
     </NForm>
 
     <!-- 头像裁剪弹窗（1:1，仅预览圆形头像；确认后直接上传回填 URL） -->
@@ -255,7 +376,7 @@
 import { ref, computed, watch } from 'vue'
 import {
   NModal, NForm, NFormItem, NInput, NInputNumber, NSelect,
-  NDynamicTags, NCheckbox, NButton, NAlert, NText,
+  NDynamicTags, NCheckbox, NCheckboxGroup, NSwitch, NSpace, NButton, NAlert, NText,
   NAvatar, NUpload, useMessage
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -263,6 +384,11 @@ import { createAgent, updateAgent } from '@/api/agent'
 import { createCircleAgent, updateCircleAgent } from '@/api/circle'
 import ImageCropperModal from '@/components/common/ImageCropperModal.vue'
 import { useImageUpload } from '@/composables/useImageUpload'
+import {
+  AUTO_REPLY_THRESHOLD_MAX, AUTO_REPLY_WINDOW_HOURS_MAX, AUTO_REPLY_MAX_PER_HOUR_MAX,
+  emptyAutoReply, autoReplyFromAgent, prefillOnEnable, validateAutoReply,
+  autoReplyChanged, buildAutoConfig
+} from '@/utils/agentAutoReply'
 
 // llm_params 后端白名单键（值为数字，其余键一律 400）
 const LLM_PARAM_KEYS = [
@@ -335,7 +461,9 @@ const emptyForm = () => ({
   trigger_mode: 2,
   trigger_keywords: [],
   max_replies_per_hour: 30,
-  min_interval_sec: 60
+  min_interval_sec: 60,
+  // 自动回复高热度帖子 / 评论（auto_config.auto_reply），默认关闭
+  auto_reply: emptyAutoReply()
 })
 
 const formData = ref(emptyForm())
@@ -417,10 +545,27 @@ watch(
       fresh.trigger_keywords = [...(a.trigger_keywords || [])]
       fresh.max_replies_per_hour = a.max_replies_per_hour ?? 30
       fresh.min_interval_sec = a.min_interval_sec ?? 60
+      fresh.auto_reply = autoReplyFromAgent(a)
     }
     formData.value = fresh
   }
 )
+
+// 开关自动回复：首次开启时预填目标与时间窗口（门槛交给运营填写）
+const toggleAutoReply = on => {
+  formData.value.auto_reply.enabled = on
+  if (on) prefillOnEnable(formData.value.auto_reply)
+}
+
+// 自动回复表单项校验：复用 validateAutoReply（规则与后端 §2.5 一致），取所给字段的第一条错误
+const autoReplyRule = (...fields) => ({
+  trigger: ['input', 'blur', 'change'],
+  validator: () => {
+    const errors = validateAutoReply(formData.value.auto_reply)
+    const key = fields.map(f => errors[f]).find(Boolean)
+    return key ? new Error(t(key)) : true
+  }
+})
 
 const rules = computed(() => ({
   name: [
@@ -467,6 +612,8 @@ const buildCreatePayload = () => {
   if (f.api_key.trim()) payload.api_key = f.api_key.trim()
   const llm = buildLlmParams()
   if (Object.keys(llm).length) payload.llm_params = llm
+  // 未动过自动回复（仍为零值）时不传，后端默认不自动回复
+  if (autoReplyChanged(f.auto_reply, null)) payload.auto_config = buildAutoConfig(f.auto_reply)
   return payload
 }
 
@@ -512,6 +659,9 @@ const buildUpdatePayload = () => {
     payload.min_interval_sec = f.min_interval_sec ?? 0
   }
 
+  // auto_reply 整体替换语义：有变更就带完整对象（关闭状态下折叠的字段也一并提交）
+  if (autoReplyChanged(f.auto_reply, a)) payload.auto_config = buildAutoConfig(f.auto_reply)
+
   return payload
 }
 
@@ -531,6 +681,13 @@ const handleSubmit = async () => {
       JSON.stringify([...(props.agent.trigger_keywords || [])].sort())
   if (willSubmitTrigger && !f.trigger_keywords.length) {
     message.warning(t('agent.form.keywordsRequired'))
+    return
+  }
+
+  // 自动回复兜底校验：关闭时字段已折叠、不走表单项校验，这里按完整对象再校验一次
+  const autoReplyError = Object.values(validateAutoReply(f.auto_reply))[0]
+  if (autoReplyError) {
+    message.warning(t(autoReplyError))
     return
   }
 
@@ -734,6 +891,32 @@ const handleSubmit = async () => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+/* ===== 自动回复分区 ===== */
+.auto-switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.auto-switch-label {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.auto-switch-hint {
+  font-size: 12px;
+}
+
+.auto-threshold-row {
+  width: 100%;
+}
+
+.auto-note {
+  margin-bottom: 12px;
+  font-size: 13px;
 }
 
 .modal-footer {

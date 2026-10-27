@@ -796,6 +796,35 @@ export default {
       atLeastOne: '至少修改一个字段',
       createSuccess: '创建成功',
       updateSuccess: '已保存'
+    },
+    // 自动回复高热度帖子 / 评论（auto_config.auto_reply）
+    autoReply: {
+      section: '自动回复',
+      enabled: '自动回复高热度内容',
+      enabledHint: '开启后后台定时扫描，自动回复达到门槛的帖子 / 评论',
+      targets: '回复目标',
+      targetPost: '帖子（发顶层评论）',
+      targetComment: '评论（回复到该评论楼层）',
+      postHotMin: '帖子热度门槛',
+      postHotMinPlaceholder: '热度 ≥ 该值才回复',
+      commentThreshold: '评论门槛（满足任一即可，0 = 不参与）',
+      commentLikeMin: '点赞数 ≥',
+      commentReplyMin: '回复数 ≥',
+      windowHours: '时间窗口',
+      windowHoursPlaceholder: '只看最近 N 小时发布的内容',
+      hours: '小时',
+      maxPerHour: '自动回复每小时上限',
+      maxPerHourPlaceholder: '0 = 不单独限制',
+      note: '每个机器人对同一目标最多自动回复一次（失败或判定不回复也算，不会重试）；自动回复同样受「每小时回复上限」「最小回复间隔」限频，配置了回复判定条件时也会先判定；平台总开关关闭时不会生效。',
+      scopeGlobal: '全局机器人扫描全站内容。',
+      scopeCircle: '圈内机器人只回复本圈内容。',
+      errTargetsInvalid: '回复目标只能是帖子 / 评论，且不可重复',
+      errTargetsRequired: '开启时至少选择一个回复目标',
+      errThresholdRange: '门槛须为非负整数',
+      errWindowRange: '时间窗口须为 1-168 小时',
+      errMaxPerHourRange: '每小时上限须为 0-1000',
+      errPostHotRequired: '回复帖子时热度门槛须 ≥ 1',
+      errCommentThresholdRequired: '回复评论时点赞数或回复数门槛至少一个 ≥ 1'
     }
   },
 
