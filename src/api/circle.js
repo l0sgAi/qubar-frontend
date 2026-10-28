@@ -302,6 +302,8 @@ export function updateCircle(data) {
  * @param {string[]} [data.trigger_keywords] - 触发关键词；mode=2 时必须非空
  * @param {number} [data.max_replies_per_hour] - 每小时回复上限，0=不限
  * @param {number} [data.min_interval_sec] - 最小回复间隔秒，0=不限
+ * @param {Object} [data.auto_config] - 自主行为配置：auto_reply 自动回复本圈高热度帖子 / 评论，
+ *   字段与校验同全局机器人（见 createAgent / src/utils/agentAutoReply.js），不传 = 不自动回复
  * @param {number} [data.status] - 0=停用 1=启用，缺省启用
  * @returns {Promise} data 为创建后的完整圈内机器人对象（含 circle_id）
  */
@@ -350,10 +352,11 @@ export function getCircleAgentDetail(id) {
 /**
  * 部分更新圈内机器人（指针语义：只传要改的字段，未传字段不动；全部不传返回 400）
  * 权限分组：运营字段（name/avatar_url/model/llm_params/system_prompt/filter_prompt/
- * trigger_mode/trigger_keywords/max_replies_per_hour/min_interval_sec/status）admin+ 可改；
+ * trigger_mode/trigger_keywords/max_replies_per_hour/min_interval_sec/auto_config/status）admin+ 可改；
  * 凭据字段（api_protocol/base_url/api_key）仅圈主——请求体中任一凭据字段非空即整体
  * 要求圈主，管理员混提也会 403，前端须按表单分组控制提交。
- * 特殊语义：api_key 传空串=清除，不传=保持不变；llm_params/trigger_keywords 整体替换。
+ * 特殊语义：api_key 传空串=清除，不传=保持不变；llm_params/trigger_keywords 整体替换；
+ * auto_config.auto_reply（运营字段，admin+ 可改）传了即整体替换该子对象，不传保持不变。
  * @param {string} id - 机器人 ID(UUID)
  * @param {Object} data - 只含变更字段的对象（按权限裁剪）
  * @returns {Promise} data 为更新后的完整圈内机器人对象

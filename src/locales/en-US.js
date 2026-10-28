@@ -795,6 +795,35 @@ export default {
       atLeastOne: 'Modify at least one field',
       createSuccess: 'Created',
       updateSuccess: 'Saved'
+    },
+    // Auto-reply to trending posts / comments (auto_config.auto_reply)
+    autoReply: {
+      section: 'Auto Reply',
+      enabled: 'Auto-reply to trending content',
+      enabledHint: 'When on, a background scan replies to posts / comments that reach the thresholds',
+      targets: 'Reply to',
+      targetPost: 'Posts (top-level comment)',
+      targetComment: 'Comments (reply in the thread)',
+      postHotMin: 'Post hotness threshold',
+      postHotMinPlaceholder: 'Reply when hotness ≥ this',
+      commentThreshold: 'Comment thresholds (either one is enough, 0 = ignored)',
+      commentLikeMin: 'Likes ≥',
+      commentReplyMin: 'Replies ≥',
+      windowHours: 'Time window',
+      windowHoursPlaceholder: 'Only content from the last N hours',
+      hours: 'h',
+      maxPerHour: 'Max auto replies / hour',
+      maxPerHourPlaceholder: '0 = no separate limit',
+      note: 'Each bot auto-replies to the same target at most once (failures and filter rejections count too; no retry). Auto replies still obey "Max replies / hour" and "Min interval", and go through the reply filter if one is set. Nothing happens while the platform-wide switch is off.',
+      scopeGlobal: 'Global bots scan the whole site.',
+      scopeCircle: 'Circle bots only reply to content in this circle.',
+      errTargetsInvalid: 'Targets must be posts / comments without duplicates',
+      errTargetsRequired: 'Pick at least one target when enabled',
+      errThresholdRange: 'Thresholds must be non-negative integers',
+      errWindowRange: 'Time window must be 1-168 hours',
+      errMaxPerHourRange: 'Max per hour must be 0-1000',
+      errPostHotRequired: 'Post hotness threshold must be ≥ 1 when replying to posts',
+      errCommentThresholdRequired: 'Set likes or replies threshold ≥ 1 when replying to comments'
     }
   },
 
