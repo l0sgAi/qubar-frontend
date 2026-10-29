@@ -11,9 +11,10 @@
               class="circle-avatar"
               :alt="circleDetail.name"
             />
-            <div v-else class="circle-avatar-placeholder">
-              {{ circleDetail.name?.charAt(0)?.toUpperCase() || '?' }}
-            </div>
+            <!-- 无头像：与搜索结果 CircleList 一致，用 NAvatar 默认底色 + 首字，无边框 -->
+            <NAvatar v-else round :size="48" class="circle-avatar-fallback">
+              {{ circleDetail.name?.charAt(0) || '?' }}
+            </NAvatar>
           </router-link>
           <div class="circle-basic-info">
             <router-link :to="`/circle/${circleDetail.id}`" class="circle-name-link">
@@ -145,7 +146,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { NButton, NIcon, NTag, useMessage } from 'naive-ui'
+import { NAvatar, NButton, NIcon, NTag, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { getCircleDetail, joinCircle, leaveCircle } from '@/api/circle'
 import { auth } from '@/utils/auth'
@@ -400,20 +401,19 @@ defineExpose({
   }
 }
 
-.circle-avatar-placeholder {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background: var(--primary-gradient);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: white;
-  backdrop-filter: blur(10px);
+/* 无头像时的首字头像：底色沿用 NAvatar 默认（与搜索结果 CircleList 相同），不加边框 */
+.circle-avatar-fallback {
   flex-shrink: 0;
+  color: white;
+  font-weight: 700;
+  font-size: 1.25rem;
+  transition: transform 0.2s ease;
+}
+
+@media (hover: hover) {
+  .circle-avatar-fallback:hover {
+    transform: scale(1.05);
+  }
 }
 
 .circle-basic-info {

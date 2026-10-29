@@ -49,7 +49,8 @@ const headerBg = computed(() => {
   if (props.coverUrl) {
     return `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(16,16,28,1)), url(${props.coverUrl})`
   }
-  return 'linear-gradient(135deg, rgba(34,197,94,0.8) 0%, rgba(16,185,129,0.8) 25%, rgba(20,184,166,0.8) 50%, rgba(59,130,246,0.8) 75%, rgba(234,179,8,0.8) 100%)'
+  // 未设置封面：使用全局默认封面（src/assets/main.css 的 --circle-cover-default）
+  return 'var(--circle-cover-default)'
 })
 
 const initial = computed(() => props.name?.charAt(0)?.toUpperCase() || '?')
@@ -148,8 +149,10 @@ const displaySlug = computed(() => props.slug || 'circle')
 
 .circle-slug {
   font-size: 0.78rem;
-  opacity: 0.8;
+  opacity: 0.92;
   margin: 0;
   font-weight: 400;
+  /* 默认封面偏亮（橙→黄→绿），加阴影保证白字可读 */
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
 }
 </style>
