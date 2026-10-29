@@ -1,6 +1,6 @@
 /* Qubar 趣吧 宣传页脚本：零依赖，原生 JS
  * - i18n：中文文案直接写在 HTML（data-i18n），启动时从 DOM 收集为 zh 字典；英文字典见 EN
- * - Hero：兴趣气泡（视差 + 点击冒泡）、Q Logo 回音、关键词轮换
+ * - Hero：三层兴趣图标（鼠标 / 滚动视差 + 点击冒泡）、Q Logo 回音、关键词轮换
  * - 各示意界面进入视口时播放一次演示，离开视口时复原为完整静态状态
  * - prefers-reduced-motion：不启动视差、轮换与自动演示，页面保持完整静态内容 */
 (function () {
@@ -14,7 +14,13 @@
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
   function reflow(el) { return el.offsetWidth; }
-  function restartClass(el, cls) { el.classList.remove(cls); reflow(el); el.classList.add(cls); }
+  /* 重播 CSS 动画：已带该类时优先用 getAnimations() 归零重播，避免 offsetWidth 强制同步布局 */
+  function restartClass(el, cls) {
+    if (!el.classList.contains(cls)) { el.classList.add(cls); return; }
+    var anims = el.getAnimations ? el.getAnimations() : [];
+    if (anims.length) { anims.forEach(function (a) { a.currentTime = 0; a.play(); }); return; }
+    el.classList.remove(cls); reflow(el); el.classList.add(cls);
+  }
 
   /* ======================= i18n ======================= */
   var EN = {
@@ -28,7 +34,7 @@
     "hero.sub": "Qubar is an open community for the things you love. Find your people and show off what you’re into. Every circle is run by its own hosts, with a well-mannered AI buddy to keep the conversation going.",
     "cta.enter": "Enter Qubar", "cta.browse": "Look around (no sign-up)",
     "hero.n1": "Browse as a guest", "hero.n2": "Sign in with email, Google, GitHub or Microsoft", "hero.n3": "中文 / English",
-    "hero.hint": "Go on, poke a floating bubble ✨",
+    "hero.hint": "Go on, poke a floating icon ✨",
     "strip.title": "There’s a circle waiting for you", "demo.circles": "Example circles · names are made up",
     "cc.film": "Film Walks", "cc.ride": "City Ride", "cc.radio": "Late-Night Radio", "cc.craft": "Weekend Makers", "cc.indie": "Indie Game Corner", "cc.read": "Slow Reading Club",
     "cc.coffee": "Coffee Lab", "cc.code": "Code After Dark", "cc.plant": "Balcony Plants", "cc.hike": "Weekend Hikers", "cc.draw": "A Sketch a Day", "cc.movie": "Old Movie Theater",
@@ -217,7 +223,7 @@
     var max = document.documentElement.scrollHeight - window.innerHeight;
     if (nav) nav.classList.toggle("scrolled", y > 16);
     if (progress) progress.style.transform = "scaleX(" + (max > 0 ? Math.min(1, y / max) : 0) + ")";
-    if (!reduced && heroVisible && hero) hero.style.setProperty("--sy", y.toFixed(0));
+    hiKick();
   }
   window.addEventListener("scroll", function () {
     if (!scrollTicking) { scrollTicking = true; requestAnimationFrame(onScrollFrame); }
@@ -235,113 +241,133 @@
     els.forEach(function (el) { io.observe(el); });
   }
 
-  /* ======================= Hero：兴趣气泡 ======================= */
-  var BUB_LABEL = {
-    zh: { photo: "摄影", ride: "骑行", music: "音乐", code: "编程", craft: "手作", game: "游戏", read: "读书", coffee: "咖啡", plant: "植物", hike: "徒步", draw: "绘画", film: "电影" },
-    en: { photo: "Photography", ride: "Cycling", music: "Music", code: "Coding", craft: "Crafts", game: "Gaming", read: "Reading", coffee: "Coffee", plant: "Plants", hike: "Hiking", draw: "Drawing", film: "Movies" }
-  };
-  /* 宽屏：相对整个 Hero 的百分比位置；z 为视差深度，s 缩放，o 透明度，b 模糊（远景） */
-  var BUB_WIDE = [
-    { k: "photo", i: "camera", c: "coral", x: "6%", y: "17%", z: 1.1, s: 1.1 },
-    { k: "ride", i: "bike", c: "mint", x: "79%", y: "14%", z: 0.9, s: 1.05 },
-    { k: "music", i: "music", c: "lilac", x: "14%", y: "43%", z: 0.6, s: 0.95, o: 0.85 },
-    { k: "code", i: "code", c: "sky", x: "85%", y: "40%", z: 1.2, s: 1.1 },
-    { k: "craft", i: "scissors", c: "sun", x: "4%", y: "68%", z: 0.9 },
-    { k: "game", i: "game", c: "rose", x: "80%", y: "66%", z: 0.7, s: 0.95 },
-    { k: "read", i: "book", c: "sky", x: "19%", y: "86%", z: 0.45, s: 0.85, o: 0.6, b: 1 },
-    { k: "coffee", i: "coffee", c: "sun", x: "88%", y: "86%", z: 0.5, s: 0.9, o: 0.75 },
-    { k: "plant", i: "leaf", c: "mint", x: "23%", y: "11%", z: 0.4, s: 0.82, o: 0.6, b: 1 },
-    { k: "hike", i: "mountain", c: "coral", x: "67%", y: "8%", z: 0.4, s: 0.82, o: 0.6, b: 1 },
-    { k: "draw", i: "palette", c: "lilac", x: "3%", y: "90%", z: 0.35, s: 0.8, o: 0.5, b: 1.5 },
-    { k: "film", i: "film", c: "rose", x: "72%", y: "90%", z: 0.35, s: 0.8, o: 0.5, b: 1.5 }
+  /* ======================= Hero：兴趣图标 ======================= */
+  /* 宽屏三层，位置为相对 Hero 的百分比。
+   * i 图标、c 兴趣色、s 尺寸(px)、o 透明度、b 模糊(px，仅远景)、rot 入场旋转角、f 漂浮方式 */
+  var HI_DEEP = [
+    { i: "game", c: "sky", x: "-3%", y: "2%", s: 270, o: 0.15, b: 9, rot: -18, f: "a" },
+    { i: "palette", c: "rose", x: "76%", y: "46%", s: 250, o: 0.13, b: 9, rot: 12, f: "b" },
+    { i: "book", c: "sky", x: "1%", y: "64%", s: 230, o: 0.14, b: 8, rot: 8, f: "c" },
+    { i: "camera", c: "mint", x: "80%", y: "2%", s: 210, o: 0.15, b: 8, rot: -10, f: "a" },
+    { i: "film", c: "lilac", x: "38%", y: "76%", s: 290, o: 0.1, b: 10, rot: 6, f: "b" },
+    { i: "music", c: "lilac", x: "44%", y: "-8%", s: 240, o: 0.1, b: 10, rot: -6, f: "c" }
   ];
-  /* 窄屏：以 Logo 中心为原点的像素偏移，左侧用 right、右侧用 left，保证不越过 Logo */
-  var BUB_NARROW = [
-    { k: "ride", i: "bike", c: "mint", side: "l", d: 62, top: -50, z: 0.5 },
-    { k: "craft", i: "scissors", c: "sun", side: "l", d: 72, top: 8, z: 0.8 },
-    { k: "music", i: "music", c: "lilac", side: "r", d: 62, top: -48, z: 0.6 },
-    { k: "code", i: "code", c: "sky", side: "r", d: 72, top: 10, z: 0.9 },
-    { k: "photo", i: "camera", c: "coral", side: "l", d: 196, top: -22, z: 0.4, s: 0.95, o: 0.85, t: 1 },
-    { k: "coffee", i: "coffee", c: "sun", side: "r", d: 200, top: -18, z: 0.4, s: 0.95, o: 0.85, t: 1 }
+  var HI_MID = [
+    { i: "book", c: "sky", x: "25%", y: "30%", s: 104, o: 0.3, rot: -8, f: "b" },
+    { i: "palette", c: "rose", x: "20%", y: "57%", s: 96, o: 0.26, rot: 10, f: "a" },
+    { i: "scissors", c: "sun", x: "62%", y: "17%", s: 92, o: 0.3, rot: 20, f: "c" },
+    { i: "coffee", c: "sun", x: "73%", y: "63%", s: 100, o: 0.24, rot: -12, f: "b" },
+    { i: "mountain", c: "mint", x: "92%", y: "38%", s: 88, o: 0.28, rot: -18, f: "a" },
+    { i: "film", c: "coral", x: "20%", y: "86%", s: 88, o: 0.24, rot: 8, f: "c" },
+    { i: "sparkles", c: "sky", x: "21%", y: "5%", s: 66, o: 0.34, rot: 0, f: "b" },
+    { i: "music", c: "lilac", x: "70%", y: "88%", s: 78, o: 0.26, rot: 6, f: "a" }
   ];
-  var bubbleLabels = [];
+  var HI_FRONT = [
+    { i: "camera", c: "coral", x: "8%", y: "18%", s: 72, rot: -8, f: "a" },
+    { i: "music", c: "lilac", x: "84%", y: "21%", s: 62, rot: 6, f: "b" },
+    { i: "game", c: "sky", x: "6%", y: "50%", s: 66, rot: 8, f: "c" },
+    { i: "bike", c: "mint", x: "86%", y: "54%", s: 70, rot: -6, f: "a" },
+    { i: "code", c: "sky", x: "13%", y: "79%", s: 54, rot: -10, f: "b" },
+    { i: "coffee", c: "sun", x: "80%", y: "81%", s: 56, rot: 4, f: "c" },
+    { i: "heart", c: "rose", x: "30%", y: "12%", s: 44, rot: 0, f: "b" },
+    { i: "star", c: "sun", x: "66%", y: "9%", s: 46, rot: 0, f: "a" },
+    { i: "leaf", c: "mint", x: "93%", y: "8%", s: 40, rot: 12, f: "c" }
+  ];
+  /* 窄屏前景：以 Logo 中心为原点的像素偏移（左侧用 right、右侧用 left），始终贴着 Logo、不压正文 */
+  var HI_NEAR = [
+    { i: "camera", c: "coral", side: "l", d: 66, top: -46, s: 46, rot: -8, f: "a" },
+    { i: "music", c: "lilac", side: "r", d: 64, top: -40, s: 42, rot: 6, f: "b" },
+    { i: "bike", c: "mint", side: "l", d: 92, top: 18, s: 40, rot: 8, f: "c" },
+    { i: "code", c: "sky", side: "r", d: 90, top: 22, s: 44, rot: -10, f: "a" },
+    { i: "heart", c: "rose", side: "l", d: 140, top: -20, s: 30, rot: 0, f: "b" },
+    { i: "star", c: "sun", side: "r", d: 138, top: -16, s: 30, rot: 0, f: "c" }
+  ];
 
-  function makeBubble(cfg, narrow) {
-    var b = document.createElement("div");
-    b.className = "bubble" + (cfg.t ? " t-only" : "");
-    b.style.setProperty("--z", cfg.z);
-    if (narrow) {
-      b.style.top = (cfg.top - 17) + "px";
-      if (cfg.side === "l") { b.style.right = cfg.d + "px"; } else { b.style.left = cfg.d + "px"; }
+  function makeIcon(cfg, idx, interactive, near) {
+    var el = document.createElement("div");
+    el.className = "hicon c-" + cfg.c;
+    el.style.setProperty("--s", cfg.s);
+    if (near) {
+      el.style.top = (cfg.top - cfg.s / 2) + "px";
+      el.style[cfg.side === "l" ? "right" : "left"] = cfg.d + "px";
     } else {
-      b.style.setProperty("--x", cfg.x);
-      b.style.setProperty("--y", cfg.y);
+      el.style.setProperty("--x", cfg.x);
+      el.style.setProperty("--y", cfg.y);
     }
-    var f = document.createElement("div");
-    f.className = "bubble-float";
-    f.style.setProperty("--dur", (5.5 + Math.random() * 3.5).toFixed(2) + "s");
-    f.style.setProperty("--delay", (-Math.random() * 6).toFixed(2) + "s");
-    var btn = document.createElement("span");
-    btn.className = "bubble-btn c-" + cfg.c;
-    if (cfg.s) btn.style.setProperty("--s", cfg.s);
-    if (cfg.o) btn.style.setProperty("--o", cfg.o);
-    if (cfg.b) btn.style.setProperty("--b", cfg.b + "px");
-    btn.innerHTML = '<span class="bi"><svg class="ic"><use href="#i-' + cfg.i + '"/></svg></span><span class="bl"></span>';
-    var lbl = btn.querySelector(".bl");
-    lbl.textContent = BUB_LABEL[LANG][cfg.k];
-    bubbleLabels.push({ el: lbl, k: cfg.k });
-    btn.addEventListener("click", function (ev) { ev.stopPropagation(); popBubble(b, cfg.c); });
-    f.appendChild(btn);
-    b.appendChild(f);
-    return b;
+    if (cfg.o) el.style.setProperty("--o", cfg.o);
+    if (cfg.b) el.style.setProperty("--b", cfg.b + "px");
+    el.style.setProperty("--rot", (cfg.rot || 0) + "deg");
+    el.style.setProperty("--delay", (0.05 + idx * 0.08).toFixed(2) + "s");
+    el.style.setProperty("--float", "hi-float-" + (cfg.f || "a"));
+    el.style.setProperty("--dur", ((cfg.s > 150 ? 14 : 7) + Math.random() * 5).toFixed(2) + "s");
+    el.style.setProperty("--fdelay", (-Math.random() * 8).toFixed(2) + "s");
+    if (cfg.s < 80) el.style.setProperty("--sw", "1.9");
+    el.innerHTML = '<div class="hicon-in"><div class="hicon-float"><svg class="ic"><use href="#i-' + cfg.i + '"/></svg></div></div>';
+    if (interactive) el.firstChild.addEventListener("click", function (ev) { ev.stopPropagation(); popIcon(el, cfg.c); });
+    return el;
   }
 
   var SPARK_COLORS = ["#66eac2", "#ff8a65", "#ffc94d", "#5cc8ff", "#b79cff", "#ff7eb3"];
-  function popBubble(b, color) {
-    if (b.classList.contains("popped")) return;
-    b.classList.remove("respawn");
-    b.classList.add("popped");
+  function popIcon(el, color) {
+    if (el.classList.contains("popped")) return;
+    el.classList.remove("respawn");
+    el.classList.add("popped");
     if (!reduced) {
-      for (var n = 0; n < 10; n++) {
-        var s = document.createElement("span");
-        var ang = (Math.PI * 2 * n) / 10 + Math.random() * 0.4;
-        var dist = 36 + Math.random() * 34;
-        s.className = "spark c-" + color;
-        if (n % 3 === 0) s.style.background = SPARK_COLORS[n % SPARK_COLORS.length];
-        s.style.setProperty("--dx", (Math.cos(ang) * dist).toFixed(1) + "px");
-        s.style.setProperty("--dy", (Math.sin(ang) * dist).toFixed(1) + "px");
-        b.appendChild(s);
+      var n = 12, size = el.offsetWidth;
+      for (var k = 0; k < n; k++) {
+        var sp = document.createElement("span");
+        var ang = (Math.PI * 2 * k) / n + Math.random() * 0.3;
+        var dist = size * 0.55 + 18 + Math.random() * 30;
+        sp.className = "spark c-" + color;
+        if (k % 3 === 0) sp.style.background = SPARK_COLORS[k % SPARK_COLORS.length];
+        sp.style.setProperty("--dx", (Math.cos(ang) * dist).toFixed(1) + "px");
+        sp.style.setProperty("--dy", (Math.sin(ang) * dist).toFixed(1) + "px");
+        el.appendChild(sp);
       }
-      setTimeout(function () { $$(".spark", b).forEach(function (s) { s.remove(); }); }, 700);
+      setTimeout(function () { $$(".spark", el).forEach(function (x) { x.remove(); }); }, 700);
     }
-    setTimeout(function () {
-      b.classList.remove("popped");
-      b.classList.add("respawn");
-      setTimeout(function () { b.classList.remove("respawn"); }, 800);
-    }, 1700);
+    /* respawn 类保留到下次冒泡：移除它会让入场动画重新播放 */
+    setTimeout(function () { el.classList.remove("popped"); el.classList.add("respawn"); }, 1600);
   }
 
-  function initBubbles() {
-    var wide = $("#bubbles"), narrow = $("#bubblesM");
-    if (wide) BUB_WIDE.forEach(function (c) { wide.appendChild(makeBubble(c, false)); });
-    if (narrow) BUB_NARROW.forEach(function (c) { narrow.appendChild(makeBubble(c, true)); });
-    langListeners.push(function (lang) {
-      bubbleLabels.forEach(function (x) { x.el.textContent = BUB_LABEL[lang][x.k]; });
+  /* 三层视差：鼠标（平滑插值）+ 滚动（远景慢于页面、前景快于页面）。
+   * 只写三个层容器的 transform，并且只在 Hero 可见且有变化时运行 rAF */
+  var hiLayers = [];
+  var ptr = { tx: 0, ty: 0, x: 0, y: 0 };
+  var hiRaf = 0;
+  function hiFrame() {
+    hiRaf = 0;
+    ptr.x += (ptr.tx - ptr.x) * 0.08;
+    ptr.y += (ptr.ty - ptr.y) * 0.08;
+    var y = window.scrollY || document.documentElement.scrollTop;
+    hiLayers.forEach(function (l) {
+      l.el.style.transform = "translate3d(" + (ptr.x * l.px).toFixed(2) + "px," + (ptr.y * l.px + y * l.sy).toFixed(2) + "px,0)";
     });
+    if (Math.abs(ptr.tx - ptr.x) > 0.0005 || Math.abs(ptr.ty - ptr.y) > 0.0005) hiRaf = requestAnimationFrame(hiFrame);
+  }
+  function hiKick() {
+    if (!hiRaf && !reduced && heroVisible && hiLayers.length) hiRaf = requestAnimationFrame(hiFrame);
+  }
 
-    /* 鼠标视差：只在精确指针设备、未开启减少动画时启用 */
-    if (!reduced && finePointer && hero) {
-      var pending = null, raf = 0;
+  function initHeroIcons() {
+    var deep = $("#hiDeep"), mid = $("#hiMid"), front = $("#hiFront"), near = $("#hiNear");
+    var n = 0;
+    if (deep) HI_DEEP.forEach(function (c) { deep.appendChild(makeIcon(c, n++, false, false)); });
+    if (mid) HI_MID.forEach(function (c) { mid.appendChild(makeIcon(c, n++, false, false)); });
+    if (front) HI_FRONT.forEach(function (c, i) { front.appendChild(makeIcon(c, i, true, false)); });
+    if (near) HI_NEAR.forEach(function (c, i) { near.appendChild(makeIcon(c, i, true, true)); });
+    if (deep) hiLayers.push({ el: deep, px: 14, sy: 0.22 });
+    if (mid) hiLayers.push({ el: mid, px: 32, sy: 0.08 });
+    if (front) hiLayers.push({ el: front, px: 58, sy: -0.14 });
+
+    if (!reduced && finePointer) {
       window.addEventListener("pointermove", function (e) {
         if (!heroVisible) return;
-        pending = [e.clientX / window.innerWidth - 0.5, e.clientY / window.innerHeight - 0.5];
-        if (!raf) raf = requestAnimationFrame(function () {
-          raf = 0;
-          if (!pending) return;
-          hero.style.setProperty("--px", pending[0].toFixed(3));
-          hero.style.setProperty("--py", pending[1].toFixed(3));
-        });
+        ptr.tx = e.clientX / window.innerWidth - 0.5;
+        ptr.ty = e.clientY / window.innerHeight - 0.5;
+        hiKick();
       }, { passive: true });
+      document.documentElement.addEventListener("pointerleave", function () { ptr.tx = 0; ptr.ty = 0; hiKick(); });
     }
 
     /* 点 Logo：弹一下，再发出一圈回音 */
@@ -421,7 +447,8 @@
     if (hasIO && hero) {
       new IntersectionObserver(function (es) {
         heroVisible = es[0].isIntersecting;
-        if (heroVisible) start(); else stop();
+        hero.classList.toggle("is-off", !heroVisible);
+        if (heroVisible) { start(); hiKick(); } else stop();
       }).observe(hero);
     }
   }
@@ -437,6 +464,12 @@
       var half = track.scrollWidth / 2;
       track.style.setProperty("--dur", Math.max(28, half / 38).toFixed(1) + "s");
     });
+    if (hasIO && !reduced) {
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { e.target.classList.toggle("is-off", !e.isIntersecting); });
+      });
+      $$(".marquee").forEach(function (m) { io.observe(m); });
+    }
   }
 
   /* ======================= 理念翻转卡：触屏点按翻面 ======================= */
@@ -532,11 +565,18 @@
         btn.classList.remove("press");
         item.classList.add(act === "approve" ? "fly-right" : "fly-left");
         setCount(remaining().length, true);
-        setTimeout(function () { item.classList.add("gone"); }, reduced ? 0 : 320);
         setTimeout(function () {
-          item.hidden = true;
-          busy = false;
           var left = remaining();
+          /* FLIP：记录剩余卡片位置 → 移除飞走的卡片 → 用 transform 从旧位置滑到新位置（不做布局动画） */
+          var before = left.map(function (it) { return it.offsetTop; });
+          item.hidden = true;
+          if (!reduced && left.length && left[0].animate) {
+            left.forEach(function (it, i) {
+              var dy = before[i] - it.offsetTop;
+              if (dy) it.animate([{ transform: "translateY(" + dy + "px)" }, { transform: "none" }], { duration: 420, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)" });
+            });
+          }
+          busy = false;
           if (!left.length) {
             done.hidden = false;
             if (hadFocus) done.focus();
@@ -544,14 +584,14 @@
           } else if (hadFocus) {
             $(".mbtn.approve", left[0]).focus();
           }
-        }, reduced ? 10 : 720);
+        }, reduced ? 10 : 480);
       }, reduced ? 0 : 240);
     }
     function reset() {
       done.hidden = true;
       items.forEach(function (it, i) {
         it.hidden = false;
-        it.classList.remove("fly-right", "fly-left", "gone");
+        it.classList.remove("fly-right", "fly-left");
         if (!reduced) {
           it.style.setProperty("--d", (i * 0.08) + "s");
           restartClass(it, "enter");
@@ -585,7 +625,7 @@
       busy = false;
       panel.style.minHeight = "";
       done.hidden = true;
-      items.forEach(function (it) { it.hidden = false; it.classList.remove("fly-right", "fly-left", "gone", "enter"); });
+      items.forEach(function (it) { it.hidden = false; it.classList.remove("fly-right", "fly-left", "enter"); });
       setCount(items.length, false);
     });
   }
@@ -779,7 +819,7 @@
 
   /* ======================= 启动 ======================= */
   initMarquee();
-  initBubbles();
+  initHeroIcons();
   applyLang(readLangPref());
   initRotator();
   initReveal();
