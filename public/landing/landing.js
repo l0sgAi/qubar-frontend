@@ -540,6 +540,9 @@
     if (!panel) return;
     var items = $$(".mod-item", list);
     var userTook = false, busy = false, demo;
+    /* resolve() 的飞卡计时器单独存放：用户点击时 demo.clear() 不能清掉它们，但 stop() 必须清掉 */
+    var pending = [];
+    function wait(fn, ms) { pending.push(setTimeout(fn, ms)); }
     done.setAttribute("tabindex", "-1");
 
     function remaining() { return items.filter(function (it) { return !it.classList.contains("fly-right") && !it.classList.contains("fly-left"); }); }
@@ -553,11 +556,11 @@
       var hadFocus = item.contains(document.activeElement);
       busy = true;
       btn.classList.add("press");
-      setTimeout(function () {
+      wait(function () {
         btn.classList.remove("press");
         item.classList.add(act === "approve" ? "fly-right" : "fly-left");
         setCount(remaining().length, true);
-        setTimeout(function () {
+        wait(function () {
           var left = remaining();
           /* FLIP：记录剩余卡片位置 → 移除飞走的卡片 → 用 transform 从旧位置滑到新位置（不做布局动画） */
           var before = left.map(function (it) { return it.offsetTop; });
@@ -614,8 +617,11 @@
       reset();
       d.later(auto, 900);
     }, function () {
+      pending.forEach(clearTimeout);
+      pending = [];
       busy = false;
       panel.style.minHeight = "";
+      $$(".mbtn.press", list).forEach(function (b) { b.classList.remove("press"); });
       done.hidden = true;
       items.forEach(function (it) { it.hidden = false; it.classList.remove("fly-right", "fly-left", "enter"); });
       setCount(items.length, false);
