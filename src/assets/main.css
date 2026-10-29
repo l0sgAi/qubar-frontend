@@ -29,6 +29,13 @@
   /* 帖子详情页底部「说点什么…」输入条（不含安全区） */
   --compose-bar-height: 56px;
 
+  /* 圈子未设置封面时的默认 banner（CircleDetail 头部与 CircleHeaderPreview 共用）：
+   * 珊瑚橙 → 向日葵黄 → 薄荷绿的斜向渐变，叠两枚半透明白色圆点，与宣传页「城市骑行」示例一致 */
+  --circle-cover-default:
+    radial-gradient(circle at 20% 120%, rgba(255, 255, 255, 0.25) 0 18%, transparent 19%),
+    radial-gradient(circle at 85% -20%, rgba(255, 255, 255, 0.2) 0 22%, transparent 23%),
+    linear-gradient(120deg, #ff8a65 0%, #ffc94d 55%, #66eac2 100%);
+
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
