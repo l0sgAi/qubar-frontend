@@ -25,10 +25,10 @@
   /* ======================= i18n ======================= */
   var EN = {
     "meta.title": "Qubar · Where every passion finds its echo",
-    "meta.desc": "Qubar is an open, open-source interest community where every circle runs itself. Browse without signing up, share posts with pictures, and let well-mannered AI bots help out. Non-profit and MIT-licensed.",
+    "meta.desc": "Qubar is an open, open-source and non-profit interest community where every circle is run by its own owner. Browse without signing up, share posts with pictures, and let well-mannered AI bots help out.",
     "a11y.skip": "Skip to content", "a11y.home": "Qubar home", "a11y.nav": "Page sections", "a11y.top": "Back to top", "a11y.footNav": "Footer links",
     "brand": "Qubar",
-    "nav.ideas": "Ideas", "nav.circles": "Circles", "nav.create": "Create", "nav.discover": "Discover", "nav.bots": "AI buddies", "nav.open": "Open source", "nav.roadmap": "Roadmap", "nav.enter": "Enter Qubar",
+    "nav.ideas": "Ideas", "nav.circles": "Circles", "nav.create": "Create", "nav.discover": "Discover", "nav.bots": "AI buddies", "nav.open": "Open source", "nav.enter": "Enter Qubar",
     "hero.badge": "Open · Open source · Self-run · Non-profit",
     "hero.titleA": "Where every", "hero.word": "passion", "hero.titleB": "finds its echo",
     "hero.sub": "Qubar is an open community for the things you love. Find your people and show off what you’re into. Every circle is run by its own hosts, with a well-mannered AI buddy to keep the conversation going.",
@@ -39,109 +39,102 @@
     "cc.film": "Film Walks", "cc.ride": "City Ride", "cc.radio": "Late-Night Radio", "cc.craft": "Weekend Makers", "cc.indie": "Indie Game Corner", "cc.read": "Slow Reading Club",
     "cc.coffee": "Coffee Lab", "cc.code": "Code After Dark", "cc.plant": "Balcony Plants", "cc.hike": "Weekend Hikers", "cc.draw": "A Sketch a Day", "cc.movie": "Old Movie Theater",
     "ideas.eyebrow": "What we believe", "ideas.title": "A community should belong to everyone",
-    "ideas.sub": "Qubar doesn’t sell your attention, and it doesn’t decide what you should see. We just want to get these things right.",
+    "ideas.sub": "Qubar isn’t here to cash in on your attention. We just want to get these things right.",
     "ideas.hint": "Hover over a card, or tap it, to flip it over",
     "ideas.c1t": "Open", "ideas.c1s": "Walk right in",
     "ideas.c1b": "Look around as a guest without signing up. When you want to join in, sign in with email, Google, GitHub or Microsoft, in Chinese or English.",
     "ideas.c2t": "Open source", "ideas.c2s": "Nothing hidden",
-    "ideas.c2b": "Both the frontend and the backend are MIT-licensed. Read the code, file an issue, run your own copy. All welcome.",
+    "ideas.c2b": "Both the frontend and the backend code are public (MIT license), so anyone can take a look. Ideas and bug reports are always welcome. Let’s make Qubar better together.",
     "ideas.c3t": "Shared", "ideas.c3s": "Content belongs to the community",
     "ideas.c3b": "Posts and conversations belong to the community. Interests flow between circles, and good posts reach more people through For You, Trending and Discover.",
     "ideas.c4t": "Self-run", "ideas.c4s": "Circles make their own calls",
-    "ideas.c4b": "Rules, members, moderation and bots are run by each circle’s owner and admins. The platform doesn’t decide for them.",
+    "ideas.c4b": "Members, circle rules, moderation and circle bots are all managed by each circle’s owner and admins.",
     "ideas.c5t": "Non-profit & light", "ideas.c5s": "Quiet by design",
-    "ideas.c5b": "We’re not here to cash in on traffic. The interface stays clean and calm, and the whole thing runs on a single server.",
+    "ideas.c5b": "We’re not here to cash in on traffic. No pushy distractions, just a clean interface that’s pleasant to use.",
     "ideas.c6t": "AI as a buddy", "ideas.c6s": "Helps out, never hogs the stage",
-    "ideas.c6b": "Bots answer questions and liven things up, with a clear identity and a rate limit. The circle owner decides how they’re used.",
+    "ideas.c6b": "Bots answer questions and liven things up. They post from their own accounts, so it’s always clear who’s a bot, and they have a rate limit. How a circle bot is used is up to the circle owner.",
     "circles.eyebrow": "Circles, run by their hosts", "circles.title": "Start a circle,<br>run it your way",
-    "circles.lead": "Give your circle a short, memorable link, choose how people join, and bring in a few admins to help. New posts get a first look from AI, and anything it isn’t sure about is your call.",
-    "circles.f1t": "Short links, three ways to join", "circles.f1p": "c/your-circle is easy to remember and share. Open, approval-based or private: you set the vibe.",
-    "circles.f2t": "Owner, admins, members", "circles.f2p": "Three roles, each with a job. If someone stirs up trouble, mute or remove them. “My circles” can be filtered by role, too.",
-    "circles.f3t": "AI looks first, people decide", "circles.f3p": "Every new post gets an AI pre-review. Anything it can’t call goes into a review queue, and the circle’s admins make the final decision.",
-    "circles.f4t": "Reports get handled, alerts take you there", "circles.f4p": "Members can report posts, and admins deal with them on the circle’s admin page. Review alerts open the circle’s Review tab directly, with the pending count right there.",
-    "circles.joinLabel": "How to join (demo)", "circles.j0": "Open", "circles.j1": "Approval", "circles.j2": "Private",
-    "circles.j0d": "Anyone can join right away.",
-    "circles.j1d": "People send a request first, and get in once an admin approves it.",
-    "circles.j2d": "Invite only.",
+    "circles.lead": "Anyone can start a circle, and it’s ready to use right away. Write an intro and some circle rules, bring in a few admins to help, and let AI take a first look at new posts. Anything it isn’t sure about is your call.",
+    "circles.f1t": "Start a circle in seconds", "circles.f1p": "Anyone can create a circle and use it right away. The owner can edit the circle’s profile, intro and rules at any time. Joining an open circle takes one click.",
+    "circles.f2t": "Owner, admins, members", "circles.f2p": "Three roles, each with a job: the owner can appoint admins or hand over ownership, and admins can mute or block members who stir up trouble. “My circles” can be filtered by your role.",
+    "circles.f3t": "AI looks first, people decide", "circles.f3p": "AI reads the text of every new post first. Anything it can’t call goes into the circle’s review queue, where admins approve or reject it, and the author is told the result.",
+    "circles.f4t": "Reports get handled, alerts take you there", "circles.f4p": "Members can report posts. The owner and admins get an alert and can keep the post or take it down, and the author is notified if it’s taken down. The alert opens the circle’s Review tab directly, with the pending count right there.",
     "circles.rOwner": "Owner", "circles.rAdmin": "Admin", "circles.rMember": "Member", "circles.rMuted": "Muted",
     "mod.title": "City Ride · Review", "mod.pending": "Pending", "mod.unsure": "AI: not sure", "mod.report": "Report",
-    "mod.i1a": "Xiaoman", "mod.i1t": "Sunday morning ride, 40 km along the lake. Who’s in?", "mod.i1w": "Why: contains an external link",
+    "mod.i1a": "Xiaoman", "mod.i1t": "Sunday morning ride, 40 km along the lake. Add me on WeChat to join", "mod.i1w": "Why: contains contact details",
     "mod.i2a": "A passing dealer", "mod.i2t": "Brand-new road bikes, super cheap, DM me", "mod.i2w": "Why: looks like an ad",
-    "mod.i3a": "Member report", "mod.i3t": "Someone is spamming the comments on “Night-ride gear”", "mod.i3w": "Reason: spam",
-    "mod.i4a": "Hehe", "mod.i4t": "Newbie question: how do I adjust my cleats?", "mod.i4w": "Why: unsure about the photo",
+    "mod.i3a": "Member report", "mod.i3t": "“Cheapest bike lights anywhere, buy via this link” was reported", "mod.i3w": "Report reason: ad",
+    "mod.i4a": "Hehe", "mod.i4t": "Newbie question: how do I adjust my cleats? Tutorial at this link", "mod.i4w": "Why: contains an external link",
     "mod.reject": "Reject", "mod.approve": "Approve", "mod.keep": "Keep", "mod.takedown": "Take down",
     "mod.done": "All done. Go grab some water",
     "demo.note": "Demo UI · names, circles and posts are made up · the buttons work",
     "create.eyebrow": "Create & connect", "create.title": "Share what you love,<br>someone will catch it",
-    "create.lead": "Write in Markdown, drop in a few photos and crop them on the spot, pick a circle, and post. After that, every like, reply and @mention reaches you right away.",
-    "create.f1t": "Posts with pictures", "create.f1p": "A Markdown editor with multi-image upload and cropping. Pick the circle, then publish.",
-    "create.f2t": "Threaded comments", "create.f2p": "Comments and replies stay neatly stacked, however lively it gets.",
-    "create.f3t": "Likes, saves, history", "create.f3p": "Like what you love, save what you want to keep, and find anything you’ve viewed again.",
-    "create.f4t": "@mentions that reach the right person", "create.f4p": "Mention someone and they get notified. Tap the notification to jump straight to that comment.",
-    "ed.md": "## Early-autumn alleys\nOut the door at 6 a.m. **The light comes in sideways** and the shadows go on forever.",
-    "ed.crop": "Crop", "ed.to": "Post to: Film Walks", "ed.publish": "Publish",
+    "create.lead": "Add a heading, bold the important bits, quote a line, attach your photos (up to 9 per post), pick a circle, and post. After that, every like, reply and @mention reaches you right away.",
+    "create.f1t": "Posts with pictures", "create.f1p": "The editor handles headings, bold, quotes and more. Each post can have up to 9 pictures, and goes to the circle you choose.",
+    "create.f2t": "Threaded comments", "create.f2p": "Comments and replies stay neatly stacked, however lively it gets. Comments can include pictures too.",
+    "create.f3t": "Likes, saves, history", "create.f3p": "Like posts and comments, and save the posts you love. Your saves and viewing history are on your profile.",
+    "create.f4t": "@mentions that reach the right person", "create.f4p": "Mention someone and they get notified. Tap the notification to land right on that comment.",
+    "ed.md": "Early-autumn alleys\nOut the door at 6 a.m. The light comes in sideways and the shadows go on forever.", "ed.to": "Post to: Film Walks", "ed.publish": "Publish",
     "post.author": "Acha", "post.time": "Just now", "post.title": "Early-autumn alleys", "post.like": "Like", "post.fav": "Save",
     "post.c1a": "Lulu", "post.c1": "The light in the second shot is unreal!",
     "post.c2": "Replying to <span class=\"mention\">@Lulu</span>: waited all morning for it 😄",
     "demo.note2": "Demo UI · made-up content · try the like and save buttons",
     "disc.eyebrow": "For You · Trending · Discover", "disc.title": "Three doors for three kinds of curiosity",
-    "disc.sub": "For You follows the circles you’ve joined and where you’ve been lately. Trending gathers the highlights from across the site. Discover brings new circles and new faces to you. Looking for a specific person, circle or post? Just search.",
+    "disc.sub": "For You is based on the circles you’ve joined and what you’ve viewed. Trending gathers the most popular posts on the site. Discover introduces new circles and new posts. Looking for a specific post, circle or user? Just search.",
     "disc.tabsLabel": "Feeds (demo)", "disc.t1": "For You", "disc.t2": "Trending", "disc.t3": "Discover",
-    "disc.p1": "Close to your circles and footprints", "disc.p2": "What everyone’s talking about", "disc.p3": "New circles, new faces",
+    "disc.p1": "Based on your circles and what you’ve viewed", "disc.p2": "Popular across the site", "disc.p3": "New circles, new posts",
     "disc.r1": "Night ride by the river: the best-lit route", "disc.r2": "Can you still shoot expired film?", "disc.r3": "Picking your first pour-over kettle",
     "disc.h1": "The song you had on repeat all week", "disc.h2": "Day 100 of making a game solo", "disc.h3": "Show us your balcony in autumn",
-    "disc.newCircle": "New circle", "disc.newFace": "New face",
+    "disc.newCircle": "New circle",
     "disc.d1": "“A Sketch a Day” just opened. Come hand in your homework", "disc.d2": "Hehe made a first post in “Weekend Hikers”", "disc.d3": "“Old Movie Theater” posted this week’s lineup",
     "search.q": "coffee", "search.g1": "Circles", "search.g2": "Posts", "search.g3": "Users",
     "search.r2": "First espresso machine: semi-auto or capsules?", "search.r3": "A map of coffee stops along cycling routes", "search.r4": "CoffeeBean",
     "demo.note3": "Demo UI · made-up content · click a tab, or use the arrow keys",
     "bots.eyebrow": "AI buddies", "bots.title": "Bring in Little Q<br>to warm up the room",
-    "bots.lead": "Bots can connect to different AI model services, with their own name, avatar and personality. They only show up when it makes sense, and how much they say, and where, is up to the circle owner.",
+    "bots.lead": "Bots can connect to different AI models, with their own name, avatar and personality, and one sentence can tell them when to reply. They only show up when it makes sense, and never crowd out the people.",
     "bots.trigTitle": "When do they speak up?",
-    "bots.t1": "When @mentioned", "bots.t2": "When a post hits a keyword", "bots.t3": "When an admin calls them in", "bots.t4": "Auto-replies to the hottest posts and comments",
-    "bots.f1t": "Global bots + circle bots", "bots.f1p": "Circle bots are managed by the circle owner and only speak in their own circle.",
-    "bots.f2t": "One sentence keeps them in check", "bots.f2p": "A filter prompt tells the bot when to chime in and when to stay quiet.",
-    "bots.f3t": "Knows its manners", "bots.f3p": "When auto-replying, a bot answers the same post or comment at most once. It has a rate limit, never chats with other bots, and posts from its own account, labeled “Bot” on its profile.",
+    "bots.t1": "@mentioned in a new post", "bots.t2": "A comment hits a keyword", "bots.t3": "An admin asks it to reply", "bots.t4": "Auto-replies to popular posts and comments",
+    "bots.f1t": "Global bots + circle bots", "bots.f1p": "Global bots are provided by the platform. Circle bots are managed by the circle owner and only speak in their own circle.",
+    "bots.f2t": "One sentence keeps them in check", "bots.f2p": "Tell the bot in one sentence when it should reply and when it should stay quiet.",
+    "bots.f3t": "Knows its manners", "bots.f3p": "When auto-replying, a bot answers each post or comment at most once. It has a rate limit, bots never chat with each other, and it posts from its own account, labeled “Bot” on its profile.",
     "chat.title": "City Ride · Post", "chat.postTitle": "First 100 km ride. What should I bring?",
-    "chat.uName": "Xiaoman", "chat.q": "<span class=\"mention\">@Little Q</span> got a supplies checklist? First time, kind of nervous",
-    "chat.bName": "Little Q", "chat.badge": "AI bot", "chat.scope": "Circle bot",
+    "chat.uName": "Xiaoman · new post", "chat.q": "First ride this long and I’m a bit nervous. <span class=\"mention\">@Little Q</span> could you put together a supplies checklist?",
+    "chat.bName": "Little Q", "chat.badge": "AI bot",
     "chat.a": "On it! Bring two bottles of water, three or four energy bars, a spare tube and a pump, plus a bike light. Check your tire pressure before you set off and refill your water about every 20 km. Take it easy and have fun 🚴",
     "bots.persona": "Persona: ", "bots.personaText": "A friendly cycling veteran who keeps it short and loves emoji",
     "bots.r1": "Auto-replies: once per post", "bots.r2": "Rate-limited", "bots.r3": "Stays in its own circle", "bots.r4": "Never replies to other bots",
     "demo.note4": "Demo UI · made-up conversation",
     "nt.eyebrow": "Real-time notifications", "nt.title": "When someone answers,<br>you’ll know right away",
-    "nt.lead": "Likes, comments, @mentions, review results: they reach you within seconds. Stay signed in on your phone and your computer at the same time, and both get the news.",
-    "nt.f1t": "Within seconds", "nt.f1p": "No need to keep refreshing. New activity just shows up.",
-    "nt.f2t": "Several devices at once", "nt.f2p": "Read on your phone, reply on your laptop. Nothing slips through.",
-    "nt.f3t": "One tap to get there", "nt.f3p": "Comment alerts jump to the comment, and review alerts open the circle’s Review tab.",
+    "nt.lead": "Likes, saves, comments, replies, @mentions, review results: they all reach you in real time. Sign in on your phone and your computer at the same time, and both get the news.",
+    "nt.f1t": "Real time", "nt.f1p": "No need to keep refreshing. New notifications just show up.",
+    "nt.f2t": "Several devices at once", "nt.f2p": "Read on your phone, reply on your laptop. Notifications arrive on both.",
+    "nt.f3t": "One tap to get there", "nt.f3p": "@mention alerts take you straight to the comment, and report alerts for admins open the circle’s Review tab.",
     "nt.center": "Notifications", "nt.now": "Just now",
     "nt.n1": "<b>Lulu</b> liked your post “Early-autumn alleys”",
-    "nt.n2": "<b>Bai</b> commented: “Love these colors”",
+    "nt.n2": "<b>Bai</b> commented on your post: “Love these colors”",
     "nt.n3": "<b>Acha</b> @mentioned you in a comment",
     "nt.n4": "Your post “Sunday morning ride” <b>was approved</b>",
-    "nt.n5": "<b>City Ride</b> has 2 posts waiting for review · Review →",
+    "nt.n5": "“Cheapest bike lights” <b>was reported</b> · Handle it →",
     "demo.note5": "Demo UI · made-up notifications",
-    "open.eyebrow": "Open source · Self-hostable", "open.title": "All the code is here.<br>Run your own if you like",
-    "open.lead": "Both the frontend and the backend are open source under the MIT license. Curious how it works, or want one for your own group? Start with the README.",
-    "open.techLabel": "Tech stack", "open.backend": "Backend · Go · MIT", "open.frontend": "Frontend · Vue 3 · MIT",
-    "road.eyebrow": "Coming soon", "road.title": "New things on the way", "road.badge": "Not live yet",
-    "road.sub": "These features are planned or in development and can’t be used yet. What ships may differ.",
-    "road.r1t": "Bots that post about trending topics", "road.r1p": "Automatic posts based on what’s trending, marked as AI-generated and with source links.",
-    "road.r2t": "Follow people", "road.r2p": "Follow writers you like and never miss a new post.",
-    "road.r3t": "Direct messages", "road.r3p": "One-on-one chats with people who share your interests.",
-    "road.r4t": "Circle group chat", "road.r4p": "A place in every circle to just hang out and talk.",
-    "road.r5t": "Member reputation levels", "road.r5p": "Members who really show up get recognized.",
-    "road.r6t": "More interface languages", "road.r6p": "More languages beyond Chinese and English.",
-    "road.soon": "Not live yet",
+    "open.eyebrow": "Open source · Non-profit", "open.title": "Open code,<br>a community for everyone",
+    "open.lead": "Qubar’s frontend and backend code are both public on GitHub (MIT license), so anyone can see how it works. We’re not here to cash in on traffic, just to build a good community. Got an idea or found a problem? Tell us, and let’s make Qubar better together.", "open.backend": "Backend code · MIT", "open.frontend": "Website code · MIT",
     "end.title": "Your passion deserves to be heard",
     "end.sub": "Look around first, and sign in if you like it. You’re also welcome on GitHub to help make Qubar better.",
     "foot.slogan": "Where every passion finds its echo.", "foot.site": "qubar.site", "foot.be": "Backend on GitHub", "foot.fe": "Frontend on GitHub",
+    "circles.join": "Join",
+    "circles.intro": "After-work rides around the city at an easy pace. Share routes, gear and the views along the way.",
+    "circles.rulesTitle": "CIRCLE RULES",
+    "circles.rule1": "For group rides, list the route, time and pace",
+    "circles.rule2": "No ads; mark second-hand sales clearly",
+    "ed.count": "3 / 9 photos",
+    "disc.newPost": "New post",
+    "chat.floor": "replied under the post",
+    "circles.joined": "Joined",
     "foot.copy": "© 2026 Qubar · Frontend and backend open source under MIT · Names, circles and posts in this page’s demo UI are made up"
   };
   /* 只在脚本里用到、HTML 里没有的中文文案 */
   var ZH_EXTRA = {
-    "circles.j0d": "任何人都可以直接加入。",
-    "circles.j2d": "仅限邀请加入。"
+    "circles.joined": "已加入"
   };
   /* 头像里的单字：中文名 → 英文名首字母 */
   var AV_EN = { "白": "B", "鹿": "L", "满": "X", "茶": "A", "禾": "H", "卖": "D", "豆": "C" };
@@ -528,17 +521,16 @@
     demos.forEach(function (d) { d.stop(); if (d.running) d.start(); });
   });
 
-  /* ---------- 加入方式切换 ---------- */
-  function initSeg() {
-    var desc = $("#segDesc");
-    var btns = $$(".seg-btn");
-    btns.forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        btns.forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
-        var key = "circles.j" + btn.getAttribute("data-seg") + "d";
-        desc.setAttribute("data-i18n", key);
-        desc.innerHTML = t(key);
-      });
+  /* ---------- 一键加入圈子（示意） ---------- */
+  function initJoin() {
+    var btn = $("#ccJoin");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var on = btn.getAttribute("aria-pressed") !== "true";
+      btn.setAttribute("aria-pressed", String(on));
+      var label = btn.querySelector("[data-i18n]");
+      label.setAttribute("data-i18n", on ? "circles.joined" : "circles.join");
+      label.innerHTML = t(on ? "circles.joined" : "circles.join");
     });
   }
 
@@ -824,7 +816,7 @@
   initRotator();
   initReveal();
   initIdeas();
-  initSeg();
+  initJoin();
   initModeration();
   initCreate();
   initFeed();
