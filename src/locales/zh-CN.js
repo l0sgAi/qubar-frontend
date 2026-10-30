@@ -102,6 +102,7 @@ export default {
     managedCircles: '我管理的圈子',
     circleInvites: '邀请成员',
     invite: '圈子邀请',
+    myInvites: '圈子邀请',
     // 动态标题模板：详情页数据加载成功后展示具体内容（见 utils/pageTitle.js）
     postDetailName: '{name}',
     circleDetailName: '{name}',
@@ -339,6 +340,78 @@ export default {
           banned: '你已被该圈子拉黑，无法加入',
           invalid: '邀请已失效',
           generic: '加入失败，请稍后重试'
+        }
+      },
+      tabs: {
+        link: '邀请链接',
+        email: '邮箱邀请'
+      },
+      email: {
+        title: '邮箱邀请',
+        desc: '按注册邮箱邀请指定用户。系统不会发送邮件，对方登录后在「圈子邀请」里确认加入；还没注册的邮箱注册后也能看到',
+        placeholder: '每行一个邮箱，也可以用逗号分隔，一次最多 50 个',
+        count: '{n} / {max}',
+        add: '添加邀请',
+        emptyInput: '请输入要邀请的邮箱',
+        tooMany: '一次最多添加 {max} 个邮箱，当前 {n} 个',
+        addedCount: '已添加 {n} 个邀请',
+        noneAdded: '没有新增邀请',
+        ignoredTitle: '以下邮箱未添加',
+        ignored: {
+          invalid: '格式不正确',
+          duplicate: '本次重复填写',
+          already_invited: '已有待接受或已接受的邀请'
+        },
+        filter: {
+          all: '全部',
+          pending: '待接受',
+          accepted: '已接受',
+          rejected: '已拒绝',
+          revoked: '已撤销'
+        },
+        invitedBy: '{name} 邀请',
+        createdAt: '邀请于 {time}',
+        updatedAt: '更新于 {time}',
+        unknownInviter: '未知用户',
+        empty: '还没有邮箱邀请',
+        emptyFiltered: '没有该状态的邀请',
+        loadFailed: '邮箱邀请加载失败',
+        revoke: '撤销',
+        revokeTitle: '撤销邮箱邀请',
+        revokeContent: '撤销后 {email} 将看不到这条邀请。确定撤销吗？',
+        revoked: '已撤销邀请',
+        error: {
+          handled: '该邀请已处理',
+          notPrivate: '只有私密圈可以添加邮箱邀请',
+          badRequest: '邮箱数量需要在 1 ~ 50 个之间',
+          notFound: '该邀请不存在，列表已刷新',
+          generic: '操作失败，请稍后重试'
+        }
+      },
+      // 我的邀请：后端不发邮件、没有站内通知，这里是被邀请人唯一的入口
+      mine: {
+        title: '圈子邀请',
+        navEntry: '圈子邀请',
+        desc: '圈主或管理员按你的注册邮箱发出的邀请会出现在这里',
+        entryPending: '你有 {n} 个待接受的圈子邀请',
+        entryNone: '暂无待接受的圈子邀请',
+        entryAction: '去查看',
+        invitedBy: '{name} 邀请你加入',
+        unknownInviter: '圈子管理员',
+        accept: '接受',
+        reject: '拒绝',
+        rejectTitle: '拒绝邀请',
+        rejectContent: '拒绝后这条邀请不再显示，确定不加入「{name}」吗？',
+        accepted: '已加入「{name}」',
+        alreadyMember: '你已经是该圈子成员',
+        rejected: '已拒绝邀请',
+        empty: '暂无待接受的圈子邀请',
+        loadFailed: '邀请加载失败，请稍后重试',
+        retry: '重试',
+        error: {
+          invalid: '邀请已失效',
+          banned: '你已被该圈子拉黑，无法加入',
+          generic: '操作失败，请稍后重试'
         }
       }
     },

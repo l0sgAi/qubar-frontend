@@ -143,6 +143,13 @@ export const routes = [
     meta: { titleKey: 'title.invite' }
   },
   {
+    // 我的圈子邀请：需登录。被邀请人确认 / 拒绝按邮箱收到的私密圈邀请（后端不发邮件，这里是唯一入口）
+    path: '/invites',
+    name: 'my-invites',
+    component: () => import('@/views/circle/MyInvites.vue'),
+    meta: { requiresAuth: true, titleKey: 'title.myInvites', mobile: { topBar: 'back' } }
+  },
+  {
     // 帖子详情：访客可读（/post/detail/:id 已开放 anonymous）
     // pageFade：进出该页时启用页面级淡入淡出（见 App.vue）
     path: '/post/:id',

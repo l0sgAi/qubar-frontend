@@ -6,6 +6,10 @@ const unread = vi.hoisted(() => ({ count: null }))
 vi.mock('@/composables/useUnreadNotice', () => ({
   useUnreadNotice: () => ({ unreadCount: unread.count })
 }))
+const invites = vi.hoisted(() => ({ count: null, refresh: null }))
+vi.mock('@/composables/usePendingInvites', () => ({
+  usePendingInvites: () => ({ pendingCount: invites.count, refreshPendingInvites: (...a) => invites.refresh(...a) })
+}))
 vi.mock('naive-ui', async (importOriginal) => ({
   ...(await importOriginal()),
   useMessage: () => ({ warning: vi.fn() })
@@ -28,6 +32,19 @@ const active = (wrapper) => wrapper.findAll('.tab-item.active').map(el => el.fin
 describe('MobileTabBar', () => {
   beforeEach(() => {
     unread.count = ref(0)
+    invites.count = ref(0)
+    invites.refresh = vi.fn()
+  })
+
+  it('「我的」显示待接受的圈子邀请数，挂载时刷新', async () => {
+    localStorage.setItem('qubar_token', 'tok')
+    localStorage.setItem('qubar_token_expire', String(Date.now() + 60_000))
+    invites.count = ref(3)
+    const wrapper = await mountAt('/home')
+    expect(invites.refresh).toHaveBeenCalled()
+    const me = wrapper.findAll('.tab-item').at(3)
+    expect(me.find('.badge').text()).toBe('3')
+    expect(wrapper.findAll('.badge')).toHaveLength(1)
   })
 
   it('访客：首页 / 发现 / 登录，登录项带 redirect', async () => {

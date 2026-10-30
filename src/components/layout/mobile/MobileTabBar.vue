@@ -13,6 +13,10 @@
         <span v-if="item.key === 'notice' && unreadCount > 0" class="badge">
           {{ unreadCount > 99 ? '99+' : unreadCount }}
         </span>
+        <!-- 「我的」：待接受的圈子邀请数（入口在个人中心顶部） -->
+        <span v-else-if="item.key === 'me' && pendingCount > 0" class="badge">
+          {{ pendingCount > 99 ? '99+' : pendingCount }}
+        </span>
       </span>
       <span class="tab-label">{{ t(item.label) }}</span>
     </SmartLink>
@@ -20,7 +24,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NIcon, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -29,6 +33,7 @@ import SmartLink from '@/components/common/SmartLink.vue'
 import { auth } from '@/utils/auth'
 import { activeTab, loginLocation } from '@/utils/mobileNav'
 import { useUnreadNotice } from '@/composables/useUnreadNotice'
+import { usePendingInvites } from '@/composables/usePendingInvites'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -44,6 +49,10 @@ const { unreadCount } = useUnreadNotice({
     router.push('/')
   }
 })
+
+// 待接受的圈子邀请数（与桌面侧栏共用单例，未登录时恒为 0）
+const { pendingCount, refreshPendingInvites } = usePendingInvites()
+onMounted(() => refreshPendingInvites())
 
 const items = computed(() => (isLoggedIn
   ? [

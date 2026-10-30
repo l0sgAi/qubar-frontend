@@ -34,6 +34,7 @@ const PROTECTED = [
   '/circle/1/agents',
   '/circle/1/moderation',
   '/circle/1/invites',
+  '/invites',
   '/circle/managed'
 ]
 
