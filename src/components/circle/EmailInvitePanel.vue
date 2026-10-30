@@ -134,6 +134,7 @@ import { useI18n } from 'vue-i18n'
 import { Mail as MailIcon } from '@vicons/tabler'
 import { addEmailInvites, getEmailInvites, revokeEmailInvite } from '@/api/circleInvite'
 import { useFormatTime } from '@/utils/i18n'
+import { isForbiddenError } from '@/constants/circle'
 import {
   EMAIL_INVITE_MAX_BATCH, EMAIL_INVITE_STATUS, EMAIL_INVITE_STATUS_KEY, INVITE_PAGE_SIZE,
   parseEmailInput, groupIgnoredEmails, isInviteHandledError
@@ -171,8 +172,8 @@ const STATUS_TAG = {
   [EMAIL_INVITE_STATUS.REJECTED]: 'warning'
 }
 
-// 统一错误处理：按 code / HTTP 状态给自有文案（203↔403、204↔404、201↔400、207↔409）
-const handleError = (error, { silentGeneric = false } = {}) => {
+// 添加 / 撤销的错误处理：按 code / HTTP 状态给自有文案（203↔403、204↔404、201↔400、207↔409）
+const handleError = (error) => {
   const code = error?.code
   const status = error?.status
   if (isInviteHandledError(error)) {
@@ -196,7 +197,7 @@ const handleError = (error, { silentGeneric = false } = {}) => {
       : t('circle.invite.email.error.badRequest'))
     return
   }
-  if (!silentGeneric) message.error(t('circle.invite.email.error.generic'))
+  message.error(t('circle.invite.email.error.generic'))
 }
 
 // ---------- 列表 ----------
@@ -230,7 +231,9 @@ const loadInvites = async () => {
     if (myGen !== gen) return
     invites.value = []
     loadFailed.value = true
-    handleError(error, { silentGeneric: true })
+    // 列表自身失败只显示空态里的「加载失败」，不走操作类错误处理：
+    // 那里 404 / 409 会刷新列表，列表持续失败时会无限重试。403 仍交给页面重查角色
+    if (isForbiddenError(error)) handleError(error)
   } finally {
     if (myGen === gen) loading.value = false
   }

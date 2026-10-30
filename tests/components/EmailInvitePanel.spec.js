@@ -147,6 +147,15 @@ describe('EmailInvitePanel 列表', () => {
     expect(api.getEmailInvites).toHaveBeenCalledTimes(2)
   })
 
+  it('列表 404：只请求一次，显示加载失败，不弹提示', async () => {
+    api.getEmailInvites = vi.fn(() => fail({ code: 204, status: 404 }))
+    await mountPanel()
+    await flushPromises()
+    expect(api.getEmailInvites).toHaveBeenCalledTimes(1)
+    expect(wrapper.text()).toContain('邮箱邀请加载失败')
+    expect(msg.warning).not.toHaveBeenCalled()
+  })
+
   it('撤销成功提示并刷新', async () => {
     await mountPanel()
     await wrapper.find('.revoke-btn').trigger('click')
