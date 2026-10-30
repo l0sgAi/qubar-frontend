@@ -29,7 +29,7 @@ const TAB_MATCH = {
   home: (path) => path === '/home',
   discover: (path) => path === '/discover' || path === '/hot' || path === '/search',
   notice: (path) => path === '/notifications',
-  me: (path) => path === '/profile'
+  me: (path) => path === '/profile' || path === '/invites'
 }
 
 /** 当前路径对应的 TabBar 项（无匹配返回 null，如帖子详情、圈子页）。 */

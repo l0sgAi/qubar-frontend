@@ -102,6 +102,7 @@ export default {
     managedCircles: 'Circles I Manage',
     circleInvites: 'Invite Members',
     invite: 'Circle Invitation',
+    myInvites: 'Circle Invitations',
     // Dynamic title templates: show concrete content after data loads (see utils/pageTitle.js)
     postDetailName: '{name}',
     circleDetailName: '{name}',
@@ -339,6 +340,78 @@ export default {
           banned: 'You have been banned from this circle and cannot join',
           invalid: 'Invitation no longer valid',
           generic: 'Failed to join, please try again later'
+        }
+      },
+      tabs: {
+        link: 'Invite Links',
+        email: 'Email Invites'
+      },
+      email: {
+        title: 'Email Invites',
+        desc: 'Invite specific people by their account email. No email is sent. They confirm in "Circle Invitations" after signing in, and emails not yet registered see it after signing up.',
+        placeholder: 'One email per line, or separated by commas. Up to 50 at a time.',
+        count: '{n} / {max}',
+        add: 'Add Invites',
+        emptyInput: 'Enter the emails to invite',
+        tooMany: 'Up to {max} emails at a time, you entered {n}',
+        addedCount: '{n} invites added',
+        noneAdded: 'No new invites added',
+        ignoredTitle: 'These emails were not added',
+        ignored: {
+          invalid: 'Invalid format',
+          duplicate: 'Repeated in this batch',
+          already_invited: 'Already has a pending or accepted invite'
+        },
+        filter: {
+          all: 'All',
+          pending: 'Pending',
+          accepted: 'Accepted',
+          rejected: 'Declined',
+          revoked: 'Revoked'
+        },
+        invitedBy: 'Invited by {name}',
+        createdAt: 'Invited {time}',
+        updatedAt: 'Updated {time}',
+        unknownInviter: 'Unknown user',
+        empty: 'No email invites yet',
+        emptyFiltered: 'No invites with this status',
+        loadFailed: 'Failed to load email invites',
+        revoke: 'Revoke',
+        revokeTitle: 'Revoke Email Invite',
+        revokeContent: '{email} will no longer see this invitation. Revoke it?',
+        revoked: 'Invite revoked',
+        error: {
+          handled: 'This invite has already been handled',
+          notPrivate: 'Only private circles can add email invites',
+          badRequest: 'Enter between 1 and 50 emails',
+          notFound: 'This invite no longer exists. The list has been refreshed.',
+          generic: 'Operation failed, please try again later'
+        }
+      },
+      // My invitations: the backend sends no email or notification, so this is the only entry point
+      mine: {
+        title: 'Circle Invitations',
+        navEntry: 'Invitations',
+        desc: 'Invitations sent to your account email by circle owners or admins appear here',
+        entryPending: 'You have {n} pending circle invitations',
+        entryNone: 'No pending circle invitations',
+        entryAction: 'View',
+        invitedBy: '{name} invited you to join',
+        unknownInviter: 'A circle admin',
+        accept: 'Accept',
+        reject: 'Decline',
+        rejectTitle: 'Decline Invitation',
+        rejectContent: 'This invitation will no longer be shown. Decline joining {name}?',
+        accepted: 'Joined {name}',
+        alreadyMember: 'You are already a member of this circle',
+        rejected: 'Invitation declined',
+        empty: 'No pending circle invitations',
+        loadFailed: 'Failed to load invitations, please try again later',
+        retry: 'Retry',
+        error: {
+          invalid: 'Invitation no longer valid',
+          banned: 'You have been banned from this circle and cannot join',
+          generic: 'Operation failed, please try again later'
         }
       }
     },

@@ -19,6 +19,8 @@
 
         <!-- 左侧内容区域 -->
         <div class="content-area">
+          <!-- 圈子邀请入口（后端 #169 不发邮件，这里是被邀请人的常驻入口） -->
+          <MyInvitesEntry />
           <!-- 标签页内容 -->
           <NCard class="tabs-card" :bordered="false">
           <NTabs
@@ -353,6 +355,7 @@ import SmartLink from '@/components/common/SmartLink.vue'
 import { ChevronRight } from '@vicons/tabler'
 import MyPosts from '@/components/user/MyPosts.vue'
 import MyGroups from '@/components/user/MyGroups.vue'
+import MyInvitesEntry from '@/components/user/MyInvitesEntry.vue'
 import MyFavorites from '@/components/user/MyFavorites.vue'
 import BrowseHistory from '@/components/user/BrowseHistory.vue'
 import ImageCropperModal from '@/components/common/ImageCropperModal.vue'
