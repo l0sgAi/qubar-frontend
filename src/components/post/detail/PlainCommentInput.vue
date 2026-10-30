@@ -41,7 +41,7 @@ import { ref, computed } from 'vue'
 import { NInput, NButton, NIcon, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { Send as SendIcon } from '@vicons/tabler'
-import { useCommentSubmit } from '@/composables/useCommentSubmit'
+import { useCommentSubmit, commentSubmitErrorMessage } from '@/composables/useCommentSubmit'
 
 // 与桌面 MdEditor 的 max-length 一致；接近上限时才显示字数
 const MAX_LENGTH = 2000
@@ -100,7 +100,7 @@ const handleSubmit = async () => {
     emit('update:value', '')
     emit('submit', created)
   } catch (err) {
-    message.error(err.message || t(isReply.value ? 'comment.reply.failed' : 'comment.editor.failed'))
+    message.error(commentSubmitErrorMessage(err, t, isReply.value ? 'comment.reply.failed' : 'comment.editor.failed'))
   }
 }
 

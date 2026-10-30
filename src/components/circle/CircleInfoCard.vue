@@ -24,9 +24,10 @@
           </div>
         </div>
 
-        <!-- 加入按钮 -->
+        <!-- 加入按钮：私密圈非成员只提示需邀请（邀请入口后端 #169 未上线） -->
+        <span v-if="inviteOnly" class="invite-only-hint">{{ t('circle.private.inviteOnly') }}</span>
         <NButton
-          v-if="!circleDetail.is_joined"
+          v-else-if="!circleDetail.is_joined"
           type="primary"
           size="medium"
           round
@@ -52,103 +53,114 @@
         </NButton>
       </div>
 
-      <!-- 统计数据 -->
-      <div class="circle-stats">
-        <div class="stat-item">
-          <NIcon size="18" color="rgba(255,255,255,0.6)">
-            <UserIcon />
-          </NIcon>
-          <div class="stat-content">
-            <span class="stat-value">{{ formatNumber(circleDetail.member_count) }}</span>
-            <span class="stat-label">{{ t('circle.members') }}</span>
+      <!-- 私密圈非成员：后端只返回精简字段（restricted），不渲染简介 / 圈规等 -->
+      <div v-if="circleDetail.restricted" class="restricted-section">
+        <span class="stat-value">{{ formatNumber(circleDetail.member_count) }}</span>
+        <span class="stat-label">{{ t('circle.members') }}</span>
+        <p class="restricted-desc">{{ t('circle.private.membersOnly') }}</p>
+      </div>
+
+      <template v-else>
+        <!-- 统计数据 -->
+        <div class="circle-stats">
+          <div class="stat-item">
+            <NIcon size="18" color="rgba(255,255,255,0.6)">
+              <UserIcon />
+            </NIcon>
+            <div class="stat-content">
+              <span class="stat-value">{{ formatNumber(circleDetail.member_count) }}</span>
+              <span class="stat-label">{{ t('circle.members') }}</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <NIcon size="18" color="rgba(255,255,255,0.6)">
+              <FileTextIcon />
+            </NIcon>
+            <div class="stat-content">
+              <span class="stat-value">{{ formatNumber(circleDetail.post_count) }}</span>
+              <span class="stat-label">{{ t('circle.posts') }}</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <NIcon size="18" color="rgba(255,255,255,0.6)">
+              <FlameIcon />
+            </NIcon>
+            <div class="stat-content">
+              <span class="stat-value">{{ circleDetail.hot }}</span>
+              <span class="stat-label">{{ t('circle.hotness') }}</span>
+            </div>
           </div>
         </div>
-        <div class="stat-item">
-          <NIcon size="18" color="rgba(255,255,255,0.6)">
-            <FileTextIcon />
-          </NIcon>
-          <div class="stat-content">
-            <span class="stat-value">{{ formatNumber(circleDetail.post_count) }}</span>
-            <span class="stat-label">{{ t('circle.posts') }}</span>
+
+        <!-- 简介和规则 -->
+        <div v-if="circleDetail.description" class="description-section">
+          <h4 class="section-title">{{ t('circle.description') }}</h4>
+          <p class="description">{{ getDisplayDescription(circleDetail.description) }}</p>
+          <div
+            v-if="shouldShowMoreButton(circleDetail.description)"
+            class="show-more-btn"
+            @click="toggleDescription"
+          >
+            {{ isDescriptionExpanded ? t('common.cancel') : t('common.loadMore') }}
           </div>
         </div>
-        <div class="stat-item">
-          <NIcon size="18" color="rgba(255,255,255,0.6)">
-            <FlameIcon />
-          </NIcon>
-          <div class="stat-content">
-            <span class="stat-value">{{ circleDetail.hot }}</span>
-            <span class="stat-label">{{ t('circle.hotness') }}</span>
+
+        <!-- 圈子信息 -->
+        <div class="circle-info">
+          <div class="info-row">
+            <span class="label">{{ t('time.createdAt') }}</span>
+            <span class="value">{{ formatDate(circleDetail.create_time) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">{{ t('circle.joinType') }}</span>
+            <span class="value">{{ getJoinTypeText(circleDetail.join_type) }}</span>
           </div>
         </div>
-      </div>
 
-      <!-- 简介和规则 -->
-      <div v-if="circleDetail.description" class="description-section">
-        <h4 class="section-title">{{ t('circle.description') }}</h4>
-        <p class="description">{{ getDisplayDescription(circleDetail.description) }}</p>
-        <div
-          v-if="shouldShowMoreButton(circleDetail.description)"
-          class="show-more-btn"
-          @click="toggleDescription"
-        >
-          {{ isDescriptionExpanded ? t('common.cancel') : t('common.loadMore') }}
+        <!-- 成员信息 -->
+        <div v-if="circleDetail.is_joined" class="member-info">
+          <h4 class="section-title">{{ t('circle.memberInfo') }}</h4>
+          <div class="info-row">
+            <span class="label">{{ t('user.role') }}</span>
+            <NTag :type="getRoleInfo(circleDetail.member_role).type" size="small" round>
+              {{ getRoleInfo(circleDetail.member_role).text }}
+            </NTag>
+          </div>
+          <div class="info-row">
+            <span class="label">{{ t('user.status') }}</span>
+            <NTag :type="getMemberStatusInfo(circleDetail.member_status).type" size="small" round>
+              {{ getMemberStatusInfo(circleDetail.member_status).text }}
+            </NTag>
+          </div>
+          <div v-if="circleDetail.member_is_top" class="info-row">
+            <span class="label">{{ t('circle.pinnedDisplay') }}</span>
+            <span class="value">{{ t('common.yes') }}</span>
+          </div>
+          <div v-if="circleDetail.member_is_disturb" class="info-row">
+            <span class="label">{{ t('circle.messageDisturb') }}</span>
+            <span class="value">{{ t('common.enabled') }}</span>
+          </div>
         </div>
-      </div>
 
-      <!-- 圈子信息 -->
-      <div class="circle-info">
-        <div class="info-row">
-          <span class="label">{{ t('time.createdAt') }}</span>
-          <span class="value">{{ formatDate(circleDetail.create_time) }}</span>
+        <!-- 圈子规则（放在最后） -->
+        <div v-if="circleDetail.rule" class="rules-section">
+          <h4 class="section-title">{{ t('circle.rules') }}</h4>
+          <p class="rules">{{ circleDetail.rule }}</p>
         </div>
-        <div class="info-row">
-          <span class="label">{{ t('circle.joinType') }}</span>
-          <span class="value">{{ getJoinTypeText(circleDetail.join_type) }}</span>
-        </div>
-      </div>
-
-      <!-- 成员信息 -->
-      <div v-if="circleDetail.is_joined" class="member-info">
-        <h4 class="section-title">{{ t('circle.memberInfo') }}</h4>
-        <div class="info-row">
-          <span class="label">{{ t('user.role') }}</span>
-          <NTag :type="getRoleInfo(circleDetail.member_role).type" size="small" round>
-            {{ getRoleInfo(circleDetail.member_role).text }}
-          </NTag>
-        </div>
-        <div class="info-row">
-          <span class="label">{{ t('user.status') }}</span>
-          <NTag :type="getMemberStatusInfo(circleDetail.member_status).type" size="small" round>
-            {{ getMemberStatusInfo(circleDetail.member_status).text }}
-          </NTag>
-        </div>
-        <div v-if="circleDetail.member_is_top" class="info-row">
-          <span class="label">{{ t('circle.pinnedDisplay') }}</span>
-          <span class="value">{{ t('common.yes') }}</span>
-        </div>
-        <div v-if="circleDetail.member_is_disturb" class="info-row">
-          <span class="label">{{ t('circle.messageDisturb') }}</span>
-          <span class="value">{{ t('common.enabled') }}</span>
-        </div>
-      </div>
-
-      <!-- 圈子规则（放在最后） -->
-      <div v-if="circleDetail.rule" class="rules-section">
-        <h4 class="section-title">{{ t('circle.rules') }}</h4>
-        <p class="rules">{{ circleDetail.rule }}</p>
-      </div>
+      </template>
 
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { NAvatar, NButton, NIcon, NTag, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { getCircleDetail, joinCircle, leaveCircle } from '@/api/circle'
+import { useCircleMeta } from '@/composables/useCircleMeta'
+import { needsInviteToJoin, joinErrorKey } from '@/constants/circle'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
 import { User as UserIcon, FileText as FileTextIcon, Flame as FlameIcon } from '@vicons/tabler'
@@ -234,15 +246,10 @@ const formatDate = (dateStr) => {
   return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`
 }
 
-// 获取加入方式文本
-const getJoinTypeText = (type) => {
-  const types = {
-    0: t('circle.joinTypeDirect'),
-    1: t('circle.joinTypeReview'),
-    2: t('circle.joinTypePrivate')
-  }
-  return types[type] || t('common.unknown')
-}
+// 加入方式文本（已下线的需审核 1 按私密展示）
+const { getJoinTypeText } = useCircleMeta()
+
+const inviteOnly = computed(() => needsInviteToJoin(circleDetail.value))
 
 // 获取角色文本和类型
 const getRoleInfo = (role) => {
@@ -257,7 +264,6 @@ const getRoleInfo = (role) => {
 // 获取状态文本和类型
 const getMemberStatusInfo = (status) => {
   const statuses = {
-    0: { text: t('user.normal'), type: 'success' },
     1: { text: t('user.normal'), type: 'success' },
     2: { text: t('circle.statusMuted'), type: 'error' }
   }
@@ -300,7 +306,9 @@ const handleJoinCircle = async () => {
     circleDetail.value.member_count += 1
     emit('join-success', circleDetail.value.id)
   } catch (error) {
-    message.error(t('circle.joinFailed') + ': ' + (error.message || t('common.unknownError')))
+    message.error(t(joinErrorKey(error, circleDetail.value.join_type)))
+    // 409 已是成员：重拉详情对齐按钮状态
+    if (joinErrorKey(error) === 'circle.joinError.alreadyMember') fetchCircleDetail()
   } finally {
     joinLoading.value = false
   }
@@ -455,6 +463,32 @@ defineExpose({
 
 .join-button {
   flex-shrink: 0;
+}
+
+/* 私密圈非成员：需邀请提示（非按钮） */
+.invite-only-hint {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* 私密圈非成员精简视图 */
+.restricted-section {
+  padding: 16px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.restricted-desc {
+  width: 100%;
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
 
 /* 统计数据 */

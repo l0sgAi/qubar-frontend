@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { createComment } from '@/api/comment'
+import { createComment, isCommentUnavailableError } from '@/api/comment'
 import { getUserInfo } from '@/api/auth'
 import { seedContentMentions } from '@/utils/mentionResolve'
 
@@ -10,6 +10,15 @@ import { seedContentMentions } from '@/utils/mentionResolve'
  *
  * @returns {{ submitting: Ref<boolean>, submit: Function }}
  */
+/**
+ * 评论 / 回复提交失败的提示文案。帖子已不可见（删除 / 私密圈非成员，后端 404）时给自有文案，
+ * 不展示后端英文 message；其它错误沿用原逻辑（后端 message 优先，缺省时用 fallbackKey）。
+ */
+export function commentSubmitErrorMessage(err, t, fallbackKey) {
+  if (isCommentUnavailableError(err)) return t('comment.unavailable')
+  return err?.message || t(fallbackKey)
+}
+
 export function useCommentSubmit() {
   const submitting = ref(false)
 

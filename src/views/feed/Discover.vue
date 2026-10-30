@@ -215,11 +215,14 @@ const fetchFirst = async () => {
     posts.value = pList
     circlesToken.value = data.pool_token || ''
     postsToken.value = data.pool_token || ''
-    circlesOffset.value = cList.length
-    postsOffset.value = pList.length
-    // 首屏启发式：满 size 视为可能还有更多，后续单分区响应会以真实 has_more 纠正
-    circlesHasMore.value = cList.length >= PAGE_SIZE
-    postsHasMore.value = pList.length >= PAGE_SIZE
+    // offset 是候选池切片位置，不是已展示条数：私密圈 / 失效帖子在回填时被过滤（后端 #170），
+    // 单页可能不足 size 条，下一页仍从 offset + size 开始，否则会重复取到同一段池
+    circlesOffset.value = PAGE_SIZE
+    postsOffset.value = PAGE_SIZE
+    // section=all 只有一个 has_more，不能分别对应两个分区：首屏有内容或接口说还有更多时
+    // 先视为可能还有更多，不能按「本页满 size」推断；第一次单分区翻页后以真实 has_more 纠正
+    circlesHasMore.value = cList.length > 0 || !!data.has_more
+    postsHasMore.value = pList.length > 0 || !!data.has_more
   } catch (e) {
     console.error('获取发现内容失败:', e)
     message.error(e.message || t('discover.loadFailed'))
@@ -253,7 +256,7 @@ const loadMoreCircles = async () => {
       circles.value = [...circles.value, ...list]
     }
     circlesToken.value = data.pool_token || ''
-    circlesOffset.value = data.pool_refreshed ? list.length : (circlesOffset.value + list.length)
+    circlesOffset.value = data.pool_refreshed ? PAGE_SIZE : (circlesOffset.value + PAGE_SIZE)
     circlesHasMore.value = !!data.has_more
   } catch (e) {
     console.error('发现圈子翻页失败:', e)
@@ -283,7 +286,7 @@ const loadMorePosts = async () => {
       posts.value = [...posts.value, ...list]
     }
     postsToken.value = data.pool_token || ''
-    postsOffset.value = data.pool_refreshed ? list.length : (postsOffset.value + list.length)
+    postsOffset.value = data.pool_refreshed ? PAGE_SIZE : (postsOffset.value + PAGE_SIZE)
     postsHasMore.value = !!data.has_more
   } catch (e) {
     console.error('发现帖子翻页失败:', e)

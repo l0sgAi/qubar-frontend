@@ -166,7 +166,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import CommentItem from '@/components/post/detail/CommentItem.vue'
 import CommentReplies from '@/components/post/detail/CommentReplies.vue'
-import { getCommentList, getCommentReplies, locateComment, COMMENT_NOT_FOUND_CODE } from '@/api/comment'
+import { getCommentList, getCommentReplies, locateComment, isCommentUnavailableError } from '@/api/comment'
 import { seedContentMentions } from '@/utils/mentionResolve'
 import { toggleLike } from '@/api/like'
 import CommentReplyEditor from '@/components/post/detail/CommentReplyEditor.vue'
@@ -650,6 +650,8 @@ const loadComments = async (isRefresh = false) => {
     }
   } catch (error) {
     console.error('加载评论失败:', error)
+    // 帖子已不可见（删除 / 私密圈被移出）：停止翻页，避免触底哨兵反复重试
+    if (isCommentUnavailableError(error)) hasMore.value = false
   } finally {
     loading.value = false
     initialized.value = true
@@ -822,8 +824,8 @@ const locateAndJump = async (commentId) => {
     scrollToComment(targetId)
   } catch (error) {
     if (isStale()) return // 过期目标的错误不提示，交由最新流程处理
-    // 业务码 40401 = 评论不存在、已删除或因审核不可见（对接文档 §3.2）
-    if (error.code === COMMENT_NOT_FOUND_CODE) {
+    // 业务码 40401 = 评论不存在、已删除或因审核不可见（对接文档 §3.2）；私密圈不可见时为 404
+    if (isCommentUnavailableError(error)) {
       message.info(t('notice.targetDeleted'))
     } else {
       console.error('定位评论失败:', error)

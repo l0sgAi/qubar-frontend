@@ -84,7 +84,7 @@ import { NButton, NIcon, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
-import { useCommentSubmit } from '@/composables/useCommentSubmit'
+import { useCommentSubmit, commentSubmitErrorMessage } from '@/composables/useCommentSubmit'
 import { useImageUpload } from '@/composables/useImageUpload'
 import UploadImageWall from '@/components/post/detail/UploadImageWall.vue'
 import MentionPicker from '@/components/post/MentionPicker.vue'
@@ -188,7 +188,7 @@ const handleSubmit = async () => {
     clearMentioned()
     emit('submit', newReply)
   } catch (err) {
-    message.error(err.message || t('comment.reply.failed'))
+    message.error(commentSubmitErrorMessage(err, t, 'comment.reply.failed'))
   }
 }
 
