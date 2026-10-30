@@ -183,6 +183,7 @@ import { useI18n } from 'vue-i18n'
 import { Link as LinkIcon, Copy as CopyIcon } from '@vicons/tabler'
 import { createInviteLink, getInviteLinks, revokeInviteLink } from '@/api/circleInvite'
 import { useFormatTime } from '@/utils/i18n'
+import { isForbiddenError } from '@/constants/circle'
 import { copyText } from '@/utils/share'
 import {
   INVITE_EXPIRE_DEFAULT_HOURS, INVITE_EXPIRE_MIN_HOURS, INVITE_EXPIRE_MAX_HOURS,
@@ -232,7 +233,9 @@ const loadLinks = async () => {
   } catch (error) {
     if (myGen !== gen) return
     loadFailed.value = true
-    handleError(error, { silentGeneric: true })
+    // 列表自身失败只显示空态里的「加载失败」，不走操作类错误处理：
+    // 那里 404 会刷新列表，列表持续 404 时会无限重试。403 仍交给页面重查角色
+    if (isForbiddenError(error)) handleError(error)
   } finally {
     if (myGen === gen) loading.value = false
   }
@@ -267,8 +270,8 @@ const formatDateTime = (time) => {
   return date.toLocaleString(locale.value, options)
 }
 
-// 统一错误处理：按 code / HTTP 状态给自有文案（203↔403、204↔404、201↔400）
-const handleError = (error, { silentGeneric = false } = {}) => {
+// 撤销 / 生成的错误处理：按 code / HTTP 状态给自有文案（203↔403、204↔404、201↔400）
+const handleError = (error) => {
   const code = error?.code
   const status = error?.status
   if (code === 203 || status === 403) {
@@ -288,7 +291,7 @@ const handleError = (error, { silentGeneric = false } = {}) => {
       : t('circle.invite.link.error.badRequest'))
     return
   }
-  if (!silentGeneric) message.error(t('circle.invite.link.error.generic'))
+  message.error(t('circle.invite.link.error.generic'))
 }
 
 // ---------- 撤销 ----------

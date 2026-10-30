@@ -113,6 +113,26 @@ describe('InviteLinkPanel 列表', () => {
     expect(api.getInviteLinks).toHaveBeenCalledTimes(2)
   })
 
+  it('列表 404：只请求一次，显示加载失败，不弹提示', async () => {
+    api.getInviteLinks = vi.fn(() => fail({ code: 204, status: 404 }))
+    await mountPanel()
+    await flushPromises()
+    expect(api.getInviteLinks).toHaveBeenCalledTimes(1)
+    expect(wrapper.text()).toContain('邀请链接加载失败')
+    expect(msg.warning).not.toHaveBeenCalled()
+    expect(msg.error).not.toHaveBeenCalled()
+  })
+
+  it('撤销返回 404：提示链接不存在并刷新一次', async () => {
+    api.revokeInviteLink = vi.fn(() => fail({ code: 204, status: 404 }))
+    await mountPanel()
+    await wrapper.find('.revoke-btn').trigger('click')
+    await dialogs[0].onPositiveClick()
+    await flushPromises()
+    expect(msg.warning).toHaveBeenCalledWith('该邀请链接不存在，列表已刷新')
+    expect(api.getInviteLinks).toHaveBeenCalledTimes(2)
+  })
+
   it('列表 403：提示无权限并通知页面重查角色', async () => {
     api.getInviteLinks = vi.fn(() => fail({ code: 203, status: 403 }))
     await mountPanel()
