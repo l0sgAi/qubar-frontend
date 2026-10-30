@@ -24,7 +24,7 @@
           </div>
         </div>
 
-        <!-- 加入按钮：私密圈非成员只提示需邀请（邀请入口后端 #169 未上线） -->
+        <!-- 加入按钮：私密圈非成员只提示需邀请（只能通过邀请链接加入，后端 #169） -->
         <span v-if="inviteOnly" class="invite-only-hint">{{ t('circle.private.inviteOnly') }}</span>
         <NButton
           v-else-if="!circleDetail.is_joined"

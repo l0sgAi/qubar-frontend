@@ -100,6 +100,8 @@ export default {
     circleAgents: 'Circle Agents',
     circleModeration: 'Moderation',
     managedCircles: 'Circles I Manage',
+    circleInvites: 'Invite Members',
+    invite: 'Circle Invitation',
     // Dynamic title templates: show concrete content after data loads (see utils/pageTitle.js)
     postDetailName: '{name}',
     circleDetailName: '{name}',
@@ -108,6 +110,8 @@ export default {
     circleEditName: 'Edit Circle: {name}',
     circleAgentsName: 'Agent Management: {name}',
     circleModerationName: 'Moderation: {name}',
+    circleInvitesName: 'Invite Members: {name}',
+    inviteName: 'Join {name}',
     profileName: 'Profile: {name}',
     notFound: 'Page Not Found'
   },
@@ -264,7 +268,79 @@ export default {
       inviteOnly: 'Private circle, invite only',
       membersOnly: 'Private circle, members only',
       membersOnlyDesc: 'Posts and details are only visible to members. Join by invitation to see them.',
-      restrictedNote: 'Description, rules and other details are visible to members only'
+      restrictedNote: 'Description, rules and other details are visible to members only',
+      inviteHint: 'Invite only. Ask the owner or an admin for an invite link.'
+    },
+    // Private circle invitations (backend v0.7.0, #169)
+    invite: {
+      title: 'Invite Members',
+      entry: 'Invite',
+      publicCircle: 'Public circles need no invitation. Anyone can join directly.',
+      link: {
+        title: 'Invite Links',
+        desc: 'Share a link in any chat app. People who open it can join this circle after signing in and confirming.',
+        create: 'Create Link',
+        createTitle: 'Create Invite Link',
+        expire: 'Expires in',
+        expireDays: '{n} days',
+        hoursUnit: 'hours',
+        expireHint: '1 hour to 30 days, 7 days by default',
+        maxUses: 'Max uses',
+        maxUsesPlaceholder: 'Unlimited',
+        maxUsesHint: 'Leave empty for unlimited, 1 to 10000',
+        createdTitle: 'Invite link created',
+        onlyOnce: 'This link is shown only once. Copy it now, it cannot be viewed again after closing.',
+        copy: 'Copy Link',
+        copied: 'Invite link copied',
+        copyFailed: 'Copy failed. Please select the link and copy it manually.',
+        done: 'I have saved it',
+        usesLimit: 'Up to {n} uses',
+        usesUnlimited: 'Unlimited uses',
+        empty: 'No invite links yet',
+        expireAt: 'Expires {time}',
+        used: 'Used {used} / {max}',
+        usedUnlimited: 'Used {used} · unlimited',
+        createdAt: 'Created {time}',
+        unknownCreator: 'Unknown user',
+        status: {
+          active: 'Active',
+          expired: 'Expired',
+          revoked: 'Revoked',
+          usedUp: 'Used up'
+        },
+        revoke: 'Revoke',
+        revokeTitle: 'Revoke Invite Link',
+        revokeContent: 'The link stops working immediately. Members who already joined with it are not affected. Revoke it?',
+        revoked: 'Invite link revoked',
+        loadFailed: 'Failed to load invite links',
+        error: {
+          notPrivate: 'Only private circles can create invite links',
+          badRequest: 'Expiry or max uses is out of range',
+          notFound: 'This invite link no longer exists. The list has been refreshed.',
+          generic: 'Operation failed, please try again later'
+        }
+      },
+      landing: {
+        title: 'You are invited to a circle',
+        memberCount: '{n} members',
+        privateTag: 'Private',
+        desc: 'Join to see posts in this circle and take part in discussions',
+        join: 'Join Circle',
+        loginToJoin: 'Sign in to Join',
+        loginHint: 'You will come back to this page after signing in',
+        joined: 'Joined {name}',
+        alreadyMember: 'You are already a member of this circle',
+        invalidTitle: 'Invitation no longer valid',
+        invalidDesc: 'Ask the person who invited you for a new invite link',
+        loadFailed: 'Failed to load the invitation. Check your network and try again.',
+        retry: 'Retry',
+        goDiscover: 'Discover more circles',
+        error: {
+          banned: 'You have been banned from this circle and cannot join',
+          invalid: 'Invitation no longer valid',
+          generic: 'Failed to join, please try again later'
+        }
+      }
     },
     leaveSuccess: 'Left circle',
     leaveFailed: 'Failed to leave',

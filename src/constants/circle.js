@@ -41,7 +41,7 @@ export function isPrivateJoinType(joinType) {
 
 /**
  * 私密圈非成员（含访客）不显示可点击的加入按钮：POST /circle/join 对私密圈一律 403，
- * 邀请入口（后端 #169）未上线前只展示「需邀请加入」提示。
+ * 只能拿邀请链接走落地页加入（后端 #169），这里只展示「需邀请加入」提示。
  */
 export function needsInviteToJoin(circle) {
   return !!circle && !circle.is_joined && isPrivateJoinType(circle.join_type)

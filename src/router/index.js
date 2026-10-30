@@ -116,6 +116,14 @@ export const routes = [
     meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleModeration', mobile: { supported: false } }
   },
   {
+    // 圈子邀请管理：需登录；圈主/管理员管理私密圈邀请链接（后端 v0.7.0 #169），角色校验在页面内自查。
+    // 邀请链接要随手分享，移动端也支持（其他管理页仍是桌面专属）
+    path: '/circle/:id/invites',
+    name: 'circle-invites',
+    component: () => import('@/views/circle/CircleInvites.vue'),
+    meta: { requiresAuth: true, pageFade: true, titleKey: 'title.circleInvites', mobile: { topBar: 'back' } }
+  },
+  {
     // 对接文档里的入口写法（/circle/:id/manage?tab=reports&focus=）：重定向到内容审核页，tab 别名由页面解析
     path: '/circle/:id/manage',
     redirect: to => ({ name: 'circle-moderation', params: to.params, query: to.query })
@@ -126,6 +134,13 @@ export const routes = [
     name: 'managed-circles',
     component: () => import('@/views/circle/ManagedCircles.vue'),
     meta: { requiresAuth: true, pageFade: true, titleKey: 'title.managedCircles', mobile: { supported: false } }
+  },
+  {
+    // 邀请落地页：访客可读（/circle/invite/preview 开放 anonymous），点「加入」时未登录先跳登录再回到本页
+    path: '/invite/:token',
+    name: 'invite-landing',
+    component: () => import('@/views/circle/InviteLanding.vue'),
+    meta: { titleKey: 'title.invite' }
   },
   {
     // 帖子详情：访客可读（/post/detail/:id 已开放 anonymous）

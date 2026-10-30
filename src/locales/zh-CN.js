@@ -100,6 +100,8 @@ export default {
     circleAgents: '圈子机器人管理',
     circleModeration: '内容审核',
     managedCircles: '我管理的圈子',
+    circleInvites: '邀请成员',
+    invite: '圈子邀请',
     // 动态标题模板：详情页数据加载成功后展示具体内容（见 utils/pageTitle.js）
     postDetailName: '{name}',
     circleDetailName: '{name}',
@@ -108,6 +110,8 @@ export default {
     circleEditName: '编辑圈子资料：{name}',
     circleAgentsName: '机器人管理：{name}',
     circleModerationName: '内容审核：{name}',
+    circleInvitesName: '邀请成员：{name}',
+    inviteName: '邀请加入：{name}',
     profileName: '个人中心：{name}',
     notFound: '页面不存在'
   },
@@ -264,7 +268,79 @@ export default {
       inviteOnly: '私密圈，需邀请加入',
       membersOnly: '私密圈，仅成员可见',
       membersOnlyDesc: '圈内帖子和资料只对成员开放，受邀加入后即可查看',
-      restrictedNote: '简介、圈规等资料仅成员可见'
+      restrictedNote: '简介、圈规等资料仅成员可见',
+      inviteHint: '仅限邀请加入，可向圈主或管理员索取邀请链接'
+    },
+    // 私密圈邀请（后端 v0.7.0，#169）
+    invite: {
+      title: '邀请成员',
+      entry: '邀请成员',
+      publicCircle: '公开圈子无需邀请，用户可以直接加入',
+      link: {
+        title: '邀请链接',
+        desc: '生成链接后通过任意聊天工具分享，对方登录并确认后即可加入本圈',
+        create: '生成链接',
+        createTitle: '生成邀请链接',
+        expire: '有效期',
+        expireDays: '{n} 天',
+        hoursUnit: '小时',
+        expireHint: '1 小时 ~ 30 天，默认 7 天',
+        maxUses: '使用次数上限',
+        maxUsesPlaceholder: '不限',
+        maxUsesHint: '留空为不限次数，范围 1 ~ 10000',
+        createdTitle: '邀请链接已生成',
+        onlyOnce: '链接只显示这一次，关闭后无法再查看，请立即复制保存',
+        copy: '复制链接',
+        copied: '已复制邀请链接',
+        copyFailed: '复制失败，请手动选中链接复制',
+        done: '我已保存',
+        usesLimit: '最多 {n} 次',
+        usesUnlimited: '不限次数',
+        empty: '还没有邀请链接',
+        expireAt: '有效期至 {time}',
+        used: '已用 {used} / {max} 次',
+        usedUnlimited: '已用 {used} 次 · 不限',
+        createdAt: '创建于 {time}',
+        unknownCreator: '未知用户',
+        status: {
+          active: '有效',
+          expired: '已过期',
+          revoked: '已撤销',
+          usedUp: '已用完'
+        },
+        revoke: '撤销',
+        revokeTitle: '撤销邀请链接',
+        revokeContent: '撤销后该链接立即失效，已通过它加入的成员不受影响。确定撤销吗？',
+        revoked: '已撤销邀请链接',
+        loadFailed: '邀请链接加载失败',
+        error: {
+          notPrivate: '只有私密圈可以生成邀请链接',
+          badRequest: '有效期或次数上限超出范围',
+          notFound: '该邀请链接不存在，列表已刷新',
+          generic: '操作失败，请稍后重试'
+        }
+      },
+      landing: {
+        title: '你收到一个圈子邀请',
+        memberCount: '{n} 位成员',
+        privateTag: '私密圈',
+        desc: '加入后可以查看圈内帖子并参与讨论',
+        join: '加入圈子',
+        loginToJoin: '登录后加入',
+        loginHint: '登录后会回到这个页面继续加入',
+        joined: '已加入「{name}」',
+        alreadyMember: '你已经是该圈子成员',
+        invalidTitle: '邀请已失效',
+        invalidDesc: '请联系邀请人重新获取邀请链接',
+        loadFailed: '邀请信息加载失败，请检查网络后重试',
+        retry: '重试',
+        goDiscover: '去发现更多圈子',
+        error: {
+          banned: '你已被该圈子拉黑，无法加入',
+          invalid: '邀请已失效',
+          generic: '加入失败，请稍后重试'
+        }
+      }
     },
     leaveSuccess: '已退出圈子',
     leaveFailed: '退出失败',
