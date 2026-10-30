@@ -1,6 +1,7 @@
 <template>
   <div class="admin-header">
-    <div class="admin-top">
+    <!-- 移动端外框只有邀请页可用，顶栏已带返回，这里不再重复返回和管理区切换 -->
+    <div v-if="!mobileShell" class="admin-top">
       <NButton text size="small" @click="goDetail">
         <template #icon>
           <NIcon><ArrowLeftIcon /></NIcon>
@@ -21,8 +22,8 @@
         </NTag>
       </div>
 
-      <!-- 管理区切换：成员管理 / 编辑资料 / 内容审核 -->
-      <div class="seg-nav">
+      <!-- 管理区切换：成员管理 / 编辑资料 / 内容审核 / 邀请成员（仅私密圈） -->
+      <div v-if="!mobileShell" class="seg-nav">
         <button
           class="seg-item"
           :class="{ active: active === 'members' }"
@@ -53,6 +54,16 @@
             {{ moderationBadgeFull ? t('circle.manage.badgeFull') : moderationBadgeCount }}
           </span>
         </button>
+        <button
+          v-if="isPrivate"
+          class="seg-item"
+          :class="{ active: active === 'invites' }"
+          type="button"
+          @click="go('invites')"
+        >
+          <NIcon size="16"><UserPlusIcon /></NIcon>
+          <span>{{ t('circle.invite.title') }}</span>
+        </button>
       </div>
     </div>
   </div>
@@ -67,11 +78,13 @@ import {
   ArrowLeft as ArrowLeftIcon,
   Users as UsersIcon,
   Settings as SettingsIcon,
-  ShieldCheck as ShieldCheckIcon
+  ShieldCheck as ShieldCheckIcon,
+  UserPlus as UserPlusIcon
 } from '@vicons/tabler'
 import { getModerationCounts } from '@/api/moderation'
 import { useCircleMeta } from '@/composables/useCircleMeta'
-import { isManager } from '@/constants/circle'
+import { useMobileShell } from '@/composables/useAppShell'
+import { isManager, isPrivateJoinType } from '@/constants/circle'
 
 const props = defineProps({
   // 圈子详情对象（含 member_role / name / avatar_url）
@@ -79,7 +92,7 @@ const props = defineProps({
     type: Object,
     default: () => ({})
   },
-  // 当前激活的管理页：'members' | 'edit' | 'moderation'
+  // 当前激活的管理页：'members' | 'edit' | 'moderation' | 'invites'
   active: {
     type: String,
     required: true
@@ -92,6 +105,9 @@ const { t } = useI18n()
 const { getRoleInfo } = useCircleMeta()
 
 const myRole = computed(() => props.circle.member_role || 0)
+// 邀请只对私密圈开放（公开圈生成链接返回 400）
+const isPrivate = computed(() => isPrivateJoinType(props.circle.join_type))
+const mobileShell = useMobileShell()
 
 const goDetail = () => router.push(`/circle/${route.params.id}`)
 // seg key 与管理页子路径一一对应：/circle/:id/<key>

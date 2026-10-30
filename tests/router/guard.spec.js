@@ -33,6 +33,7 @@ const PROTECTED = [
   '/circle/1/edit',
   '/circle/1/agents',
   '/circle/1/moderation',
+  '/circle/1/invites',
   '/circle/managed'
 ]
 
@@ -47,6 +48,7 @@ const PUBLIC = [
   '/privacy',
   '/search',
   '/circle/1',
+  '/invite/abc',
   '/post/1'
 ]
 

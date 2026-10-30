@@ -132,6 +132,13 @@ describe('CircleDetail：私密圈非成员空态（后端 #170）', () => {
     expect(buttonByText('加入圈子')).toBeUndefined()
   })
 
+  it('restricted：空态补充「仅限邀请加入」说明', async () => {
+    api.getCircleDetail = vi.fn(() => Promise.resolve({ data: restrictedDetail() }))
+    await mountPage()
+
+    expect(wrapper.find('.members-only-invite').text()).toContain('仅限邀请加入')
+  })
+
   it('私密圈成员：完整详情与帖子列表照常', async () => {
     api.getCircleDetail = vi.fn(() => Promise.resolve({
       data: fullDetail({ join_type: 2, is_joined: true, member_role: 10, member_status: 1 })
@@ -187,5 +194,19 @@ describe('CircleDetail：私密圈非成员空态（后端 #170）', () => {
 
     expect(api.getModerationCounts).toHaveBeenCalledWith(CIRCLE_ID)
     expect(wrapper.find('.manage-badge').text()).toBe('3')
+  })
+
+  it.each([
+    ['私密圈圈主', { join_type: 2, member_role: 30 }, true],
+    ['私密圈管理员', { join_type: 2, member_role: 20 }, true],
+    ['私密圈普通成员', { join_type: 2, member_role: 10 }, false],
+    ['公开圈圈主', { join_type: 0, member_role: 30 }, false]
+  ])('邀请成员入口：%s → %s', async (_, extra, visible) => {
+    api.getCircleDetail = vi.fn(() => Promise.resolve({
+      data: fullDetail({ is_joined: true, member_status: 1, ...extra })
+    }))
+    await mountPage()
+
+    expect(wrapper.find('.invite-entry').exists()).toBe(visible)
   })
 })

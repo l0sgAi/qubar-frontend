@@ -102,6 +102,39 @@
                 </span>
               </NButton>
 
+              <!-- 邀请成员（私密圈的圈主/管理员可见）：移动端也提供，方便随手分享邀请链接。
+                   桌面端头部按钮已多，改为图标按钮 + 提示，避免挤压圈名 -->
+              <NTooltip v-if="canInvite && !mobileShell" trigger="hover">
+                <template #trigger>
+                  <NButton
+                    size="large"
+                    secondary
+                    circle
+                    class="invite-entry"
+                    :aria-label="t('circle.invite.entry')"
+                    @click="goInvites"
+                  >
+                    <template #icon>
+                      <NIcon><UserPlusIcon /></NIcon>
+                    </template>
+                  </NButton>
+                </template>
+                {{ t('circle.invite.entry') }}
+              </NTooltip>
+              <NButton
+                v-else-if="canInvite"
+                size="large"
+                secondary
+                round
+                class="invite-entry"
+                @click="goInvites"
+              >
+                <template #icon>
+                  <NIcon><UserPlusIcon /></NIcon>
+                </template>
+                {{ t('circle.invite.entry') }}
+              </NButton>
+
               <!-- 加入/退出按钮：私密圈非成员（含访客）只提示需邀请，不放可点击按钮 -->
               <span v-if="inviteOnly" class="invite-only-hint">
                 <NIcon size="16"><LockIcon /></NIcon>
@@ -153,6 +186,7 @@
             <NIcon size="40" class="members-only-icon"><LockIcon /></NIcon>
             <h3 class="members-only-title">{{ t('circle.private.membersOnly') }}</h3>
             <p class="members-only-desc">{{ t('circle.private.membersOnlyDesc') }}</p>
+            <p class="members-only-invite">{{ t('circle.private.inviteHint') }}</p>
           </div>
           <NTabs v-else v-model:value="activeTab" type="segment" animated>
             <NTabPane name="hot" :tab="t('post.hottest')">
@@ -325,7 +359,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, inject, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { NTabs, NTabPane, NButton, NIcon, NTag, NSpin, useMessage, useDialog } from 'naive-ui'
+import { NTabs, NTabPane, NButton, NIcon, NTag, NSpin, NTooltip, useMessage, useDialog } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import AppShell from '@/components/layout/AppShell.vue'
 import AppDropdown from '@/components/common/AppDropdown.vue'
@@ -340,10 +374,11 @@ import { requireLogin } from '@/utils/guest-action'
 import { useCircleMeta } from '@/composables/useCircleMeta'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { isManager, needsInviteToJoin, joinErrorKey, isForbiddenError } from '@/constants/circle'
+import { canManageInvites } from '@/constants/circleInvite'
 import { getModerationCounts } from '@/api/moderation'
 import { Bell as BellIcon, BellOff as BellOffIcon, Edit as EditIcon, DotsVertical as MoreIcon } from '@vicons/tabler'
 import { User as UserIcon, FileText as FileTextIcon, Flame as FlameIcon } from '@vicons/tabler'
-import { ShieldCheck as ShieldCheckIcon, Lock as LockIcon } from '@vicons/tabler'
+import { ShieldCheck as ShieldCheckIcon, Lock as LockIcon, UserPlus as UserPlusIcon } from '@vicons/tabler'
 
 const route = useRoute()
 const router = useRouter()
@@ -408,7 +443,7 @@ const restricted = computed(() => !!circleDetail.value.restricted)
 // 圈内帖子 403（restricted 时不请求；成员中途被移出等情况仍可能拿到 403）
 const postsForbidden = ref(false)
 const membersOnly = computed(() => restricted.value || postsForbidden.value)
-// 私密圈非成员不放可点击的加入按钮（邀请入口后端 #169 未上线）
+// 私密圈非成员不放可点击的加入按钮：只能通过邀请链接加入（后端 #169）
 const inviteOnly = computed(() => needsInviteToJoin(circleDetail.value))
 const joinLoading = ref(false)
 const activeTab = ref('hot')
@@ -711,6 +746,9 @@ const handleMobileShare = async () => {
 // ---------- 管理入口（圈主/管理员） ----------
 
 const canManage = computed(() => isManager(circleDetail.value.member_role))
+// 私密圈的圈主/管理员：头部直接给邀请入口
+const canInvite = computed(() => canManageInvites(circleDetail.value))
+const goInvites = () => router.push(`/circle/${circleDetail.value.id}/invites`)
 
 // 待处理角标（入口提示）：待审帖子 + 被举报帖子（getModerationCounts：优先 #156 summary，否则各拉一页），
 // 满页显示「20+」。入圈审核已下线（后端 #168），不再统计入圈待审
@@ -965,6 +1003,12 @@ onUnmounted(() => {
   margin: 0;
   font-size: 0.9rem;
   color: var(--text-secondary);
+}
+
+.members-only-invite {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: #8af0d0;
 }
 
 /* 私密圈非成员：需邀请提示（替代加入按钮，非可点击） */
@@ -1242,6 +1286,11 @@ onUnmounted(() => {
   .action-buttons button {
     flex: 1;
     min-width: 0;
+  }
+
+  /* 邀请成员带文字，按内容定宽，其余按钮均分剩余空间 */
+  .action-buttons .invite-entry {
+    flex: 0 0 auto;
   }
 
   .circle-name {
