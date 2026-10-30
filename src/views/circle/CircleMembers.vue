@@ -22,10 +22,10 @@
       </div>
 
       <template v-else>
-        <!-- 管理页共享页头：返回 + 圈子信息 + 角色 + 成员管理/编辑资料切换（含待审核角标） -->
-        <CircleAdminHeader ref="adminHeaderRef" active="members" :circle="circle" />
+        <!-- 管理页共享页头：返回 + 圈子信息 + 角色 + 成员管理/编辑资料切换 -->
+        <CircleAdminHeader active="members" :circle="circle" />
 
-        <!-- 成员 Tab：正常成员(1) / 待审核(0) / 禁言中(2) / 已拉黑(3)；搜索框固定在 tab 行右侧 -->
+        <!-- 成员 Tab：正常成员(1) / 禁言中(2) / 已拉黑(3)（入圈审核已下线，后端 #168）；搜索框固定在 tab 行右侧 -->
         <div class="members-panel">
           <NTabs v-model:value="activeTab" type="line" animated size="large">
             <!-- 搜索框：作用于当前 Tab（服务端按用户名/邮箱匹配，可与 status 过滤叠加） -->
@@ -88,32 +88,8 @@
 
                   <!-- 行内操作：按权限矩阵显隐，目标 role >= 自己一律不渲染 -->
                   <div class="row-actions">
-                    <!-- 待审核：通过 / 拒绝 -->
-                    <template v-if="tab.key === 'pending'">
-                      <NButton
-                        size="tiny"
-                        type="primary"
-                        round
-                        :disabled="actingId !== ''"
-                        :loading="actingId === m.user_id"
-                        @click="handleApprove(m)"
-                      >
-                        {{ t('circle.manage.actions.approve') }}
-                      </NButton>
-                      <NButton
-                        size="tiny"
-                        quaternary
-                        round
-                        type="error"
-                        :disabled="actingId !== ''"
-                        @click="handleReject(m)"
-                      >
-                        {{ t('circle.manage.actions.reject') }}
-                      </NButton>
-                    </template>
-
-                    <!-- 正常成员：禁言 / 拉黑（圈主额外有任免与转让菜单） -->
-                    <template v-else-if="tab.key === 'normal'">
+                    <!-- 正常成员：禁言 / 移出 / 拉黑（圈主额外有任免与转让菜单） -->
+                    <template v-if="tab.key === 'normal'">
                       <template v-if="canModerate(myRole, m.role)">
                         <NButton
                           size="tiny"
@@ -123,6 +99,17 @@
                           @click="openMuteModal(m)"
                         >
                           {{ t('circle.manage.actions.mute') }}
+                        </NButton>
+                        <NButton
+                          size="tiny"
+                          quaternary
+                          round
+                          type="warning"
+                          class="action-remove"
+                          :disabled="actingId === m.user_id"
+                          @click="handleRemove(m)"
+                        >
+                          {{ t('circle.manage.actions.remove') }}
                         </NButton>
                         <NButton
                           size="tiny"
@@ -155,29 +142,40 @@
                       </AppDropdown>
                     </template>
 
-                    <!-- 禁言中：解除禁言 / 拉黑 -->
+                    <!-- 禁言中：解除禁言 / 移出 / 拉黑 -->
                     <template v-else-if="tab.key === 'muted'">
-                      <NButton
-                        v-if="canModerate(myRole, m.role)"
-                        size="tiny"
-                        quaternary
-                        round
-                        :disabled="actingId === m.user_id"
-                        @click="handleUnmute(m)"
-                      >
-                        {{ t('circle.manage.actions.unmute') }}
-                      </NButton>
-                      <NButton
-                        v-if="canModerate(myRole, m.role)"
-                        size="tiny"
-                        quaternary
-                        round
-                        type="error"
-                        :disabled="actingId === m.user_id"
-                        @click="handleBan(m)"
-                      >
-                        {{ t('circle.manage.actions.ban') }}
-                      </NButton>
+                      <template v-if="canModerate(myRole, m.role)">
+                        <NButton
+                          size="tiny"
+                          quaternary
+                          round
+                          :disabled="actingId === m.user_id"
+                          @click="handleUnmute(m)"
+                        >
+                          {{ t('circle.manage.actions.unmute') }}
+                        </NButton>
+                        <NButton
+                          size="tiny"
+                          quaternary
+                          round
+                          type="warning"
+                          class="action-remove"
+                          :disabled="actingId === m.user_id"
+                          @click="handleRemove(m)"
+                        >
+                          {{ t('circle.manage.actions.remove') }}
+                        </NButton>
+                        <NButton
+                          size="tiny"
+                          quaternary
+                          round
+                          type="error"
+                          :disabled="actingId === m.user_id"
+                          @click="handleBan(m)"
+                        >
+                          {{ t('circle.manage.actions.ban') }}
+                        </NButton>
+                      </template>
                     </template>
 
                     <!-- 已拉黑：解除拉黑 -->
@@ -282,7 +280,7 @@ import SmartLink from '@/components/common/SmartLink.vue'
 import CircleAdminHeader from '@/components/circle/CircleAdminHeader.vue'
 import {
   getCircleDetail, getCircleMembers, setMemberRole, transferOwnership,
-  muteMember, unmuteMember, banMember, unbanMember, reviewMember
+  muteMember, unmuteMember, banMember, unbanMember, removeMember
 } from '@/api/circle'
 import { useFormatTime } from '@/utils/i18n'
 import { useDebounceFn } from '@/utils/throttle'
@@ -314,10 +312,9 @@ const pageLoading = ref(true)
 const actingId = ref('')
 
 // Tab 定义：key → 后端 status（注意按文档以字符串传参）；默认展示正常成员
-const TAB_STATUS = { pending: '0', normal: '1', muted: '2', banned: '3' }
+const TAB_STATUS = { normal: '1', muted: '2', banned: '3' }
 const tabDefs = computed(() => [
   { key: 'normal', label: t('circle.manage.tabs.normal') },
-  { key: 'pending', label: t('circle.manage.tabs.pending') },
   { key: 'muted', label: t('circle.manage.tabs.muted') },
   { key: 'banned', label: t('circle.manage.tabs.banned') }
 ])
@@ -325,14 +322,13 @@ const activeTab = ref('normal')
 
 // 每个 Tab 独立的游标分页状态（keyword 为该 Tab 的搜索关键字，服务端按用户名/邮箱匹配）
 const tabState = reactive({
-  pending: { members: [], cursor: '', hasMore: true, loading: false, loaded: false, keyword: '' },
   normal: { members: [], cursor: '', hasMore: true, loading: false, loaded: false, keyword: '' },
   muted: { members: [], cursor: '', hasMore: true, loading: false, loaded: false, keyword: '' },
   banned: { members: [], cursor: '', hasMore: true, loading: false, loaded: false, keyword: '' }
 })
 
 // 加载世代：刷新 Tab 后旧请求的响应直接丢弃，防止覆盖新列表
-const genMap = { pending: 0, normal: 0, muted: 0, banned: 0 }
+const genMap = { normal: 0, muted: 0, banned: 0 }
 
 const loadTab = async (key, isRefresh = false) => {
   const state = tabState[key]
@@ -392,9 +388,6 @@ const reloadTab = async (key) => {
   tabState[key].hasMore = true
   await loadTab(key, true)
 }
-
-// 共享页头（含待审核角标），审核操作后经 ref 同步角标
-const adminHeaderRef = ref(null)
 
 // ---------- 搜索（服务端 keyword：按用户名/邮箱匹配，与当前 Tab 的 status 过滤叠加） ----------
 
@@ -469,27 +462,29 @@ const muteRemaining = (m) => {
 }
 
 // 统一错误处理：按 error.code 分支渲染自有文案，不展示后端英文 message。
+// 信封 code 与 HTTP 状态一一对应（201↔400、203↔403、204↔404、207↔409，文档 §四），两者都认。
 // 202/401 未登录已由 axios 拦截器全局处理（清 token 跳登录），此处无需关心。
 const handleManageError = (error) => {
   const code = error?.code
-  if (code === 409) {
+  const status = error?.status
+  if (code === 207 || code === 409 || status === 409) {
     // 状态冲突：目标已被别人改过 / 已是该角色 / 重复操作 → 刷新后让用户重试
     message.warning(t('circle.manage.error.conflict'))
     reloadTab(activeTab.value)
     return
   }
-  if (code === 203) {
+  if (code === 203 || status === 403) {
     // 权限不足：角色可能已变更，重查详情，若已降级则退回圈子详情页
     message.error(t('circle.manage.error.noPermission'))
     refreshRoleAndGuard()
     return
   }
-  if (code === 204) {
+  if (code === 204 || status === 404) {
     message.warning(t('circle.manage.error.memberNotFound'))
     reloadTab(activeTab.value)
     return
   }
-  if (code === 201) {
+  if (code === 201 || status === 400) {
     message.error(t('circle.manage.error.badRequest'))
     return
   }
@@ -509,47 +504,17 @@ const refreshRoleAndGuard = async () => {
   }
 }
 
-// 执行一次管理操作：成功后就地刷新当前 Tab；affectsPending 时同步页头待审核角标
-const executeAction = async ({ apiCall, successMsg, affectsPending = false }) => {
+// 执行一次管理操作：成功后就地刷新当前 Tab
+const executeAction = async ({ apiCall, successMsg }) => {
   try {
     await apiCall()
     message.success(successMsg)
     await reloadTab(activeTab.value)
-    if (affectsPending) {
-      adminHeaderRef.value?.refreshPendingBadge()
-    }
     return true
   } catch (error) {
     handleManageError(error)
     return false
   }
-}
-
-// 待审核：通过 / 拒绝（拒绝算成功，靠 approve 参数区分）
-const handleApprove = (m) => {
-  actingId.value = m.user_id
-  executeAction({
-    apiCall: () => reviewMember({ circle_id: circleId.value, target_user_id: m.user_id, approve: true }),
-    successMsg: t('circle.manage.success.approved'),
-    affectsPending: true
-  }).finally(() => { actingId.value = '' })
-}
-
-const handleReject = (m) => {
-  dialog.warning({
-    title: t('circle.manage.confirm.rejectTitle'),
-    content: t('circle.manage.confirm.rejectContent', { name: displayName(m) }),
-    positiveText: t('common.confirm'),
-    negativeText: t('common.cancel'),
-    onPositiveClick: () => {
-      actingId.value = m.user_id
-      return executeAction({
-        apiCall: () => reviewMember({ circle_id: circleId.value, target_user_id: m.user_id, approve: false }),
-        successMsg: t('circle.manage.success.rejected'),
-        affectsPending: true
-      }).finally(() => { actingId.value = '' })
-    }
-  })
 }
 
 // 禁言：弹时长选择
@@ -602,7 +567,24 @@ const handleUnmute = (m) => {
   }).finally(() => { actingId.value = '' })
 }
 
-// 拉黑：不可逆移出圈子，二次确认
+// 移出：status 1/2 → 4，不拉黑（公开圈可重新加入，私密圈需重新邀请），二次确认
+const handleRemove = (m) => {
+  dialog.warning({
+    title: t('circle.manage.confirm.removeTitle'),
+    content: t('circle.manage.confirm.removeContent', { name: displayName(m) }),
+    positiveText: t('circle.manage.actions.remove'),
+    negativeText: t('common.cancel'),
+    onPositiveClick: () => {
+      actingId.value = m.user_id
+      return executeAction({
+        apiCall: () => removeMember({ circle_id: circleId.value, target_user_id: m.user_id }),
+        successMsg: t('circle.manage.success.removed')
+      }).finally(() => { actingId.value = '' })
+    }
+  })
+}
+
+// 拉黑：移出且解除前不能再加入，二次确认
 const handleBan = (m) => {
   dialog.warning({
     title: t('circle.manage.confirm.banTitle'),
@@ -619,7 +601,7 @@ const handleBan = (m) => {
   })
 }
 
-// 解除拉黑：落为已退出，可重新申请（文案需说明）
+// 解除拉黑：落为已退出，公开圈可重新加入、私密圈需邀请（文案需说明）
 const handleUnban = (m) => {
   dialog.warning({
     title: t('circle.manage.confirm.unbanTitle'),

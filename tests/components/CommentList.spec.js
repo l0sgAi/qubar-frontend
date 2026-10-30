@@ -12,16 +12,19 @@ const mocks = vi.hoisted(() => ({
   message: { success: vi.fn(), error: vi.fn(), info: vi.fn() }
 }))
 
-vi.mock('@/api/comment', () => ({
+vi.mock('@/api/comment', async (importOriginal) => ({
+  ...(await importOriginal()),
   getCommentList: mocks.getCommentList,
   getCommentReplies: mocks.getCommentReplies,
-  locateComment: mocks.locateComment,
-  COMMENT_NOT_FOUND_CODE: 40401
+  locateComment: mocks.locateComment
 }))
 vi.mock('@/api/like', () => ({ toggleLike: vi.fn() }))
-vi.mock('@/composables/useCommentSubmit', async () => {
+vi.mock('@/composables/useCommentSubmit', async (importOriginal) => {
   const { ref } = await import('vue')
-  return { useCommentSubmit: () => ({ submitting: ref(false), submit: mocks.submit }) }
+  return {
+    ...(await importOriginal()),
+    useCommentSubmit: () => ({ submitting: ref(false), submit: mocks.submit })
+  }
 })
 vi.mock('@/utils/guest-action', () => ({ requireLogin: mocks.requireLogin }))
 vi.mock('naive-ui', async (importOriginal) => ({
@@ -433,6 +436,26 @@ describe('CommentList 移动端回复抽屉', () => {
     retry.click()
     await settle()
     expect(sheetReplyIds()).toHaveLength(10)
+  })
+
+  it('帖子不可见（私密圈 404）：评论列表停止翻页，不反复重试（后端 #170）', async () => {
+    mocks.getCommentList.mockReset().mockRejectedValue(Object.assign(new Error('not found'), { code: 204, status: 404 }))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    await mountList()
+    await settle()
+    expect(mocks.getCommentList).toHaveBeenCalledTimes(1)
+    expect(mocks.message.error).not.toHaveBeenCalled()
+  })
+
+  it('通知定位：评论所属帖子不可见（HTTP 404）时提示内容已删除，而不是定位失败', async () => {
+    mocks.locateComment.mockRejectedValue(Object.assign(new Error('not found'), { code: 204, status: 404 }))
+    mocks.message.info.mockReset()
+    mocks.message.error.mockReset()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    await mountList({ props: { locateCommentId: 'x1' } })
+    await settle()
+    expect(mocks.message.info).toHaveBeenCalledWith('内容已被删除')
+    expect(mocks.message.error).not.toHaveBeenCalled()
   })
 })
 

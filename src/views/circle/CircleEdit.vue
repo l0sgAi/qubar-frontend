@@ -72,10 +72,6 @@
                       <NText strong>{{ t('circle.form.joinTypeDirect') }}</NText>
                       <NText depth="3" style="margin-left: 8px">{{ t('circle.form.joinTypeDirectDesc') }}</NText>
                     </NRadio>
-                    <NRadio :value="1">
-                      <NText strong>{{ t('circle.form.joinTypeReview') }}</NText>
-                      <NText depth="3" style="margin-left: 8px">{{ t('circle.form.joinTypeReviewDesc') }}</NText>
-                    </NRadio>
                     <NRadio :value="2">
                       <NText strong>{{ t('circle.form.joinTypePrivate') }}</NText>
                       <NText depth="3" style="margin-left: 8px">{{ t('circle.form.joinTypePrivateDesc') }}</NText>
@@ -223,7 +219,7 @@ import CircleAdminHeader from '@/components/circle/CircleAdminHeader.vue'
 import { getCircleDetail, getCategories, updateCircle } from '@/api/circle'
 import { useImageUpload } from '@/composables/useImageUpload'
 import { usePageTitle } from '@/composables/usePageTitle'
-import { EMPTY_CATEGORY_ID, isManager, isOwner } from '@/constants/circle'
+import { EMPTY_CATEGORY_ID, isManager, isOwner, normalizeJoinType } from '@/constants/circle'
 
 const route = useRoute()
 const router = useRouter()
@@ -426,7 +422,8 @@ const fillForm = () => {
   const next = {
     name: d.name || '',
     slug: d.slug || '',
-    join_type: d.join_type ?? 0,
+    // 已下线的「需审核」(1) 按私密回填，初始快照同值，不会被当作改动提交
+    join_type: normalizeJoinType(d.join_type),
     category_id: (d.category_id && d.category_id !== EMPTY_CATEGORY_ID) ? d.category_id : null,
     avatar_url: d.avatar_url || '',
     cover_url: d.cover_url || '',

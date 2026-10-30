@@ -251,7 +251,21 @@ export default {
     createCircle: 'Create Circle',
     createCircleSuccess: 'Created successfully',
     joinSuccess: 'Joined successfully',
-    joinFailed: 'Failed to join',
+    // POST /circle/join failures (mapped by code, backend message not shown)
+    joinError: {
+      alreadyMember: 'You are already a member of this circle',
+      inviteOnly: 'This private circle is invite only',
+      banned: 'You have been banned from this circle',
+      notFound: 'This circle does not exist or has been deleted',
+      generic: 'Failed to join. Please try again later.'
+    },
+    // Private circle, viewer is not a member (backend #170)
+    private: {
+      inviteOnly: 'Private circle, invite only',
+      membersOnly: 'Private circle, members only',
+      membersOnlyDesc: 'Posts and details are only visible to members. Join by invitation to see them.',
+      restrictedNote: 'Description, rules and other details are visible to members only'
+    },
     leaveSuccess: 'Left circle',
     leaveFailed: 'Failed to leave',
     disturb: 'Mute',
@@ -272,7 +286,6 @@ export default {
     report: 'Report',
     joinType: 'Join Type',
     joinTypeDirect: 'Direct Join',
-    joinTypeReview: 'Review Required',
     joinTypePrivate: 'Private Circle',
     memberInfo: 'Member Info',
     roleMember: 'Member',
@@ -289,7 +302,6 @@ export default {
     shareCircle: 'Share Circle',
     circleIdNotFound: 'Circle ID not found',
     statusNormal: 'Normal',
-    statusPending: 'Pending',
     statusBanned: 'Banned',
     statusExited: 'Exited',
     // Joined circles list (my profile / user profile)
@@ -323,7 +335,6 @@ export default {
       backToCircle: 'Back to Circle',
       viewCircle: 'View Circle',
       tabs: {
-        pending: 'Pending',
         normal: 'Members',
         muted: 'Muted',
         banned: 'Banned'
@@ -342,10 +353,9 @@ export default {
       unknownUser: 'Unknown User',
       noPermissionVisit: 'No permission to access member management',
       actions: {
-        approve: 'Approve',
-        reject: 'Reject',
         mute: 'Mute',
         unmute: 'Unmute',
+        remove: 'Remove',
         ban: 'Ban',
         unban: 'Unban',
         setAdmin: 'Make Admin',
@@ -362,22 +372,21 @@ export default {
       mutePreset30d: '30 days',
       muteRangeError: 'Mute duration must be between 1 and 720 hours',
       confirm: {
-        rejectTitle: 'Reject Join Request',
-        rejectContent: 'Reject the join request from {name}? They can apply again.',
+        removeTitle: 'Remove Member',
+        removeContent: 'Remove {name} from this circle? They will not be banned: they can rejoin a public circle, but a private circle needs a new invitation.',
         banTitle: 'Ban Member',
-        banContent: 'Remove and ban {name}? They will not be able to rejoin until unbanned.',
+        banContent: 'Remove and ban {name}? They cannot join this circle again until unbanned.',
         unbanTitle: 'Unban Member',
-        unbanContent: 'Unban {name}? They will be able to apply to join again.',
+        unbanContent: 'Unban {name}? They will not rejoin automatically: they can rejoin a public circle, but a private circle needs a new invitation.',
         removeAdminTitle: 'Remove Admin',
         removeAdminContent: 'Remove {name} from the admin role?',
         transferTitle: 'Transfer Ownership',
         transferContent: 'Transfer circle ownership to {name}? This is irreversible and you will become a regular member immediately.'
       },
       success: {
-        approved: 'Join request approved',
-        rejected: 'Join request rejected',
         muted: 'Member muted',
         unmuted: 'Mute removed',
+        removed: 'Member removed',
         banned: 'Member banned',
         unbanned: 'Ban removed',
         adminSet: 'Admin role granted',
@@ -546,8 +555,6 @@ export default {
       joinType: 'Join Type',
       joinTypeDirect: 'Direct Join',
       joinTypeDirectDesc: 'Anyone can join directly',
-      joinTypeReview: 'Review Required',
-      joinTypeReviewDesc: 'Applications require admin review',
       joinTypePrivate: 'Private Circle',
       joinTypePrivateDesc: 'Invite only',
       createButton: 'Create Circle',
@@ -854,7 +861,7 @@ export default {
     postsSection: 'Discover Posts',
     exploreHint: 'Explore',
     joinDirect: 'Open',
-    joinReview: 'Review',
+    joinPrivate: 'Private',
     refreshed: 'Fresh content just dropped in',
     refresh: 'Refresh',
     refreshing: 'Refreshing…',
@@ -987,6 +994,8 @@ export default {
 
   // 评论相关
   comment: {
+    // Post no longer visible (deleted / private circle) → comment create returns 404
+    unavailable: 'This content is unavailable or you no longer have access',
     editor: {
       title: 'Post a Comment',
       placeholder: 'Write your comment... (supports images and emoji)',

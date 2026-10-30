@@ -31,9 +31,6 @@
         >
           <NIcon size="16"><UsersIcon /></NIcon>
           <span>{{ t('circle.manage.title') }}</span>
-          <span v-if="pendingBadgeCount > 0" class="seg-badge">
-            {{ pendingBadgeFull ? t('circle.manage.badgeFull') : pendingBadgeCount }}
-          </span>
         </button>
         <button
           class="seg-item"
@@ -72,10 +69,9 @@ import {
   Settings as SettingsIcon,
   ShieldCheck as ShieldCheckIcon
 } from '@vicons/tabler'
-import { getCircleMembers } from '@/api/circle'
 import { getModerationCounts } from '@/api/moderation'
 import { useCircleMeta } from '@/composables/useCircleMeta'
-import { MEMBER_PAGE_SIZE, isManager } from '@/constants/circle'
+import { isManager } from '@/constants/circle'
 
 const props = defineProps({
   // 圈子详情对象（含 member_role / name / avatar_url）
@@ -104,27 +100,6 @@ const go = (key) => {
   router.push(`/circle/${route.params.id}/${key}`)
 }
 
-// 待审核角标：拉一页 status=0&size=20，满页显示「20+」，否则按实际条数。
-// 角标归属页头组件，成员管理页操作后可通过 ref 调 refreshPendingBadge 同步。
-const pendingBadgeCount = ref(0)
-const pendingBadgeFull = ref(false)
-
-const refreshPendingBadge = async () => {
-  if (!isManager(myRole.value)) return
-  try {
-    const res = await getCircleMembers({
-      circle_id: route.params.id,
-      status: '0',
-      size: MEMBER_PAGE_SIZE
-    })
-    pendingBadgeCount.value = res.data?.members?.length || 0
-    pendingBadgeFull.value = pendingBadgeCount.value >= MEMBER_PAGE_SIZE
-  } catch {
-    pendingBadgeCount.value = 0
-    pendingBadgeFull.value = false
-  }
-}
-
 // 内容审核角标：被举报 + 待审（getModerationCounts：优先 #156 summary，否则各拉一页、满页显示「20+」）；
 // 审核页处理后经 ref 调 refreshModerationBadge 同步
 const moderationBadgeCount = ref(0)
@@ -138,11 +113,10 @@ const refreshModerationBadge = async () => {
 }
 
 onMounted(() => {
-  refreshPendingBadge()
   refreshModerationBadge()
 })
 
-defineExpose({ refreshPendingBadge, refreshModerationBadge })
+defineExpose({ refreshModerationBadge })
 </script>
 
 <style scoped>

@@ -22,7 +22,7 @@
           <span>{{ formatNumber(memberCount) }} {{ t('discover.members') }}</span>
           <span class="dot">·</span>
           <span>{{ formatNumber(postCount) }} {{ t('discover.posts') }}</span>
-          <span v-if="joinType === 1" class="join-tag review">{{ t('discover.joinReview') }}</span>
+          <span v-if="isPrivate" class="join-tag private">{{ t('discover.joinPrivate') }}</span>
           <span v-else class="join-tag">{{ t('discover.joinDirect') }}</span>
         </div>
       </div>
@@ -43,8 +43,8 @@
         <span class="dot">·</span>
         <span>{{ formatNumber(postCount) }} {{ t('discover.posts') }}</span>
       </div>
-      <div class="card-join" :class="{ review: joinType === 1 }">
-        {{ joinType === 1 ? t('discover.joinReview') : t('discover.joinDirect') }}
+      <div class="card-join" :class="{ private: isPrivate }">
+        {{ isPrivate ? t('discover.joinPrivate') : t('discover.joinDirect') }}
       </div>
     </template>
   </SmartLink>
@@ -56,6 +56,7 @@ import { NAvatar } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useFormatNumber } from '@/utils/i18n'
 import SmartLink from '@/components/common/SmartLink.vue'
+import { isPrivateJoinType } from '@/constants/circle'
 
 const props = defineProps({
   // 原始 API 条目（snake_case DiscoverCircleItem）
@@ -78,7 +79,8 @@ const description = computed(() => props.circle.description || '')
 const avatarUrl = computed(() => props.circle.avatar_url || '')
 const memberCount = computed(() => props.circle.member_count || 0)
 const postCount = computed(() => props.circle.post_count || 0)
-const joinType = computed(() => props.circle.join_type || 0)
+// 发现页后端已过滤私密圈，这里只做兜底（含已下线的需审核 1）
+const isPrivate = computed(() => isPrivateJoinType(props.circle.join_type))
 
 // 无头像时的渐变背景：沿用项目主题色（薄荷绿 #60F8BB），区别于热点的粉紫
 const avatarBg = 'var(--primary-gradient)'
@@ -194,7 +196,7 @@ const fallbackChar = computed(() => (name.value || '?').charAt(0))
   padding: 1px 6px;
 }
 
-.join-tag.review {
+.join-tag.private {
   color: #fbbf24;
   background: rgba(245, 158, 11, 0.12);
 }
@@ -247,7 +249,7 @@ const fallbackChar = computed(() => (name.value || '?').charAt(0))
   padding: 3px 12px;
 }
 
-.variant-card .card-join.review {
+.variant-card .card-join.private {
   color: #fbbf24;
   background: rgba(245, 158, 11, 0.12);
   border-color: rgba(245, 158, 11, 0.3);

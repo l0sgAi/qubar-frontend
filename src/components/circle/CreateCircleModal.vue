@@ -126,10 +126,6 @@
                 <NText strong>{{ t('circle.form.joinTypeDirect') }}</NText>
                 <NText depth="3" style="margin-left: 8px">{{ t('circle.form.joinTypeDirectDesc') }}</NText>
               </NRadio>
-              <NRadio :value="1">
-                <NText strong>{{ t('circle.form.joinTypeReview') }}</NText>
-                <NText depth="3" style="margin-left: 8px">{{ t('circle.form.joinTypeReviewDesc') }}</NText>
-              </NRadio>
               <NRadio :value="2">
                 <NText strong>{{ t('circle.form.joinTypePrivate') }}</NText>
                 <NText depth="3" style="margin-left: 8px">{{ t('circle.form.joinTypePrivateDesc') }}</NText>
@@ -318,7 +314,6 @@ const selectedCategoryLabel = computed(() => {
 const joinTypeText = computed(() => {
   const map = {
     0: t('circle.form.joinTypeDirect'),
-    1: t('circle.form.joinTypeReview'),
     2: t('circle.form.joinTypePrivate')
   }
   return map[formData.value.join_type] || '-'

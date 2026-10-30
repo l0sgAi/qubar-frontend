@@ -5,11 +5,14 @@ const api = vi.hoisted(() => ({
   getUserInfo: vi.fn(),
   seedContentMentions: vi.fn()
 }))
-vi.mock('@/api/comment', () => ({ createComment: api.createComment }))
+vi.mock('@/api/comment', async (importOriginal) => ({
+  ...(await importOriginal()),
+  createComment: api.createComment
+}))
 vi.mock('@/api/auth', () => ({ getUserInfo: api.getUserInfo }))
 vi.mock('@/utils/mentionResolve', () => ({ seedContentMentions: api.seedContentMentions }))
 
-const { useCommentSubmit } = await import('@/composables/useCommentSubmit')
+const { useCommentSubmit, commentSubmitErrorMessage } = await import('@/composables/useCommentSubmit')
 
 const ME = { id: 'u1', name: '我', avatar_url: 'a.png' }
 
@@ -117,5 +120,21 @@ describe('useCommentSubmit', () => {
     const { submit, submitting } = useCommentSubmit()
     await expect(submit({ postId: 'p1', content: 'hi' })).rejects.toBe(err)
     expect(submitting.value).toBe(false)
+  })
+})
+
+describe('commentSubmitErrorMessage（后端 #170：帖子不可见时评论返回 404）', () => {
+  const t = (key) => `t:${key}`
+  const err = (fields) => Object.assign(new Error('backend english'), fields)
+
+  it('帖子不可见（40401 / 信封 204 / HTTP 404）：自有文案，不展示后端 message', () => {
+    expect(commentSubmitErrorMessage(err({ code: 40401 }), t, 'comment.editor.failed')).toBe('t:comment.unavailable')
+    expect(commentSubmitErrorMessage(err({ code: 204 }), t, 'comment.editor.failed')).toBe('t:comment.unavailable')
+    expect(commentSubmitErrorMessage(err({ status: 404 }), t, 'comment.editor.failed')).toBe('t:comment.unavailable')
+  })
+
+  it('其它错误：沿用后端 message，缺省时用 fallbackKey', () => {
+    expect(commentSubmitErrorMessage(err({ code: 210 }), t, 'comment.editor.failed')).toBe('backend english')
+    expect(commentSubmitErrorMessage({}, t, 'comment.reply.failed')).toBe('t:comment.reply.failed')
   })
 })

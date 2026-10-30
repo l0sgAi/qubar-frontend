@@ -84,7 +84,7 @@
                 {{t('post.createPost')}}
               </NButton>
 
-              <!-- 管理按钮（圈主/管理员可见），有待审核申请时显示数量角标；移动端不支持管理 -->
+              <!-- 管理按钮（圈主/管理员可见），有待审 / 被举报帖子时显示数量角标；移动端不支持管理 -->
               <NButton
                 v-if="canManage && !mobileShell"
                 size="large"
@@ -102,9 +102,13 @@
                 </span>
               </NButton>
 
-              <!-- 加入/退出按钮 -->
+              <!-- 加入/退出按钮：私密圈非成员（含访客）只提示需邀请，不放可点击按钮 -->
+              <span v-if="inviteOnly" class="invite-only-hint">
+                <NIcon size="16"><LockIcon /></NIcon>
+                {{ t('circle.private.inviteOnly') }}
+              </span>
               <NButton
-                v-if="!circleDetail.is_joined"
+                v-else-if="!circleDetail.is_joined"
                 type="primary"
                 size="large"
                 round
@@ -144,7 +148,13 @@
       <div class="content-container">
         <!-- 帖子列表区域 -->
         <div class="posts-section">
-          <NTabs v-model:value="activeTab" type="segment" animated>
+          <!-- 私密圈非成员：仅成员可见空态（不渲染帖子 Tab，也不请求 /circle/posts） -->
+          <div v-if="membersOnly" class="members-only-state">
+            <NIcon size="40" class="members-only-icon"><LockIcon /></NIcon>
+            <h3 class="members-only-title">{{ t('circle.private.membersOnly') }}</h3>
+            <p class="members-only-desc">{{ t('circle.private.membersOnlyDesc') }}</p>
+          </div>
+          <NTabs v-else v-model:value="activeTab" type="segment" animated>
             <NTabPane name="hot" :tab="t('post.hottest')">
               <div class="posts-list">
                 <div v-if="hotPosts.length === 0 && !hotLoading" class="empty-state">
@@ -214,81 +224,94 @@
                     <span class="stat-label">{{ t('circle.members') }}</span>
                   </div>
                 </div>
-                <div class="stat-item">
-                  <NIcon size="20" color="rgba(255,255,255,0.6)">
-                    <FileTextIcon />
-                  </NIcon>
-                  <div class="stat-content">
-                    <span class="stat-value">{{ formatNumber(circleDetail.post_count) }}</span>
-                    <span class="stat-label">{{ t('circle.posts') }}</span>
+                <template v-if="!restricted">
+                  <div class="stat-item">
+                    <NIcon size="20" color="rgba(255,255,255,0.6)">
+                      <FileTextIcon />
+                    </NIcon>
+                    <div class="stat-content">
+                      <span class="stat-value">{{ formatNumber(circleDetail.post_count) }}</span>
+                      <span class="stat-label">{{ t('circle.posts') }}</span>
+                    </div>
                   </div>
-                </div>
-                <div class="stat-item">
-                  <NIcon size="20" color="rgba(255,255,255,0.6)">
-                    <FlameIcon />
-                  </NIcon>
-                  <div class="stat-content">
-                    <span class="stat-value">{{ circleDetail.hot }}</span>
-                    <span class="stat-label">{{ t('circle.hotness') }}</span>
+                  <div class="stat-item">
+                    <NIcon size="20" color="rgba(255,255,255,0.6)">
+                      <FlameIcon />
+                    </NIcon>
+                    <div class="stat-content">
+                      <span class="stat-value">{{ circleDetail.hot }}</span>
+                      <span class="stat-label">{{ t('circle.hotness') }}</span>
+                    </div>
                   </div>
-                </div>
+                </template>
               </div>
 
-              <div class="description-section">
-                <h4 class="section-title">{{ t('circle.description') }}</h4>
-                <p class="description">{{ getDisplayDescription(circleDetail.description) || t('circle.noDescription') }}</p>
-                <div
-                  v-if="shouldShowMoreButton(circleDetail.description)"
-                  class="show-more-btn"
-                  @click="toggleDescription"
-                >
-                  {{ isDescriptionExpanded ? t('common.collapse') : t('common.showMore') }}
-                </div>
-              </div>
-
-              <div class="circle-info">
-                <div class="info-row">
-                  <span class="label">{{ t('time.createdAt') }}</span>
-                  <span class="value">{{ formatDate(circleDetail.create_time) }}</span>
-                </div>
-                <!-- <div class="info-row">
-                  <span class="label">分类</span>
-                  <span class="value">{{ categoryName || '未分类' }}</span>
-                </div> -->
+              <!-- 私密圈非成员：精简视图只有成员数和加入方式，简介 / 创建时间 / 圈规后端不返回 -->
+              <div v-if="restricted" class="circle-info">
                 <div class="info-row">
                   <span class="label">{{ t('circle.joinType') }}</span>
                   <span class="value">{{ getJoinTypeText(circleDetail.join_type) }}</span>
                 </div>
+                <p class="restricted-note">{{ t('circle.private.restrictedNote') }}</p>
               </div>
 
-              <div v-if="circleDetail.is_joined" class="member-info">
-                <h4 class="section-title">{{ t('circle.yourMemberInfo') }}</h4>
-                <div class="info-row">
-                  <span class="label">{{ t('user.role') }}</span>
-                  <NTag :type="getRoleInfo(circleDetail.member_role).type" size="large" round>
-                    {{ getRoleInfo(circleDetail.member_role).text }}
-                  </NTag>
+              <template v-else>
+                <div class="description-section">
+                  <h4 class="section-title">{{ t('circle.description') }}</h4>
+                  <p class="description">{{ getDisplayDescription(circleDetail.description) || t('circle.noDescription') }}</p>
+                  <div
+                    v-if="shouldShowMoreButton(circleDetail.description)"
+                    class="show-more-btn"
+                    @click="toggleDescription"
+                  >
+                    {{ isDescriptionExpanded ? t('common.collapse') : t('common.showMore') }}
+                  </div>
                 </div>
-                <div class="info-row">
-                  <span class="label">{{ t('user.status') }}</span>
-                  <NTag :type="getMemberStatusInfo(circleDetail.member_status).type" size="large" round>
-                    {{ getMemberStatusInfo(circleDetail.member_status).text }}
-                  </NTag>
-                </div>
-                <div v-if="circleDetail.member_is_top" class="info-row">
-                  <span class="label">{{ t('circle.pinnedDisplay') }}</span>
-                  <span class="value">{{ t('common.yes') }}</span>
-                </div>
-                <div v-if="circleDetail.member_is_disturb" class="info-row">
-                  <span class="label">{{ t('circle.messageDisturb') }}</span>
-                  <span class="value">{{ t('common.enabled') }}</span>
-                </div>
-              </div>
 
-              <div v-if="circleDetail.rule" class="rules-section">
-                <h4 class="section-title">{{ t('circle.rules') }}</h4>
-                <p class="rules">{{ circleDetail.rule }}</p>
-              </div>
+                <div class="circle-info">
+                  <div class="info-row">
+                    <span class="label">{{ t('time.createdAt') }}</span>
+                    <span class="value">{{ formatDate(circleDetail.create_time) }}</span>
+                  </div>
+                  <!-- <div class="info-row">
+                    <span class="label">分类</span>
+                    <span class="value">{{ categoryName || '未分类' }}</span>
+                  </div> -->
+                  <div class="info-row">
+                    <span class="label">{{ t('circle.joinType') }}</span>
+                    <span class="value">{{ getJoinTypeText(circleDetail.join_type) }}</span>
+                  </div>
+                </div>
+
+                <div v-if="circleDetail.is_joined" class="member-info">
+                  <h4 class="section-title">{{ t('circle.yourMemberInfo') }}</h4>
+                  <div class="info-row">
+                    <span class="label">{{ t('user.role') }}</span>
+                    <NTag :type="getRoleInfo(circleDetail.member_role).type" size="large" round>
+                      {{ getRoleInfo(circleDetail.member_role).text }}
+                    </NTag>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">{{ t('user.status') }}</span>
+                    <NTag :type="getMemberStatusInfo(circleDetail.member_status).type" size="large" round>
+                      {{ getMemberStatusInfo(circleDetail.member_status).text }}
+                    </NTag>
+                  </div>
+                  <div v-if="circleDetail.member_is_top" class="info-row">
+                    <span class="label">{{ t('circle.pinnedDisplay') }}</span>
+                    <span class="value">{{ t('common.yes') }}</span>
+                  </div>
+                  <div v-if="circleDetail.member_is_disturb" class="info-row">
+                    <span class="label">{{ t('circle.messageDisturb') }}</span>
+                    <span class="value">{{ t('common.enabled') }}</span>
+                  </div>
+                </div>
+
+                <div v-if="circleDetail.rule" class="rules-section">
+                  <h4 class="section-title">{{ t('circle.rules') }}</h4>
+                  <p class="rules">{{ circleDetail.rule }}</p>
+                </div>
+              </template>
             </div>
           </div>
         </div>
@@ -310,17 +333,17 @@ import { useAppShell } from '@/composables/useAppShell'
 import { shareOrCopy } from '@/utils/share'
 import PostList from '@/components/post/PostList.vue'
 import PostListSkeleton from '@/components/post/PostListSkeleton.vue'
-import { getCircleDetail, joinCircle, leaveCircle, getCirclePosts, getCircleMembers } from '@/api/circle'
+import { getCircleDetail, joinCircle, leaveCircle, getCirclePosts } from '@/api/circle'
 import { MEMBERSHIP_CHANGED_EVENT } from '@/composables/useSideNavCircles'
 import { auth } from '@/utils/auth'
 import { requireLogin } from '@/utils/guest-action'
 import { useCircleMeta } from '@/composables/useCircleMeta'
 import { usePageTitle } from '@/composables/usePageTitle'
-import { isManager, MEMBER_PAGE_SIZE } from '@/constants/circle'
+import { isManager, needsInviteToJoin, joinErrorKey, isForbiddenError } from '@/constants/circle'
 import { getModerationCounts } from '@/api/moderation'
 import { Bell as BellIcon, BellOff as BellOffIcon, Edit as EditIcon, DotsVertical as MoreIcon } from '@vicons/tabler'
 import { User as UserIcon, FileText as FileTextIcon, Flame as FlameIcon } from '@vicons/tabler'
-import { ShieldCheck as ShieldCheckIcon } from '@vicons/tabler'
+import { ShieldCheck as ShieldCheckIcon, Lock as LockIcon } from '@vicons/tabler'
 
 const route = useRoute()
 const router = useRouter()
@@ -379,6 +402,14 @@ const circleDetail = ref({
 const categoryName = ref('')
 // 初始为 true：首次进入与切换圈子时都先显示骨架，避免闪现空内容/旧内容
 const loading = ref(true)
+
+// 私密圈非成员（含访客）：详情只返回 id / name / avatar_url / join_type / member_count + restricted（后端 #170）
+const restricted = computed(() => !!circleDetail.value.restricted)
+// 圈内帖子 403（restricted 时不请求；成员中途被移出等情况仍可能拿到 403）
+const postsForbidden = ref(false)
+const membersOnly = computed(() => restricted.value || postsForbidden.value)
+// 私密圈非成员不放可点击的加入按钮（邀请入口后端 #169 未上线）
+const inviteOnly = computed(() => needsInviteToJoin(circleDetail.value))
 const joinLoading = ref(false)
 const activeTab = ref('hot')
 const isButtonHovered = ref(false)
@@ -449,6 +480,8 @@ const transformPostData = (apiPosts) => {
 const fetchPosts = async (tab, append = false) => {
   const state = tabStateMap[tab]
   if (!state || state.loading.value || (!append && !state.hasMore.value)) return
+  // 私密圈非成员：后端必返回 403，不发请求，直接展示「仅成员可见」
+  if (membersOnly.value) return
 
   state.loading.value = true
   try {
@@ -473,7 +506,12 @@ const fetchPosts = async (tab, append = false) => {
       state.hasMore.value = !!response.data.search_after
     }
   } catch (error) {
-    message.error(t('messages.getDetailFailed', { error: error.message || t('common.unknownError') }))
+    if (isForbiddenError(error)) {
+      // 私密圈且已不是成员（被移出 / 退出）：展示空态，不弹通用错误
+      postsForbidden.value = true
+    } else {
+      message.error(t('messages.getDetailFailed', { error: error.message || t('common.unknownError') }))
+    }
   } finally {
     state.loading.value = false
   }
@@ -583,7 +621,10 @@ const handleJoinCircle = async () => {
     // 重新获取圈子详情，同步刷新侧栏统计数据
     await fetchCircleDetail()
   } catch (error) {
-    message.error(t('circle.joinFailed') + '：' + (error.message || t('common.unknownError')))
+    // 按码给自有文案（私密圈需邀请 / 已被拉黑 / 已是成员），不展示后端英文 message
+    const key = joinErrorKey(error, circleDetail.value.join_type)
+    message.error(t(key))
+    if (key === 'circle.joinError.alreadyMember') fetchCircleDetail()
   } finally {
     joinLoading.value = false
   }
@@ -671,11 +712,11 @@ const handleMobileShare = async () => {
 
 const canManage = computed(() => isManager(circleDetail.value.member_role))
 
-// 待处理角标（入口提示）：入圈待审（status=0，拉一页 size=20）+ 待审帖子 + 被举报帖子（getModerationCounts：
-// 优先 #156 summary，否则各拉一页）三者相加；任一满页显示「20+」。请求互不影响，单个失败按 0 计
+// 待处理角标（入口提示）：待审帖子 + 被举报帖子（getModerationCounts：优先 #156 summary，否则各拉一页），
+// 满页显示「20+」。入圈审核已下线（后端 #168），不再统计入圈待审
 const pendingModCount = ref(0)
 const pendingModFull = ref(false)
-// 入口落点：只有待审 / 被举报帖子、没有入圈待审时直接进内容审核页，否则进成员管理
+// 入口落点：有待审 / 被举报帖子时直接进内容审核页，否则进成员管理
 const manageTarget = ref('members')
 
 // 世代守卫：切换圈子后旧请求的响应直接丢弃，防止角标被上一个圈子的数据覆盖
@@ -684,17 +725,12 @@ let pendingModGen = 0
 const fetchPendingModCount = async () => {
   const gen = ++pendingModGen
   if (!canManage.value) return
-  const circleId = circleDetail.value.id
-  const [memberCount, moderation] = await Promise.all([
-    getCircleMembers({ circle_id: circleId, status: '0', size: MEMBER_PAGE_SIZE })
-      .then(res => res.data?.members?.length || 0, () => 0),
-    getModerationCounts(circleId)
-  ])
+  const moderation = await getModerationCounts(circleDetail.value.id)
   if (gen !== pendingModGen) return
   const postCount = moderation.reported + moderation.pending
-  pendingModCount.value = memberCount + postCount
-  pendingModFull.value = memberCount >= MEMBER_PAGE_SIZE || moderation.full
-  manageTarget.value = memberCount === 0 && postCount > 0 ? 'moderation' : 'members'
+  pendingModCount.value = postCount
+  pendingModFull.value = moderation.full
+  manageTarget.value = postCount > 0 ? 'moderation' : 'members'
 }
 
 // 无限滚动
@@ -755,6 +791,7 @@ watch(() => route.params.id, async (newId, oldId) => {
   hotHasMore.value = true
   newHasMore.value = true
   topHasMore.value = true
+  postsForbidden.value = false
   pendingModCount.value = 0
   pendingModFull.value = false
   manageTarget.value = 'members'
@@ -898,6 +935,57 @@ onUnmounted(() => {
 
 .empty-state p {
   font-size: 1rem;
+}
+
+/* 私密圈非成员：仅成员可见空态 */
+.members-only-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 64px 24px;
+  text-align: center;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+}
+
+.members-only-icon {
+  color: var(--theme-color);
+}
+
+.members-only-title {
+  margin: 8px 0 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.members-only-desc {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* 私密圈非成员：需邀请提示（替代加入按钮，非可点击） */
+.invite-only-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.35);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.restricted-note {
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
 
 .load-sentinel {

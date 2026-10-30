@@ -1,4 +1,5 @@
 import { useI18n } from 'vue-i18n'
+import { JOIN_TYPE, normalizeJoinType } from '@/constants/circle'
 
 /**
  * 圈子枚举的文案映射（依赖 i18n，勿 hardcode 中文）。
@@ -17,10 +18,9 @@ export function useCircleMeta() {
     return roles[role] || { text: t('common.unknown'), type: 'default' }
   }
 
-  // 成员状态 → 文案 + NTag 类型
+  // 成员状态 → 文案 + NTag 类型（0 待审核已下线，不再映射）
   const getMemberStatusInfo = (status) => {
     const statuses = {
-      0: { text: t('circle.statusPending'), type: 'warning' },
       1: { text: t('circle.statusNormal'), type: 'success' },
       2: { text: t('circle.statusMuted'), type: 'error' },
       3: { text: t('circle.statusBanned'), type: 'error' },
@@ -29,14 +29,11 @@ export function useCircleMeta() {
     return statuses[status] || { text: t('common.unknown'), type: 'default' }
   }
 
-  // 加入方式 → 文案
+  // 加入方式 → 文案（已下线的 1 按私密展示）
   const getJoinTypeText = (type) => {
-    const types = {
-      0: t('circle.joinTypeDirect'),
-      1: t('circle.joinTypeReview'),
-      2: t('circle.joinTypePrivate')
-    }
-    return types[type] || t('common.unknown')
+    return normalizeJoinType(type) === JOIN_TYPE.PRIVATE
+      ? t('circle.joinTypePrivate')
+      : t('circle.joinTypeDirect')
   }
 
   return { getRoleInfo, getMemberStatusInfo, getJoinTypeText }

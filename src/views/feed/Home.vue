@@ -100,6 +100,9 @@ const loading = ref(true)
 const isAppending = ref(false) // true=追加翻页（底部加载条 + NSpin）；false=首屏/切 tab（骨架屏）
 const hasMore = ref(false)
 const poolToken = ref('')   // 仅 recommend：候选池版本 token，翻页原样回传
+// 仅 recommend：已消费的候选池条数（每页 +size）。私密圈 / 失效帖子在回填时被过滤（后端 #170），
+// 单页可能不足 size 条，不能用已展示条数当 offset，否则会重复取到同一段池
+let poolOffset = 0
 const searchAfter = ref('') // 仅 hot/latest/following：游标原样透传
 
 // 内容区当前视图：作为 Transition 的 key 一部分，视图切换（含切 tab）时触发平滑过渡
@@ -154,9 +157,9 @@ const fetchFeed = async (append = false) => {
   try {
     const params = { tab: activeTab.value, size: PAGE_SIZE }
     if (activeTab.value === 'recommend') {
-      // 候选池翻页：首页不传 offset/pool_token；翻页回传 pool_token + offset=已消费条数
+      // 候选池翻页：首页不传 offset/pool_token；翻页回传 pool_token + offset=已消费的池条数
       if (append && poolToken.value) {
-        params.offset = posts.value.length
+        params.offset = poolOffset
         params.pool_token = poolToken.value
       }
     } else {
@@ -183,6 +186,8 @@ const fetchFeed = async (append = false) => {
     // 更新游标与是否还有更多
     if (activeTab.value === 'recommend') {
       poolToken.value = data.pool_token || ''
+      // 首页 / 池已重建（服务端回 offset=0 第 1 页）后从 size 起算，翻页累加 size
+      poolOffset = (params.offset !== undefined && !data.pool_refreshed ? poolOffset : 0) + PAGE_SIZE
       hasMore.value = !!data.has_more
     } else {
       searchAfter.value = data.search_after || ''

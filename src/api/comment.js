@@ -4,6 +4,14 @@ import request from '@/utils/request'
 export const COMMENT_NOT_FOUND_CODE = 40401
 
 /**
+ * 评论 / 所属帖子不可见：业务码 40401，或信封 204 / HTTP 404。
+ * 私密圈非成员访问评论 list / replies / locate / detail / create 时返回与「不存在」相同的 404（后端 #170）。
+ */
+export function isCommentUnavailableError(error) {
+  return error?.code === COMMENT_NOT_FOUND_CODE || error?.code === 204 || error?.status === 404
+}
+
+/**
  * 发表评论
  * @param {Object} data - 评论数据
  * @param {string} data.post_id - 帖子ID(UUIDv7)

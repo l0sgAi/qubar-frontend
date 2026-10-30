@@ -21,7 +21,7 @@ export function getCategories() {
  * @param {string} data.description - 描述信息
  * @param {string} data.rule - 圈子规则/公告
  * @param {string} data.category_id - 分类ID(UUIDv7)
- * @param {number} data.join_type - 加入方式 0=直接加入 1=需要审核 2=私密圈子
+ * @param {number} data.join_type - 加入方式 0=公开（直接加入） 2=私密（邀请制）；1（需审核）已下线，传入返回 400
  * @returns {Promise}
  */
 export function createCircle(data) {
@@ -50,6 +50,8 @@ export function searchCircles(params) {
 
 /**
  * 获取圈子详情
+ * 非成员（含访客）看私密圈时只返回 id / name / avatar_url / join_type / member_count，
+ * 并带 restricted: true（后端 #170），前端展示「仅成员可见」精简页。
  * @param {string} id - 圈子ID(UUIDv7)
  * @returns {Promise} 返回圈子详情 CircleDetailVO
  */
@@ -61,7 +63,7 @@ export function getCircleDetail(id) {
 }
 
 /**
- * 加入兴趣圈
+ * 加入兴趣圈（只对公开圈生效）：私密圈 403（需邀请）、已拉黑 403、已是成员 409
  * @param {Object} data - 加入数据
  * @param {string} data.circle_id - 圈子ID(UUIDv7)
  * @returns {Promise}
@@ -89,7 +91,7 @@ export function leaveCircle(data) {
 }
 
 /**
- * 获取圈子帖子列表
+ * 获取圈子帖子列表（私密圈的非成员 / 访客返回 403）
  * @param {Object} params - 查询参数
  * @param {string} params.circle_id - 圈子ID（必填，UUIDv7）
  * @param {number} params.type - 1=近期热点 2=最新 3=精华（必填）
@@ -110,7 +112,7 @@ export function getCirclePosts(params) {
  * @param {Object} params - 查询参数
  * @param {string} params.circle_id - 圈子ID（必填，UUIDv7）
  * @param {string} [params.role] - 按角色过滤：'10'/'20'/'30'；不传或 '-1'=全部（注意是字符串）
- * @param {string} [params.status] - 按状态过滤：'0'-'4'；不传或 '-1'=全部（注意是字符串）
+ * @param {string} [params.status] - 按状态过滤：'1'-'4'；不传或 '-1'=全部（注意是字符串）。'0'（待审核）已废弃，恒为空
  * @param {string} [params.keyword] - 按用户名/邮箱搜索（同一套匹配引擎，username 权重 3 倍，
  *   相关性排序模糊匹配；最多返回 100 个命中用户对应的成员；空=不过滤。
  *   keyword 与 cursor 必须配套：翻页带同一 keyword，关键词变化重置 cursor；
@@ -210,7 +212,7 @@ export function unmuteMember(data) {
 }
 
 /**
- * 拉黑/踢出成员（圈主/管理员；可拉黑正常或禁言中成员，成员数 -1，对方无法重新申请直到解黑）
+ * 拉黑/踢出成员（圈主/管理员；可拉黑正常或禁言中成员，成员数 -1，对方无法重新加入直到解黑）
  * @param {Object} data - 操作数据
  * @param {string} data.circle_id - 圈子ID
  * @param {string} data.target_user_id - 目标用户ID
@@ -225,7 +227,7 @@ export function banMember(data) {
 }
 
 /**
- * 解除拉黑（圈主/管理员；解黑后对方落为已退出(4)，不会自动回圈，需重新走加入流程）
+ * 解除拉黑（圈主/管理员；解黑后对方落为已退出(4)，不会自动回圈；公开圈可重新加入，私密圈需重新邀请）
  * @param {Object} data - 操作数据
  * @param {string} data.circle_id - 圈子ID
  * @param {string} data.target_user_id - 目标用户ID
@@ -240,16 +242,18 @@ export function unbanMember(data) {
 }
 
 /**
- * 入圈审核（圈主/管理员；仅对待审核(0)成员有效）
- * @param {Object} data - 审核数据
+ * 移出成员（圈主/管理员；后端 #168）：正常或禁言中成员 → 已退出(4)，成员数 -1。
+ * 不拉黑：公开圈可重新直接加入，私密圈需重新邀请。权限同拉黑：只能移出角色严格低于自己的人，
+ * 不能移出自己 / 圈主（403）；对已拉黑 / 已退出成员 409；目标不是该圈成员 404。
+ * 原入圈审核接口 POST /circle/manage/review 已随审核下线删除。
+ * @param {Object} data - 操作数据
  * @param {string} data.circle_id - 圈子ID
  * @param {string} data.target_user_id - 目标用户ID
- * @param {boolean} [data.approve] - true=通过（成员数+1），false/缺省=拒绝（落为已退出，可重新申请）
  * @returns {Promise}
  */
-export function reviewMember(data) {
+export function removeMember(data) {
   return request({
-    url: '/circle/manage/review',
+    url: '/circle/manage/remove',
     method: 'post',
     data
   })
@@ -263,7 +267,7 @@ export function reviewMember(data) {
  * @param {string} data.circle_id - 圈子ID（必填）
  * @param {string} [data.name] - 圈子名称，1-50 字（仅圈主，重名 409）
  * @param {string} [data.slug] - 唯一标识 ≤60 字（仅圈主，重名 409）
- * @param {number} [data.join_type] - 加入方式 0/1/2（仅圈主）
+ * @param {number} [data.join_type] - 加入方式 0=公开 / 2=私密（仅圈主；1 需审核已下线，传入 400）
  * @param {string} [data.category_id] - 分类 UUID（仅圈主）
  * @param {string} [data.avatar_url] - 头像 URL ≤500 字
  * @param {string} [data.cover_url] - 封面 URL ≤500 字

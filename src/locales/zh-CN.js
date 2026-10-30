@@ -251,7 +251,21 @@ export default {
     createCircle: '创建圈子',
     createCircleSuccess: '创建成功',
     joinSuccess: '加入成功',
-    joinFailed: '加入失败',
+    // POST /circle/join 失败（按码给文案，不展示后端 message）
+    joinError: {
+      alreadyMember: '你已经是该圈子成员',
+      inviteOnly: '私密圈需邀请才能加入',
+      banned: '你已被该圈子拉黑，无法加入',
+      notFound: '圈子不存在或已被删除',
+      generic: '加入失败，请稍后重试'
+    },
+    // 私密圈非成员（后端 #170）
+    private: {
+      inviteOnly: '私密圈，需邀请加入',
+      membersOnly: '私密圈，仅成员可见',
+      membersOnlyDesc: '圈内帖子和资料只对成员开放，受邀加入后即可查看',
+      restrictedNote: '简介、圈规等资料仅成员可见'
+    },
     leaveSuccess: '已退出圈子',
     leaveFailed: '退出失败',
     disturb: '免打扰',
@@ -272,7 +286,6 @@ export default {
     report: '举报',
     joinType: '加入方式',
     joinTypeDirect: '直接加入',
-    joinTypeReview: '需要审核',
     joinTypePrivate: '私密圈子',
     memberInfo: '成员信息',
     roleMember: '普通成员',
@@ -289,7 +302,6 @@ export default {
     shareCircle: '分享圈子',
     circleIdNotFound: '圈子ID不存在',
     statusNormal: '正常',
-    statusPending: '待审核',
     statusBanned: '已拉黑',
     statusExited: '已退出',
     // 个人中心 / 他人主页「加入的圈子」列表
@@ -323,7 +335,6 @@ export default {
       backToCircle: '返回圈子',
       viewCircle: '查看圈子',
       tabs: {
-        pending: '待审核',
         normal: '正常成员',
         muted: '禁言中',
         banned: '已拉黑'
@@ -342,10 +353,9 @@ export default {
       unknownUser: '未知用户',
       noPermissionVisit: '无权限访问成员管理',
       actions: {
-        approve: '通过',
-        reject: '拒绝',
         mute: '禁言',
         unmute: '解除禁言',
+        remove: '移出',
         ban: '拉黑',
         unban: '解除拉黑',
         setAdmin: '设为管理员',
@@ -362,22 +372,21 @@ export default {
       mutePreset30d: '30 天',
       muteRangeError: '禁言时长需在 1-720 小时之间',
       confirm: {
-        rejectTitle: '拒绝入圈申请',
-        rejectContent: '确定拒绝 {name} 的入圈申请吗？拒绝后对方可重新申请。',
+        removeTitle: '移出成员',
+        removeContent: '确定将 {name} 移出本圈吗？对方不会被拉黑：公开圈可以重新加入，私密圈需要重新邀请。',
         banTitle: '拉黑成员',
-        banContent: '确定将 {name} 移出并拉黑吗？对方将无法重新申请加入本圈。',
+        banContent: '确定将 {name} 移出并拉黑吗？解除拉黑之前，对方无法再加入本圈。',
         unbanTitle: '解除拉黑',
-        unbanContent: '确定解除对 {name} 的拉黑吗？解除后对方可重新申请加入本圈。',
+        unbanContent: '确定解除对 {name} 的拉黑吗？解除后对方不会自动回圈：公开圈可以重新加入，私密圈需要重新邀请。',
         removeAdminTitle: '免去管理员',
         removeAdminContent: '确定免去 {name} 的管理员身份吗？',
         transferTitle: '转让圈主',
         transferContent: '确定将圈主转让给 {name} 吗？此操作不可逆，你将立即变为普通成员。'
       },
       success: {
-        approved: '已通过入圈申请',
-        rejected: '已拒绝入圈申请',
         muted: '已禁言',
         unmuted: '已解除禁言',
+        removed: '已移出',
         banned: '已拉黑',
         unbanned: '已解除拉黑',
         adminSet: '已设为管理员',
@@ -548,8 +557,6 @@ export default {
       joinType: '加入方式',
       joinTypeDirect: '直接加入',
       joinTypeDirectDesc: '任何人都可以直接加入',
-      joinTypeReview: '需要审核',
-      joinTypeReviewDesc: '申请需要管理员审核',
       joinTypePrivate: '私密圈子',
       joinTypePrivateDesc: '仅限邀请加入',
       createButton: '创建兴趣圈',
@@ -855,7 +862,7 @@ export default {
     postsSection: '发现新帖子',
     exploreHint: '探索',
     joinDirect: '直接加入',
-    joinReview: '需审核',
+    joinPrivate: '私密',
     refreshed: '已为你换一批新内容',
     refresh: '换一批',
     refreshing: '换一批中…',
@@ -988,6 +995,8 @@ export default {
 
   // 评论相关
   comment: {
+    // 帖子已不可见（删除 / 私密圈非成员）时评论、回复返回 404
+    unavailable: '内容不可用，或你已无权访问',
     editor: {
       title: '发表评论',
       placeholder: '写下你的评论...（支持图文、表情）',

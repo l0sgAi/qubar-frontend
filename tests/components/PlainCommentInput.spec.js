@@ -6,9 +6,12 @@ const mocks = vi.hoisted(() => ({
   message: { success: vi.fn(), error: vi.fn() }
 }))
 
-vi.mock('@/composables/useCommentSubmit', async () => {
+vi.mock('@/composables/useCommentSubmit', async (importOriginal) => {
   const { ref } = await import('vue')
-  return { useCommentSubmit: () => ({ submitting: ref(false), submit: mocks.submit }) }
+  return {
+    ...(await importOriginal()),
+    useCommentSubmit: () => ({ submitting: ref(false), submit: mocks.submit })
+  }
 })
 vi.mock('naive-ui', async (importOriginal) => ({
   ...(await importOriginal()),
